@@ -4,8 +4,8 @@ interface ChalkErrorExtra {
 }
 
 export class ChalkError extends Error {
-  private httpStatus?: number;
-  private httpStatusText?: string;
+  public httpStatus?: number;
+  public httpStatusText?: string;
 
   constructor(message: string, extra?: ChalkErrorExtra) {
     super(message);

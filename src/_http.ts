@@ -1,4 +1,4 @@
-import { ChalkError } from "./_errors";
+import { chalkError, ChalkError } from "./_errors";
 import { urlJoin } from "./_utils";
 
 export interface ChalkHttpHeaders {
@@ -85,9 +85,9 @@ function createEndpoint<
       });
     } catch (e) {
       if (e instanceof Error) {
-        throw new ChalkError(e.message);
+        throw chalkError(e.message);
       } else {
-        throw new ChalkError("Unknown error");
+        throw chalkError("Unknown error");
       }
     }
 
@@ -131,7 +131,7 @@ export const v1_trigger_resolver_run = createEndpoint({
   },
 });
 
-interface ChalkError {
+interface ChalkErrorData {
   code: string;
   category: string;
   message: string;
@@ -170,9 +170,9 @@ export const v1_query_online = createEndpoint({
     data: {
       field: string;
       value: any;
-      error?: ChalkError;
+      error?: ChalkErrorData;
       ts: string;
     }[];
-    errors?: ChalkError[];
+    errors?: ChalkErrorData[];
   },
 });
