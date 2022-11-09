@@ -2,6 +2,7 @@ import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import {
   ChalkHttpHeaders,
+  CredentialsHolder,
   v1_get_run_status,
   v1_query_online,
   v1_trigger_resolver_run,
@@ -71,6 +72,7 @@ export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
   implements ChalkClientInterface<TFeatureMap>
 {
   private config: ChalkClientConfig;
+  private credentials;
 
   constructor(opts?: {
     clientId?: string;
@@ -96,22 +98,26 @@ export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
         "_CHALK_CLIENT_ID"
       ),
     };
+
+    this.credentials = new CredentialsHolder(this.config.apiServer);
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {
     return v1_who_am_i({
       baseUrl: this.config.apiServer,
-      headers: await this.getDefaultHeaders(),
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
     });
   }
 
   async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
     return v1_get_run_status({
       baseUrl: this.config.apiServer,
-      headers: await this.getDefaultHeaders(),
       pathParams: {
         run_id: runId,
       },
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
     });
   }
 
@@ -120,10 +126,11 @@ export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
   ): Promise<ChalkTriggerResolverRunResponse> {
     return v1_trigger_resolver_run({
       baseUrl: this.config.apiServer,
-      headers: await this.getDefaultHeaders(),
       body: {
         resolver_fqn: request.resolverFqn,
       },
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
     });
   }
 
@@ -144,7 +151,8 @@ export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
         query_name: request.queryName,
         staleness: request.staleness,
       },
-      headers: await this.getDefaultHeaders(),
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
     });
 
     if (rawResult.errors != null && rawResult.errors.length > 0) {
@@ -170,9 +178,8 @@ export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
     };
   }
 
-  private async getDefaultHeaders(): Promise<ChalkHttpHeaders> {
+  private getDefaultHeaders(): ChalkHttpHeaders {
     return {
-      Authorization: "Bearer foo",
       "X-Chalk-Env-Id": this.config.activeEnvironment,
     };
   }
