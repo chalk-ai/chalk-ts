@@ -55,7 +55,7 @@ export interface ChalkWhoamiResponse {
 }
 
 type _ChalkScalar = string | number | boolean;
-interface AnyFeatureMap {
+export interface AnyFeatureMap {
   [fqn: string]: _ChalkScalar;
 }
 

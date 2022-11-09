@@ -2,7 +2,7 @@ export interface ChalkClientConfig {
   clientId: string;
   clientSecret: string;
   apiServer: string;
-  activeEnvironment: string;
+  activeEnvironment: string | undefined;
 }
 
 export interface ChalkEnvironmentVariables {

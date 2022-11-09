@@ -19,7 +19,7 @@ const isoFetch: typeof fetch =
 type IsNever<T> = [T] extends [never] ? true : false;
 
 type PathParams<S extends string> =
-  S extends `${infer TPrefix}{${infer TParam}}${infer TRest}`
+  S extends `${infer _TPrefix}{${infer TParam}}${infer TRest}`
     ? TParam | PathParams<TRest>
     : never;
 
@@ -97,6 +97,8 @@ function createEndpoint<
         httpStatusText: result.statusText,
       });
     }
+
+    return result.json() as TResponseBody;
   };
 }
 
@@ -120,6 +122,9 @@ export const v1_get_run_status = createEndpoint({
 export const v1_trigger_resolver_run = createEndpoint({
   method: "POST",
   path: "/v1/runs/trigger",
+  requestBody: null! as {
+    resolver_fqn: string;
+  },
   responseBody: null! as {
     id: string;
     status: "received" | "succeeded" | "failed";
@@ -148,7 +153,7 @@ export const v1_query_online = createEndpoint({
     };
     outputs: string[];
     staleness?: {
-      [fqn: string]: string;
+      [fqn: string]: string | undefined;
     };
     context?: {
       environment?: string;

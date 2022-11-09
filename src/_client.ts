@@ -1,6 +1,24 @@
 import { DEFAULT_API_SERVER } from "./_const";
-import { ChalkWhoamiResponse } from "./_interface";
+import { chalkError } from "./_errors";
+import {
+  ChalkHttpHeaders,
+  v1_get_run_status,
+  v1_query_online,
+  v1_trigger_resolver_run,
+  v1_who_am_i,
+} from "./_http";
+import {
+  AnyFeatureMap,
+  ChalkClientInterface,
+  ChalkGetRunStatusResponse,
+  ChalkOnlineQueryRequest,
+  ChalkOnlineQueryResponse,
+  ChalkTriggerResolverRunRequest,
+  ChalkTriggerResolverRunResponse,
+  ChalkWhoamiResponse,
+} from "./_interface";
 import { ChalkClientConfig, ChalkEnvironmentVariables } from "./_types";
+import { fromEntries } from "./_utils";
 
 export interface ChalkClientOpts {
   /**
@@ -33,7 +51,7 @@ export interface ChalkClientOpts {
 function valueWithEnvFallback(
   parameterNameForDebugging: string,
   constructorValue: string | undefined,
-  name: keyof ChalkEnvironmentVariables,
+  name: keyof ChalkEnvironmentVariables
 ) {
   if (constructorValue != null) {
     return constructorValue;
@@ -49,8 +67,9 @@ function valueWithEnvFallback(
   );
 }
 
-
-export class ChalkClient {
+export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
+  implements ChalkClientInterface<TFeatureMap>
+{
   private config: ChalkClientConfig;
 
   constructor(opts?: {
@@ -60,20 +79,101 @@ export class ChalkClient {
     activeEnvironment?: string;
   }) {
     this.config = {
-      activeEnvironment: valueWithEnvFallback("activeEnvironment", opts?.activeEnvironment, "_CHALK_ACTIVE_ENVIRONMENT"),
-      clientSecret: valueWithEnvFallback("clientSecret", opts?.clientSecret, "_CHALK_CLIENT_SECRET"),
-      apiServer: opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER,
-      clientId: valueWithEnvFallback("clientId", opts?.clientId, "_CHALK_CLIENT_ID"),
+      activeEnvironment:
+        opts?.activeEnvironment ??
+        process.env._CHALK_ACTIVE_ENVIRONMENT ??
+        undefined,
+      clientSecret: valueWithEnvFallback(
+        "clientSecret",
+        opts?.clientSecret,
+        "_CHALK_CLIENT_SECRET"
+      ),
+      apiServer:
+        opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER,
+      clientId: valueWithEnvFallback(
+        "clientId",
+        opts?.clientId,
+        "_CHALK_CLIENT_ID"
+      ),
     };
   }
 
-  whoami(): Promise<ChalkWhoamiResponse> {
-
+  async whoami(): Promise<ChalkWhoamiResponse> {
+    return v1_who_am_i({
+      baseUrl: this.config.apiServer,
+      headers: await this.getDefaultHeaders(),
+    });
   }
 
-  private makeRequest(
+  async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
+    return v1_get_run_status({
+      baseUrl: this.config.apiServer,
+      headers: await this.getDefaultHeaders(),
+      pathParams: {
+        run_id: runId,
+      },
+    });
+  }
 
-  ) {
-    fetch();
+  async triggerResolverRun(
+    request: ChalkTriggerResolverRunRequest
+  ): Promise<ChalkTriggerResolverRunResponse> {
+    return v1_trigger_resolver_run({
+      baseUrl: this.config.apiServer,
+      headers: await this.getDefaultHeaders(),
+      body: {
+        resolver_fqn: request.resolverFqn,
+      },
+    });
+  }
+
+  async query<TOutput extends keyof TFeatureMap>(
+    request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
+  ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
+    const rawResult = await v1_query_online({
+      baseUrl: this.config.apiServer,
+      body: {
+        inputs: request.inputs,
+        outputs: request.outputs as string[],
+        context: {
+          tags: request.scopeTags,
+        },
+        correlation_id: request.correlationId,
+        deployment_id: request.previewDeploymentId,
+        meta: request.queryMeta,
+        query_name: request.queryName,
+        staleness: request.staleness,
+      },
+      headers: await this.getDefaultHeaders(),
+    });
+
+    if (rawResult.errors != null && rawResult.errors.length > 0) {
+      throw chalkError(rawResult.errors.map((e) => e.message).join("\n\n"));
+    }
+
+    // Alias the map values so we can make TypeScript help us construct the response
+    type FeatureEntry = ChalkOnlineQueryResponse<
+      TFeatureMap,
+      TOutput
+    >["data"][any];
+
+    return {
+      data: fromEntries(
+        rawResult.data.map((d): [string, FeatureEntry] => [
+          d.field,
+          {
+            value: d.value,
+            computedAt: new Date(d.ts),
+          },
+        ])
+      ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
+    };
+  }
+
+  private async getDefaultHeaders(): Promise<ChalkHttpHeaders> {
+    return {
+      Authorization: "Bearer foo",
+      "X-Chalk-Env-Id": this.config.activeEnvironment,
+    };
   }
 }
