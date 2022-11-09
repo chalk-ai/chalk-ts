@@ -1,4 +1,4 @@
-export interface ChalkEnv {
+export interface ChalkClientConfig {
   clientId: string;
   clientSecret: string;
   apiServer: string;

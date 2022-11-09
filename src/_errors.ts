@@ -1,10 +1,16 @@
 
 export class ChalkError extends Error {
-  constructor(opts: {
-    message: string,
+  private httpStatus?: number;
+  private httpStatusText?: string;
+
+  constructor(message: string, extra?: {
+    httpStatus?: number;
+    httpStatusText?: string;
   }) {
-    super(opts.message);
+    super(message);
     this.name = ChalkError.name;
+    this.httpStatus = extra?.httpStatus;
+    this.httpStatusText = extra?.httpStatusText;
   }
 }
 
