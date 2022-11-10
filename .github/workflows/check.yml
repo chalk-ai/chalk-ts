@@ -25,11 +25,12 @@ jobs:
           node-version: "16"
           cache: yarn
 
+      - run: yarn install
+
   build:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - run: yarn install
       - run: yarn build
 
   test:
