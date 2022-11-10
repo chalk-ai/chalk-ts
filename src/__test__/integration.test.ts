@@ -17,7 +17,7 @@ maybe("integration tests", () => {
     });
   });
 
-  describe("query fraud-template user.id=1", () => {
+  describe("query fraud-template", () => {
     it("query user.id", async () => {
       const result = await client.query({
         inputs: {
@@ -37,7 +37,7 @@ maybe("integration tests", () => {
         outputs: ["user.gender"],
       });
 
-      expect(result.data["user.gender"].value).toBe("m");
+      expect(result.data["user.gender"].value).toBe("f");
     });
 
     it("query user.id and user.gender", async () => {
@@ -49,7 +49,7 @@ maybe("integration tests", () => {
       });
 
       expect(Object.keys(result.data).length).toBe(2);
-      expect(result.data["user.id"].value).toBe("2");
+      expect(result.data["user.id"].value).toBe(2);
       expect(result.data["user.gender"].value).toBe("f");
     });
   });
