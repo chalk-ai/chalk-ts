@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'"
   },
   "dependencies": {
     "node-fetch": "^2.6.6"
