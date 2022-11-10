@@ -7,5 +7,6 @@
     "rootDir": "src",
     "target": "ES6",
     "strict": true
-  }
+  },
+  "include": ["src"]
 }
