@@ -21,5 +21,6 @@
   "packageManager": "yarn@3.2.3",
   "jest": {
     "preset": "ts-jest/presets/default"
-  }
+  },
+  "license": "Apache-2.0"
 }
