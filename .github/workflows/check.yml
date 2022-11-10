@@ -51,6 +51,7 @@ jobs:
   integration-test:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -58,4 +59,7 @@ jobs:
           node-version: "16"
           cache: yarn
       - run: yarn install
-      - run: yarn test:ci:integration
+      - run: yarn test:integration
+        env:
+          CI_CHALK_CLIENT_ID: ${{ secrets.CHALK_CLIENT_ID }}
+          CI_CHALK_CLIENT_SECRET: ${{ secrets.CHALK_CLIENT_SECRET }}

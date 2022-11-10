@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "test:ci:integration": "CHALK_INTEGRATION_TESTS=1 jest"
+    "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'"
   },
   "dependencies": {
     "node-fetch": "^2.6.6"

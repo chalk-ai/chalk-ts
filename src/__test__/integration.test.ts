@@ -6,17 +6,20 @@ interface FraudTemplateFeatures {
   "user.socure_score": number;
 }
 
-const maybe = Boolean(process.env.CHALK_INTEGRATION_TESTS)
+const maybe = Boolean(process.env.CHALK_INTEGRATION)
   ? describe
   : describe.skip;
 
-maybe("integration", () => {
+maybe("integration tests", () => {
   it("query fraud-template user.id=1", async () => {
-    console.log('clientId', process.env.CHALK_CLIENT_ID);
+    console.log(
+      "clientId",
+      (process.env.CI_CHALK_CLIENT_ID ?? "").substring(0, 2)
+    );
 
     const client = new ChalkClient<FraudTemplateFeatures>({
-      clientId: process.env.CHALK_CLIENT_ID,
-      clientSecret: process.env.CHALK_CLIENT_SECRET,
+      clientId: process.env.CI_CHALK_CLIENT_ID,
+      clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
     });
 
     const result = await client.query({
