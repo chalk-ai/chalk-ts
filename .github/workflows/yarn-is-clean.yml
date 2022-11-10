@@ -1,0 +1,38 @@
+name: Check yarn install is clean
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'frontend/**'
+  pull_request:
+    paths:
+      - 'frontend/**'
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Get yarn cache directory path [https://github.com/actions/setup-node/issues/488]
+        id: yarn-cache-dir-path
+        working-directory: frontend
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+        shell: bash
+
+      - name: Restore yarn cache [https://github.com/actions/setup-node/issues/488]
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
+          restore-keys: |
+            yarn-cache-folder-
+
+      - run: yarn install --immutable
