@@ -1,0 +1,49 @@
+name: check
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+
+jobs:
+  yarn-installs-cleanly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+      - run: yarn install --immutable
+
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+      - run: yarn install
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+      - run: yarn install
+      - run: yarn build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+      - run: yarn install
+      - run: yarn build
+      - run: yarn test
