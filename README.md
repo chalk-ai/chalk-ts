@@ -1,7 +1,7 @@
 # @chalk-ai/client
 
 [![npm version](https://img.shields.io/npm/v/@chalk-ai/client?label=%40chalk-ai%2Fclient&logo=npm)](https://www.npmjs.com/package/@chalk-ai/client)
-![CI](https://img.shields.io/github/workflow/status/@chalk-ai/chalk-ts/check/main)
+![CI](https://img.shields.io/github/workflow/status/chalk-ai/chalk-ts/check/main)
 
 TypeScript client for Chalk.
 
