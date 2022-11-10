@@ -1,7 +1,7 @@
 # @chalk-ai/client
 
-![CI](https://github.com/chalk-ai/chalk-ts/actions/workflows/check.yml/badge.svg?branch=main)
 [![npm version](https://badge.fury.io/js/@chalk-ai%2Fclient.svg)](https://badge.fury.io/js/@chalk-ai%2Fclient)
+![CI](https://github.com/chalk-ai/chalk-ts/actions/workflows/check.yml/badge.svg?branch=main)
 
 TypeScript client for Chalk.
 
