@@ -99,7 +99,7 @@ export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
       ),
     };
 
-    this.credentials = new CredentialsHolder(this.config.apiServer);
+    this.credentials = new CredentialsHolder(this.config);
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {

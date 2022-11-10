@@ -1,4 +1,5 @@
-import { ChalkError, isChalkError } from "./_errors";
+import { chalkError, ChalkError, isChalkError } from "./_errors";
+import { ChalkClientConfig } from "./_types";
 import { urlJoin } from "./_utils";
 
 export interface ChalkHttpHeaders {
@@ -6,13 +7,10 @@ export interface ChalkHttpHeaders {
 }
 
 const isoFetch: typeof fetch =
-  typeof fetch !== "undefined"
-    ? fetch
-    : typeof require !== "undefined"
-    ? require("node-fetch")
-    : (() => {
-        throw new Error("No fetch() found, and not running from Node context");
-      })();
+  typeof fetch !== "undefined" ? fetch : require("node-fetch");
+
+const isoHeaders: typeof Headers =
+  typeof Headers !== "undefined" ? Headers : require("node-fetch").Headers;
 
 // https://github.com/microsoft/TypeScript/issues/23182
 type IsNever<T> = [T] extends [never] ? true : false;
@@ -62,7 +60,7 @@ type EndpointCallArgs<
     headers?: ChalkHttpHeaders;
   };
 
-const APPLICATION_JSON = "application/json?charset=utf-8";
+const APPLICATION_JSON = "application/json;charset=utf-8";
 
 interface ClientCredentials {
   access_token: string;
@@ -76,15 +74,26 @@ interface ClientCredentials {
 export class CredentialsHolder {
   private credentials: ClientCredentials | null = null;
 
-  constructor(private baseUrl: string) {}
+  constructor(private config: ChalkClientConfig) {}
   async get() {
-    if (this.credentials != null) {
+    if (this.credentials == null) {
       try {
-        this.credentials = await v1_oauth_token({
-          baseUrl: this.baseUrl,
-        });
+        return (this.credentials = await v1_oauth_token({
+          baseUrl: this.config.apiServer,
+          body: {
+            client_id: this.config.clientId,
+            client_secret: this.config.clientSecret,
+            grant_type: "client_credentials",
+          },
+        }));
       } catch (e) {
-        console.error("Error getting Chalk auth token: ", e);
+        if (e instanceof Error) {
+          throw chalkError(e.message);
+        } else {
+          throw chalkError(
+            "Unable to authenticate to Chalk servers. Please check your environment config"
+          );
+        }
       }
     }
 
@@ -94,10 +103,6 @@ export class CredentialsHolder {
   clear() {
     this.credentials = null;
   }
-}
-
-function isSuccessCode(code: number) {
-  return code >= 200 && code < 300;
 }
 
 function createEndpoint<
@@ -115,13 +120,13 @@ function createEndpoint<
   const makeRequest = async (
     callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
   ) => {
-    const headers = new Headers();
+    const headers = new isoHeaders();
     headers.set("Accept", APPLICATION_JSON);
     headers.set("Content-Type", APPLICATION_JSON);
 
-    let token = await callArgs.credentials?.get();
-    if (token != null) {
-      headers.set("Authorization", `Bearer ${token}`);
+    let credentials = await callArgs.credentials?.get();
+    if (credentials != null) {
+      headers.set("Authorization", `Bearer ${credentials.access_token}`);
     }
 
     if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
@@ -131,11 +136,19 @@ function createEndpoint<
     const body =
       callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
 
+    console.log("fetch", urlJoin(callArgs.baseUrl, opts.path), {
+      method: opts.method,
+      headers,
+      body,
+    });
+
     let result = await isoFetch(urlJoin(callArgs.baseUrl, opts.path), {
       method: opts.method,
       headers,
       body,
     });
+
+    console.log("raw result", result.status, result.statusText);
 
     if (result.status < 200 || result.status >= 300) {
       throw new ChalkError(await result.text(), {
@@ -246,8 +259,13 @@ export const v1_query_online = createEndpoint({
 });
 
 export const v1_oauth_token = createEndpoint({
-  method: "GET",
+  method: "POST",
   path: "/v1/oauth/token",
   authKind: "none",
+  requestBody: null! as {
+    client_id: string;
+    client_secret: string;
+    grant_type: string;
+  },
   responseBody: null! as ClientCredentials,
 });

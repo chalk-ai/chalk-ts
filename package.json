@@ -2,10 +2,10 @@
   "name": "@chalk/client",
   "version": "0.0.0",
   "scripts": {
-    "build": "typescript"
+    "build": "tsc"
   },
   "dependencies": {
-    "node-fetch": "^3.2.10"
+    "node-fetch": "^2.6.6"
   },
   "devDependencies": {
     "@types/node": "^18.11.9",

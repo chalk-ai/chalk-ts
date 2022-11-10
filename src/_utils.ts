@@ -1,5 +1,13 @@
 export function urlJoin(base: string, path: string) {
-  return base.endsWith("/") ? `${base}${path}` : `${base}/${path}`;
+  while (base.endsWith("/")) {
+    base = base.substring(0, base.length - 1);
+  }
+
+  while (path.startsWith("/")) {
+    path = path.substring(1);
+  }
+
+  return `${base}/${path}`;
 }
 
 export function fromEntries<V>(entries: [string, V][]): Record<string, V> {
