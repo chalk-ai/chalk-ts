@@ -37,7 +37,6 @@ jobs:
       - run: yarn build
 
   test:
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -49,7 +48,6 @@ jobs:
       - run: yarn test
 
   integration-test:
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
