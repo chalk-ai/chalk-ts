@@ -1,4 +1,4 @@
-# chalk-ts
+# @chalk-ai/client
 
 TypeScript client for Chalk.
 
@@ -10,7 +10,7 @@ $ yarn add @chalk-ai/client
 
 ## Usage
 
-### Modern JavaScript, ES6
+### Modern JavaScript ES6
 
 ```ts
 import { ChalkClient } from "@chalk-ai/client";
@@ -32,7 +32,7 @@ const result = await client.query({
 console.log(result.data["user.socure_score"].value);
 ```
 
-### CommonJS, Node.js <= 12
+### CommonJS
 
 ```ts
 var ChalkClient = require("@chalk-ai/client").ChalkClient;
