@@ -1,10 +1,12 @@
+import { ChalkScalar } from "./_types";
+
 export interface ChalkGetRunStatusResponse {
   id: string;
   status: ChalkResolverRunStatus;
 }
 
 export interface ChalkOnlineQueryRequest<
-  TFeatureMap extends AnyFeatureMap,
+  TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
   inputs: Partial<TFeatureMap>;
@@ -27,7 +29,7 @@ export type ChalkOnlineQueryResponseStatusKind =
   | "error";
 
 export interface ChalkOnlineQueryResponse<
-  TFeatureMap extends AnyFeatureMap,
+  TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
   data: {
@@ -54,13 +56,8 @@ export interface ChalkWhoamiResponse {
   user: string;
 }
 
-type _ChalkScalar = string | number | boolean;
-export interface AnyFeatureMap {
-  [fqn: string]: _ChalkScalar;
-}
-
 export interface ChalkClientInterface<
-  TFeatureMap extends AnyFeatureMap = AnyFeatureMap
+  TFeatureMap = Record<string, ChalkScalar>
 > {
   getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse>;
 

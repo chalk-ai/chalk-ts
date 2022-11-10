@@ -9,7 +9,6 @@ import {
   v1_who_am_i,
 } from "./_http";
 import {
-  AnyFeatureMap,
   ChalkClientInterface,
   ChalkGetRunStatusResponse,
   ChalkOnlineQueryRequest,
@@ -18,7 +17,11 @@ import {
   ChalkTriggerResolverRunResponse,
   ChalkWhoamiResponse,
 } from "./_interface";
-import { ChalkClientConfig, ChalkEnvironmentVariables } from "./_types";
+import {
+  ChalkClientConfig,
+  ChalkEnvironmentVariables,
+  ChalkScalar,
+} from "./_types";
 import { fromEntries } from "./_utils";
 
 export interface ChalkClientOpts {
@@ -68,7 +71,7 @@ function valueWithEnvFallback(
   );
 }
 
-export class ChalkClient<TFeatureMap extends AnyFeatureMap = AnyFeatureMap>
+export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   implements ChalkClientInterface<TFeatureMap>
 {
   private config: ChalkClientConfig;

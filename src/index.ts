@@ -1,7 +1,6 @@
 export { ChalkClient, ChalkClientOpts } from "./_client";
 export { ChalkError, isChalkError } from "./_errors";
 export {
-  AnyFeatureMap,
   ChalkClientInterface,
   ChalkGetRunStatusResponse,
   ChalkOnlineQueryRequest,

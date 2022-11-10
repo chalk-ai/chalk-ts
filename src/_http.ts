@@ -136,19 +136,11 @@ function createEndpoint<
     const body =
       callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
 
-    console.log("fetch", urlJoin(callArgs.baseUrl, opts.path), {
-      method: opts.method,
-      headers,
-      body,
-    });
-
     let result = await isoFetch(urlJoin(callArgs.baseUrl, opts.path), {
       method: opts.method,
       headers,
       body,
     });
-
-    console.log("raw result", result.status, result.statusText);
 
     if (result.status < 200 || result.status >= 300) {
       throw new ChalkError(await result.text(), {

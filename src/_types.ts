@@ -22,3 +22,5 @@ declare global {
     interface ProcessEnv extends Partial<ChalkEnvironmentVariables> {}
   }
 }
+
+export type ChalkScalar = string | number | boolean;
