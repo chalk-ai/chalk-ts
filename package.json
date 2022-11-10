@@ -1,5 +1,5 @@
 {
-  "name": "@chalk/client",
+  "name": "@chalk-ai/client",
   "version": "0.0.0",
   "scripts": {
     "build": "tsc",
