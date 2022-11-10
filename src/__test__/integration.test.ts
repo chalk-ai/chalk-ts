@@ -17,6 +17,12 @@ maybe("integration tests", () => {
     });
   });
 
+  beforeEach(() => {
+    // Cold-starts for a preview deployment can be slow, so we allow a very generous timeout
+    // for all of our outbound network calls
+    jest.setTimeout(30_000);
+  });
+
   describe("query fraud-template", () => {
     it("query user.id", async () => {
       const result = await client.query({

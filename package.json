@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "build": "tsc",
+    "prepack": "rm -rf build/ && yarn build && rm -rf build/__test__",
     "test": "jest",
     "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'"
   },
@@ -22,6 +23,11 @@
   "packageManager": "yarn@3.2.3",
   "jest": {
     "preset": "ts-jest/presets/default"
+  },
+  "description": "TypeScript client for Chalk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chalk-ai/chalk-ts.git"
   },
   "license": "Apache-2.0"
 }
