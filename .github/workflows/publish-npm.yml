@@ -1,0 +1,32 @@
+on:
+  release:
+    types: [published]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+      - run: yarn install --immutable
+      - run: yarn build
+      - run: yarn test
+      - run: yarn test:integration
+
+
+  publish-npm:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          always-auth: true
+          node-version: "16"
+          cache: yarn
+      - run: yarn install
+      - run: yarn version ${{ github.event.release.tag_name }} --no-git-tag-version
+      - run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_AUTOMATION_TOKEN}}
