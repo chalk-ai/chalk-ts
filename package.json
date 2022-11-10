@@ -1,12 +1,15 @@
 {
   "name": "@chalk/client",
+  "version": "0.0.0",
   "scripts": {
-    "build": "typescript"
+    "build": "tsc"
   },
   "dependencies": {
-    "node-fetch": "^3.2.10"
+    "node-fetch": "^2.6.6"
   },
   "devDependencies": {
+    "@types/node": "^18.11.9",
+    "prettier": "^2.7.1",
     "typescript": "^4.8.4"
   },
   "main": "build/index.js",

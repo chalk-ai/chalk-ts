@@ -5,7 +5,7 @@
 !.yarn/sdks
 !.yarn/versions
 
-node_modules
+build/
+node_modules/
 
 *.log
-
