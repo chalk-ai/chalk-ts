@@ -6,6 +6,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: "16"
@@ -14,19 +15,25 @@ jobs:
       - run: yarn build
       - run: yarn test
       - run: yarn test:integration
+        env:
+          CI_CHALK_CLIENT_ID: ${{ secrets.CHALK_CLIENT_ID }}
+          CI_CHALK_CLIENT_SECRET: ${{ secrets.CHALK_CLIENT_SECRET }}
 
 
   publish-npm:
-    needs: verify
+    # Note: for now, we don't make the publish job wait on verification, just in case an integration test flakes or something.
+    # needs: verify
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           always-auth: true
           node-version: "16"
           cache: yarn
       - run: yarn install
-      - run: yarn version ${{ github.event.release.tag_name }} --no-git-tag-version
-      - run: yarn publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_AUTOMATION_TOKEN}}
+
+      # https://github.com/yarnpkg/berry/issues/4424
+      - run: npm version ${{ github.event.release.tag_name }} --no-git-tag-version
+      - run: yarn config set npmAuthToken "${{ secrets.NPM_AUTOMATION_TOKEN }}"
+      - run: yarn npm publish --access public
