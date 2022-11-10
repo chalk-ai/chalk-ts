@@ -7,6 +7,19 @@ function getConfig(client: ChalkClient): ChalkClientConfig {
 }
 
 describe("ChalkClient", () => {
+  let originalEnv: any;
+  beforeAll(() => {
+    originalEnv = process.env;
+  });
+
+  beforeEach(() => {
+    process.env = { ...process.env };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   it("constructor doesn't throw", () => {
     new ChalkClient({
       activeEnvironment: "a",
@@ -30,19 +43,6 @@ describe("ChalkClient", () => {
       clientId: "c",
       clientSecret: "d",
     });
-  });
-
-  let originalEnv: any;
-  beforeAll(() => {
-    originalEnv = process.env;
-  });
-
-  beforeEach(() => {
-    process.env = { ...process.env };
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
   });
 
   it("reads from environment variables when set", () => {
