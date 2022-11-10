@@ -2,7 +2,8 @@
   "name": "@chalk/client",
   "version": "0.0.0",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "dependencies": {
     "node-fetch": "^2.6.6"
@@ -17,5 +18,8 @@
   },
   "main": "build/index.js",
   "typings": "build/index.d.ts",
-  "packageManager": "yarn@3.2.3"
+  "packageManager": "yarn@3.2.3",
+  "jest": {
+    "preset": "ts-jest/presets/default"
+  }
 }
