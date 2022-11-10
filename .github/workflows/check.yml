@@ -13,7 +13,6 @@ jobs:
         with:
           node-version: "16"
           cache: yarn
-
       - run: yarn install --immutable
 
   install:
@@ -38,7 +37,7 @@ jobs:
       - run: yarn install
       - run: yarn build
 
-  build:
+  test:
     needs: build
     runs-on: ubuntu-latest
     steps:
