@@ -65,6 +65,7 @@ const APPLICATION_JSON = "application/json;charset=utf-8";
 interface ClientCredentials {
   access_token: string;
   token_type: string;
+  primary_environment?: string | null;
   expires_in: number;
   engines?: {
     [name: string]: string;
@@ -127,6 +128,10 @@ function createEndpoint<
     let credentials = await callArgs.credentials?.get();
     if (credentials != null) {
       headers.set("Authorization", `Bearer ${credentials.access_token}`);
+    }
+
+    if (credentials?.primary_environment != null) {
+      headers.set("X-Chalk-Env-Id", credentials.primary_environment);
     }
 
     if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
