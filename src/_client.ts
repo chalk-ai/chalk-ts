@@ -6,6 +6,7 @@ import {
   v1_get_run_status,
   v1_query_online,
   v1_trigger_resolver_run,
+  v1_upload_single,
   v1_who_am_i,
 } from "./_http";
 import {
@@ -15,6 +16,7 @@ import {
   ChalkOnlineQueryResponse,
   ChalkTriggerResolverRunRequest,
   ChalkTriggerResolverRunResponse,
+  ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
 } from "./_interface";
 import {
@@ -159,7 +161,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     });
 
     if (rawResult.errors != null && rawResult.errors.length > 0) {
-      throw chalkError(rawResult.errors.map((e) => e.message).join("\n\n"));
+      throw chalkError(rawResult.errors.map((e) => e.message).join("; "), {
+        info: rawResult.errors,
+      });
     }
 
     // Alias the map values so we can make TypeScript help us construct the response
@@ -179,6 +183,29 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         ])
       ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
     };
+  }
+
+  async uploadSingle(request: ChalkUploadSingleRequest<TFeatureMap>): Promise<void> {
+    const rawResult = await v1_upload_single({
+      baseUrl: this.config.apiServer,
+      body: {
+        inputs: request.features,
+        outputs: Object.keys(request.features),
+        context: {
+          tags: request.scopeTags,
+        },
+        correlation_id: request.correlationId,
+        deployment_id: request.previewDeploymentId,
+      },
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
+    });
+
+    if (rawResult.errors != null && rawResult.errors.length > 0) {
+      throw chalkError(rawResult.errors.map((e) => e.message).join("; "), {
+        info: rawResult.errors,
+      });
+    }
   }
 
   private getDefaultHeaders(): ChalkHttpHeaders {
