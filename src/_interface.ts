@@ -5,6 +5,15 @@ export interface ChalkGetRunStatusResponse {
   status: ChalkResolverRunStatus;
 }
 
+export interface ChalkUploadSingleRequest<
+  TFeatureMap,
+> {
+  features: Partial<TFeatureMap>;
+  previewDeploymentId?: string;
+  correlationId?: string;
+  scopeTags?: string[];
+}
+
 export interface ChalkOnlineQueryRequest<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
@@ -64,6 +73,8 @@ export interface ChalkClientInterface<
   query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>>;
+
+  uploadSingle(request: ChalkUploadSingleRequest<TFeatureMap>): Promise<void>;
 
   triggerResolverRun(
     request: ChalkTriggerResolverRunRequest

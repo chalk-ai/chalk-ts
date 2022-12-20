@@ -255,6 +255,40 @@ export const v1_query_online = createEndpoint({
   },
 });
 
+export const v1_upload_single = createEndpoint({
+  method: "POST",
+  path: "/v1/upload/single",
+  authKind: "required",
+  requestBody: null! as {
+    inputs: {
+      [fqn: string]: any;
+    };
+    outputs: string[];
+    staleness?: {
+      [fqn: string]: string | undefined;
+    };
+    context?: {
+      environment?: string;
+      tags?: string[];
+    };
+    deployment_id?: string;
+    correlation_id?: string;
+    query_name?: string;
+    meta?: {
+      [key: string]: string;
+    };
+  },
+  responseBody: null! as {
+    data: {
+      field: string;
+      value: any;
+      error?: ChalkErrorData;
+      ts: string;
+    }[];
+    errors?: ChalkErrorData[];
+  },
+});
+
 export const v1_oauth_token = createEndpoint({
   method: "POST",
   path: "/v1/oauth/token",
