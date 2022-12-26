@@ -3,7 +3,8 @@ import { ChalkClientConfig } from "./_types";
 import { urlJoin } from "./_utils";
 
 export interface ChalkHttpHeaders {
-  "X-Chalk-Env-Id"?: string;
+    "X-Chalk-Env-Id"?: string;
+    "User-Agent"?: string;
 }
 
 const isoFetch: typeof fetch =
@@ -124,6 +125,7 @@ function createEndpoint<
     const headers = new isoHeaders();
     headers.set("Accept", APPLICATION_JSON);
     headers.set("Content-Type", APPLICATION_JSON);
+    headers.set("User-Agent", "chalk-ts v1.11.2");
 
     let credentials = await callArgs.credentials?.get();
     if (credentials != null) {
