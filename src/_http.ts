@@ -159,7 +159,7 @@ function createEndpoint<
 
   return async (callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>) => {
     try {
-      return makeRequest(callArgs);
+      return await makeRequest(callArgs);
     } catch (e) {
       if (
         isChalkError(e) &&
