@@ -185,7 +185,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     };
   }
 
-  async uploadSingle(request: ChalkUploadSingleRequest<TFeatureMap>): Promise<void> {
+  async uploadSingle(
+    request: ChalkUploadSingleRequest<TFeatureMap>
+  ): Promise<void> {
     const rawResult = await v1_upload_single({
       baseUrl: this.config.apiServer,
       body: {
@@ -211,6 +213,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   private getDefaultHeaders(): ChalkHttpHeaders {
     return {
       "X-Chalk-Env-Id": this.config.activeEnvironment,
+      "User-Agent": "chalk-ts v1.11.2",
     };
   }
 }
