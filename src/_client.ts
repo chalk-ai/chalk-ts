@@ -213,7 +213,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   private getDefaultHeaders(): ChalkHttpHeaders {
     return {
       "X-Chalk-Env-Id": this.config.activeEnvironment,
-      "User-Agent": "chalk-ts v1.11.2",
+      "User-Agent": "chalk-ts v1.11.3",
     };
   }
 }
