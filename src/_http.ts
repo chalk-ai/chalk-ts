@@ -125,7 +125,7 @@ function createEndpoint<
     const headers = new isoHeaders();
     headers.set("Accept", APPLICATION_JSON);
     headers.set("Content-Type", APPLICATION_JSON);
-    headers.set("User-Agent", "chalk-ts v1.11.2");
+    headers.set("User-Agent", "chalk-ts v1.11.3");
 
     let credentials = await callArgs.credentials?.get();
     if (credentials != null) {
@@ -161,7 +161,7 @@ function createEndpoint<
 
   return async (callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>) => {
     try {
-      return makeRequest(callArgs);
+      return await makeRequest(callArgs);
     } catch (e) {
       if (
         isChalkError(e) &&
