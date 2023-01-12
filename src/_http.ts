@@ -80,38 +80,47 @@ export class CredentialsHolder {
 
   constructor(private config: ChalkClientConfig) {}
   async get() {
-    return this.credentials != null ? this.credentials : this.refreshAndGet();
+    if (this.credentials == null) {
+      this.credentials = this.makeRequest().catch((e) => {
+        this.credentials = null;
+
+        if (e instanceof Error) {
+          throw chalkError(e.message);
+        } else {
+          throw chalkError(
+            "Unable to authenticate to Chalk servers. Please check your environment config"
+          );
+        }
+      });
+    }
+
+    return this.credentials;
   }
 
-  async refresh() {
-    await this.refreshAndGet();
+  async refreshInBackground() {
+    const request = this.makeRequest();
+    request.then(() => {
+      // update stored credentials on success
+      this.credentials = request;
+    }, (e) => {
+      // Background refresh failed. Log an error to the user
+      console.warn("Error when refreshing Chalk authentication; please check your environment config", e)
+    });
   }
 
   clear() {
     this.credentials = null;
   }
 
-  private refreshAndGet() {
-    this.credentials = v1_oauth_token({
+  private makeRequest() {
+    return v1_oauth_token({
       baseUrl: this.config.apiServer,
       body: {
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
         grant_type: "client_credentials",
       },
-    }).catch((e) => {
-      this.credentials = null;
-
-      if (e instanceof Error) {
-        throw chalkError(e.message);
-      } else {
-        throw chalkError(
-          "Unable to authenticate to Chalk servers. Please check your environment config"
-        );
-      }
-    });
-
-    return this.credentials;
+    })
   }
 }
 

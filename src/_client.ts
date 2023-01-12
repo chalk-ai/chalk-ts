@@ -225,6 +225,6 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   private debouncedRefreshAuth = debounce(() => {
-    this.credentials.refresh();
+    this.credentials.refreshInBackground();
   }, AUTH_REFRESH_INTERVAL_MS);
 }
