@@ -3,8 +3,8 @@ import { ChalkClientConfig } from "./_types";
 import { urlJoin } from "./_utils";
 
 export interface ChalkHttpHeaders {
-    "X-Chalk-Env-Id"?: string;
-    "User-Agent"?: string;
+  "X-Chalk-Env-Id"?: string;
+  "User-Agent"?: string;
 }
 
 const isoFetch: typeof fetch =
@@ -74,21 +74,16 @@ interface ClientCredentials {
 }
 
 export class CredentialsHolder {
-  private credentials: ClientCredentials | null = null;
+  // The most recent credentials request, as a promise. On failure, this value will be
+  // nulled so subsequent calls to the CredentialsHolder will initiate a new request
+  private credentials: Promise<ClientCredentials> | null = null;
 
   constructor(private config: ChalkClientConfig) {}
   async get() {
     if (this.credentials == null) {
-      try {
-        return (this.credentials = await v1_oauth_token({
-          baseUrl: this.config.apiServer,
-          body: {
-            client_id: this.config.clientId,
-            client_secret: this.config.clientSecret,
-            grant_type: "client_credentials",
-          },
-        }));
-      } catch (e) {
+      this.credentials = this.makeRequest().catch((e) => {
+        this.credentials = null;
+
         if (e instanceof Error) {
           throw chalkError(e.message);
         } else {
@@ -96,14 +91,36 @@ export class CredentialsHolder {
             "Unable to authenticate to Chalk servers. Please check your environment config"
           );
         }
-      }
+      });
     }
 
     return this.credentials;
   }
 
+  async refreshInBackground() {
+    const request = this.makeRequest();
+    request.then(() => {
+      // update stored credentials on success
+      this.credentials = request;
+    }, (e) => {
+      // Background refresh failed. Log an error to the user
+      console.warn("Error when refreshing Chalk authentication; please check your environment config", e)
+    });
+  }
+
   clear() {
     this.credentials = null;
+  }
+
+  private makeRequest() {
+    return v1_oauth_token({
+      baseUrl: this.config.apiServer,
+      body: {
+        client_id: this.config.clientId,
+        client_secret: this.config.clientSecret,
+        grant_type: "client_credentials",
+      },
+    })
   }
 }
 
