@@ -18,6 +18,8 @@ $ yarn add @chalk-ai/client
 ```ts
 import { ChalkClient } from "@chalk-ai/client";
 
+// Lay out the features you want to pull using the client
+// as an interface with the feature type and feature name.
 interface Features {
   "user.id": string;
   "user.socure_score": number;
@@ -32,6 +34,10 @@ const result = await client.query({
   outputs: ["user.socure_score"],
 });
 
+// The property `.data` has auto-complete based on the
+// list provided in `output` above. So if you try to pull
+// a feature that wasn't requested, you will see an error
+// in type checking.
 console.log(result.data["user.socure_score"].value);
 ```
 
