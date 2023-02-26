@@ -1,3 +1,4 @@
+import debounce = require("lodash.debounce");
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import {
@@ -24,7 +25,7 @@ import {
   ChalkEnvironmentVariables,
   ChalkScalar,
 } from "./_types";
-import { debounce, fromEntries } from "./_utils";
+import { fromEntries } from "./_utils";
 
 export interface ChalkClientOpts {
   /**
