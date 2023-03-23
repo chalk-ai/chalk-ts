@@ -8,7 +8,7 @@
     "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'"
   },
   "dependencies": {
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.6"
   },
   "devDependencies": {
     "@types/jest": "^29.2.2",
