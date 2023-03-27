@@ -125,8 +125,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     this.credentials = new CredentialsHolder(this.config);
   }
 
-  flushTraces() {
-    this.tracingSDK?.shutdown();
+  async flushTraces() {
+    await this.tracingSDK?.shutdown();
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {
