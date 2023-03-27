@@ -1,10 +1,12 @@
+import { SpanStatusCode } from "@opentelemetry/api";
 import { chalkError, ChalkError, isChalkError } from "./_errors";
+import { getTracer } from "./_tracing";
 import { ChalkClientConfig } from "./_types";
 import { urlJoin } from "./_utils";
 
 export interface ChalkHttpHeaders {
-    "X-Chalk-Env-Id"?: string;
-    "User-Agent"?: string;
+  "X-Chalk-Env-Id"?: string;
+  "User-Agent"?: string;
 }
 
 const isoFetch: typeof fetch =
@@ -122,41 +124,54 @@ function createEndpoint<
   const makeRequest = async (
     callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
   ) => {
-    const headers = new isoHeaders();
-    headers.set("Accept", APPLICATION_JSON);
-    headers.set("Content-Type", APPLICATION_JSON);
-    headers.set("User-Agent", "chalk-ts v1.11.3");
+    return getTracer().startActiveSpan("api_request", async (span) => {
+      span.setAttribute("request_path", opts.path);
 
-    let credentials = await callArgs.credentials?.get();
-    if (credentials != null) {
-      headers.set("Authorization", `Bearer ${credentials.access_token}`);
-    }
+      const headers = new isoHeaders();
+      headers.set("Accept", APPLICATION_JSON);
+      headers.set("Content-Type", APPLICATION_JSON);
+      headers.set("User-Agent", "chalk-ts v1.11.3");
 
-    if (credentials?.primary_environment != null) {
-      headers.set("X-Chalk-Env-Id", credentials.primary_environment);
-    }
+      let credentials = await callArgs.credentials?.get();
+      if (credentials != null) {
+        headers.set("Authorization", `Bearer ${credentials.access_token}`);
+      }
 
-    if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
-      headers.set("X-Chalk-Env-Id", callArgs.headers["X-Chalk-Env-Id"]);
-    }
+      if (credentials?.primary_environment != null) {
+        headers.set("X-Chalk-Env-Id", credentials.primary_environment);
+      }
 
-    const body =
-      callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
+      if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
+        headers.set("X-Chalk-Env-Id", callArgs.headers["X-Chalk-Env-Id"]);
+      }
 
-    let result = await isoFetch(urlJoin(callArgs.baseUrl, opts.path), {
-      method: opts.method,
-      headers,
-      body,
-    });
+      const body =
+        callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
 
-    if (result.status < 200 || result.status >= 300) {
-      throw new ChalkError(await result.text(), {
-        httpStatus: result.status,
-        httpStatusText: result.statusText,
+      let result = await isoFetch(urlJoin(callArgs.baseUrl, opts.path), {
+        method: opts.method,
+        headers,
+        body,
       });
-    }
 
-    return result.json() as TResponseBody;
+      if (result.status < 200 || result.status >= 300) {
+        const errorText = await result.text();
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: errorText,
+        });
+        throw new ChalkError(errorText, {
+          httpStatus: result.status,
+          httpStatusText: result.statusText,
+        });
+      }
+
+      span.setStatus({
+        code: SpanStatusCode.OK,
+      });
+      span.end();
+      return result.json() as TResponseBody;
+    });
   };
 
   return async (callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>) => {

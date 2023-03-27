@@ -1,3 +1,5 @@
+import { SpanStatusCode } from "@opentelemetry/api";
+import { NodeSDK } from "@opentelemetry/sdk-node";
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import {
@@ -19,6 +21,7 @@ import {
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
 } from "./_interface";
+import { getTracer, initializeTracing, TracingOptions } from "./_tracing";
 import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
@@ -78,13 +81,28 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 {
   private config: ChalkClientConfig;
   private credentials;
+  private tracingSDK?: NodeSDK;
 
   constructor(opts?: {
     clientId?: string;
     clientSecret?: string;
     apiServer?: string;
     activeEnvironment?: string;
+    tracingOptions?: TracingOptions;
   }) {
+    if (
+      opts?.tracingOptions?.tracingActive ||
+      process.env._CHALK_TRACING_ACTIVE === "true"
+    ) {
+      this.tracingSDK = initializeTracing({
+        headers: opts?.tracingOptions?.headers,
+        url:
+          opts?.tracingOptions?.url ??
+          process.env._CHALK_OTEL_EXPORTER_OTLP_ENDPOINT ??
+          "http://localhost:4318/v1/traces",
+      });
+    }
+
     this.config = {
       activeEnvironment:
         opts?.activeEnvironment ??
@@ -107,107 +125,141 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     this.credentials = new CredentialsHolder(this.config);
   }
 
+  flushTraces() {
+    this.tracingSDK?.shutdown();
+  }
+
   async whoami(): Promise<ChalkWhoamiResponse> {
-    return v1_who_am_i({
-      baseUrl: this.config.apiServer,
-      headers: this.getDefaultHeaders(),
-      credentials: this.credentials,
+    return getTracer().startActiveSpan("who_am_i", async (span) => {
+      const out = await v1_who_am_i({
+        baseUrl: this.config.apiServer,
+        headers: this.getDefaultHeaders(),
+        credentials: this.credentials,
+      });
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return out;
     });
   }
 
   async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
-    return v1_get_run_status({
-      baseUrl: this.config.apiServer,
-      pathParams: {
-        run_id: runId,
-      },
-      headers: this.getDefaultHeaders(),
-      credentials: this.credentials,
+    return getTracer().startActiveSpan("get_run_status", async (span) => {
+      const out = await v1_get_run_status({
+        baseUrl: this.config.apiServer,
+        pathParams: {
+          run_id: runId,
+        },
+        headers: this.getDefaultHeaders(),
+        credentials: this.credentials,
+      });
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return out;
     });
   }
 
   async triggerResolverRun(
     request: ChalkTriggerResolverRunRequest
   ): Promise<ChalkTriggerResolverRunResponse> {
-    return v1_trigger_resolver_run({
-      baseUrl: this.config.apiServer,
-      body: {
-        resolver_fqn: request.resolverFqn,
-      },
-      headers: this.getDefaultHeaders(),
-      credentials: this.credentials,
+    return getTracer().startActiveSpan("trigger_resolver_run", async (span) => {
+      const out = await v1_trigger_resolver_run({
+        baseUrl: this.config.apiServer,
+        body: {
+          resolver_fqn: request.resolverFqn,
+        },
+        headers: this.getDefaultHeaders(),
+        credentials: this.credentials,
+      });
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return out;
     });
   }
 
   async query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
-    const rawResult = await v1_query_online({
-      baseUrl: this.config.apiServer,
-      body: {
-        inputs: request.inputs,
-        outputs: request.outputs as string[],
-        context: {
-          tags: request.scopeTags,
-        },
-        correlation_id: request.correlationId,
-        deployment_id: request.previewDeploymentId,
-        meta: request.queryMeta,
-        query_name: request.queryName,
-        staleness: request.staleness,
-      },
-      headers: this.getDefaultHeaders(),
-      credentials: this.credentials,
-    });
-
-    if (rawResult.errors != null && rawResult.errors.length > 0) {
-      throw chalkError(rawResult.errors.map((e) => e.message).join("; "), {
-        info: rawResult.errors,
-      });
-    }
-
-    // Alias the map values so we can make TypeScript help us construct the response
-    type FeatureEntry = ChalkOnlineQueryResponse<
-      TFeatureMap,
-      TOutput
-    >["data"][any];
-
-    return {
-      data: fromEntries(
-        rawResult.data.map((d): [string, FeatureEntry] => [
-          d.field,
-          {
-            value: d.value,
-            computedAt: new Date(d.ts),
+    return getTracer().startActiveSpan("query", async (span) => {
+      const rawResult = await v1_query_online({
+        baseUrl: this.config.apiServer,
+        body: {
+          inputs: request.inputs,
+          outputs: request.outputs as string[],
+          context: {
+            tags: request.scopeTags,
           },
-        ])
-      ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
-    };
+          correlation_id: request.correlationId,
+          deployment_id: request.previewDeploymentId,
+          meta: request.queryMeta,
+          query_name: request.queryName,
+          staleness: request.staleness,
+        },
+        headers: this.getDefaultHeaders(),
+        credentials: this.credentials,
+      });
+
+      if (rawResult.errors != null && rawResult.errors.length > 0) {
+        const errorText = rawResult.errors.map((e) => e.message).join("; ");
+        span.setStatus({ code: SpanStatusCode.ERROR, message: errorText });
+        span.end();
+        throw chalkError(errorText, {
+          info: rawResult.errors,
+        });
+      }
+
+      // Alias the map values so we can make TypeScript help us construct the response
+      type FeatureEntry = ChalkOnlineQueryResponse<
+        TFeatureMap,
+        TOutput
+      >["data"][any];
+
+      const out = {
+        data: fromEntries(
+          rawResult.data.map((d): [string, FeatureEntry] => [
+            d.field,
+            {
+              value: d.value,
+              computedAt: new Date(d.ts),
+            },
+          ])
+        ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
+      };
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return out;
+    });
   }
 
   async uploadSingle(
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
-    const rawResult = await v1_upload_single({
-      baseUrl: this.config.apiServer,
-      body: {
-        inputs: request.features,
-        outputs: Object.keys(request.features),
-        context: {
-          tags: request.scopeTags,
+    getTracer().startActiveSpan("upload_single", async (span) => {
+      const rawResult = await v1_upload_single({
+        baseUrl: this.config.apiServer,
+        body: {
+          inputs: request.features,
+          outputs: Object.keys(request.features),
+          context: {
+            tags: request.scopeTags,
+          },
+          correlation_id: request.correlationId,
+          deployment_id: request.previewDeploymentId,
         },
-        correlation_id: request.correlationId,
-        deployment_id: request.previewDeploymentId,
-      },
-      headers: this.getDefaultHeaders(),
-      credentials: this.credentials,
-    });
-
-    if (rawResult.errors != null && rawResult.errors.length > 0) {
-      throw chalkError(rawResult.errors.map((e) => e.message).join("; "), {
-        info: rawResult.errors,
+        headers: this.getDefaultHeaders(),
+        credentials: this.credentials,
       });
-    }
+
+      if (rawResult.errors != null && rawResult.errors.length > 0) {
+        const errorText = rawResult.errors.map((e) => e.message).join("; ");
+        span.setStatus({ code: SpanStatusCode.ERROR, message: errorText });
+        span.end();
+        throw chalkError(errorText, {
+          info: rawResult.errors,
+        });
+      }
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+    });
   }
 
   private getDefaultHeaders(): ChalkHttpHeaders {

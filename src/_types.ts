@@ -10,6 +10,8 @@ export interface ChalkEnvironmentVariables {
   _CHALK_CLIENT_SECRET: string;
   _CHALK_API_SERVER: string;
   _CHALK_ACTIVE_ENVIRONMENT: string;
+  _CHALK_OTEL_EXPORTER_OTLP_ENDPOINT: string;
+  _CHALK_TRACING_ACTIVE: string;
 }
 
 /**
