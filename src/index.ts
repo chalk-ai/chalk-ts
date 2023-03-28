@@ -11,5 +11,4 @@ export {
   ChalkTriggerResolverRunRequest,
   ChalkTriggerResolverRunResponse,
   ChalkWhoamiResponse,
-  C
 } from "./_interface";
