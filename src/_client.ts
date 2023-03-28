@@ -230,7 +230,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async uploadSingle(
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
-    getTracer().startActiveSpan("upload_single", async (span) => {
+    return await getTracer().startActiveSpan("upload_single", async (span) => {
       const rawResult = await v1_upload_single({
         baseUrl: this.config.apiServer,
         body: {
