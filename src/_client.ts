@@ -55,6 +55,21 @@ export interface ChalkClientOpts {
    * If not specified and unset by your environment, an error will be thrown on client creation
    */
   activeEnvironment?: string;
+
+  /**
+   * Tracing options that will be forwarded to the OTLP Trace Exporter. Traces are exported using http.
+   * Traces can be exported to an OpenTelemetry collector and exported to any compatible tracing backend,
+   * or can be exported to any compatible tracing backend directly.
+   *
+   * `url:` URL to export OpenTelemetry traces to. Defaults to http://localhost:4318/v1/traces.
+   * If not specified, will use the environment variable _CHALK_TRACING_EXPORT_URL.
+   *
+   * `headers:` Headers to send with the trace http requests.
+   *
+   * `tracingActive:` Boolean that indicates whether to collect and export traces. Defaults to `false`.
+   * If not specified, will use the environment variable _CHALK_TRACING_ACTIVE.
+   */
+  tracingOptions?: TracingOptions;
 }
 
 function valueWithEnvFallback(
