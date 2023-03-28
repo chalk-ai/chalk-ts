@@ -125,7 +125,10 @@ function createEndpoint<
     callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
   ) => {
     return getTracer().startActiveSpan("api_request", async (span) => {
-      span.setAttribute("request_path", opts.path);
+      span.setAttributes({
+        request_path: opts.path,
+        method: opts.method,
+      });
 
       const headers = new isoHeaders();
       headers.set("Accept", APPLICATION_JSON);
