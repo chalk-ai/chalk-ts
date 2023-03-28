@@ -59,4 +59,8 @@ maybe("integration tests", () => {
       expect(result.data["user.gender"].value).toBe("f");
     });
   });
+
+  afterAll(() => {
+    client.flushTraces();
+  });
 });

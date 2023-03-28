@@ -5,9 +5,7 @@ export interface ChalkGetRunStatusResponse {
   status: ChalkResolverRunStatus;
 }
 
-export interface ChalkUploadSingleRequest<
-  TFeatureMap,
-> {
+export interface ChalkUploadSingleRequest<TFeatureMap> {
   features: Partial<TFeatureMap>;
   previewDeploymentId?: string;
   correlationId?: string;
@@ -81,4 +79,9 @@ export interface ChalkClientInterface<
   ): Promise<ChalkTriggerResolverRunResponse>;
 
   whoami(): Promise<ChalkWhoamiResponse>;
+
+  /**
+   * Flush any tracing spans that have not been exported.
+   */
+  flushTraces(): Promise<void>;
 }
