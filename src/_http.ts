@@ -3,17 +3,12 @@ import { chalkError, ChalkError, isChalkError } from "./_errors";
 import { getTracer } from "./_tracing";
 import { ChalkClientConfig } from "./_types";
 import { urlJoin } from "./_utils";
+import axios from "axios";
 
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
   "User-Agent"?: string;
 }
-
-const isoFetch: typeof fetch =
-  typeof fetch !== "undefined" ? fetch : require("node-fetch");
-
-const isoHeaders: typeof Headers =
-  typeof Headers !== "undefined" ? Headers : require("node-fetch").Headers;
 
 // https://github.com/microsoft/TypeScript/issues/23182
 type IsNever<T> = [T] extends [never] ? true : false;
@@ -130,11 +125,11 @@ function createEndpoint<
         method: opts.method,
       });
 
-      const headers = new isoHeaders();
-      headers.set("Accept", APPLICATION_JSON);
-      headers.set("Content-Type", APPLICATION_JSON);
-      headers.set("User-Agent", "chalk-ts v1.11.3");
-
+      let headers: any = {
+        "Accept": APPLICATION_JSON,
+        "Content-Type": APPLICATION_JSON,
+        "User-Agent": "chalk-ts v1.11.7"
+      }
       let credentials = await callArgs.credentials?.get();
       if (credentials != null) {
         headers.set("Authorization", `Bearer ${credentials.access_token}`);
@@ -151,14 +146,15 @@ function createEndpoint<
       const body =
         callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
 
-      let result = await isoFetch(urlJoin(callArgs.baseUrl, opts.path), {
+      let result = await axios({
+        url: urlJoin(callArgs.baseUrl, opts.path),
         method: opts.method,
-        headers,
-        body,
+        headers: headers,
+        data: body
       });
 
       if (result.status < 200 || result.status >= 300) {
-        const errorText = await result.text();
+        const errorText = await result.statusText;
         span.setStatus({
           code: SpanStatusCode.ERROR,
           message: errorText,
@@ -173,7 +169,7 @@ function createEndpoint<
         code: SpanStatusCode.OK,
       });
       span.end();
-      return result.json() as TResponseBody;
+      return result.data as TResponseBody;
     });
   };
 
