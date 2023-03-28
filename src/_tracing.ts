@@ -42,7 +42,7 @@ export function initializeTracing(opts: OTLPExporterNodeConfigBase) {
   sdk.addResource(resource);
 
   sdk.start();
-  return sdk;
+  return { sdk, processor };
 }
 
 const TRACER_NAME = "chalk-ts-client-tracer";

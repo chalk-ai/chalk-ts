@@ -1,5 +1,6 @@
 import { SpanStatusCode } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node";
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import {
@@ -96,7 +97,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 {
   private config: ChalkClientConfig;
   private credentials;
-  private tracingSDK?: NodeSDK;
+  private sdk?: NodeSDK;
+  private processor?: BatchSpanProcessor;
 
   constructor(opts?: {
     clientId?: string;
@@ -109,10 +111,12 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       opts?.tracingOptions?.tracingActive ||
       process.env._CHALK_TRACING_ACTIVE === "true"
     ) {
-      this.tracingSDK = initializeTracing({
+      const { sdk, processor } = initializeTracing({
         url: opts?.tracingOptions?.url ?? process.env._CHALK_TRACING_EXPORT_URL,
         ...opts?.tracingOptions,
       });
+      this.sdk = sdk;
+      this.processor = processor;
     }
 
     this.config = {
@@ -138,7 +142,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   async flushTraces() {
-    await this.tracingSDK?.shutdown();
+    await this.processor?.forceFlush();
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {

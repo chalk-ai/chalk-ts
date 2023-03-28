@@ -80,5 +80,8 @@ export interface ChalkClientInterface<
 
   whoami(): Promise<ChalkWhoamiResponse>;
 
+  /**
+   * Flush any tracing spans that have not been exported.
+   */
   flushTraces(): Promise<void>;
 }
