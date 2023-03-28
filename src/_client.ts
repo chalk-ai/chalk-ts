@@ -95,11 +95,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       process.env._CHALK_TRACING_ACTIVE === "true"
     ) {
       this.tracingSDK = initializeTracing({
-        headers: opts?.tracingOptions?.headers,
-        url:
-          opts?.tracingOptions?.url ??
-          process.env._CHALK_OTEL_EXPORTER_OTLP_ENDPOINT ??
-          "http://localhost:4318/v1/traces",
+        url: opts?.tracingOptions?.url ?? process.env._CHALK_TRACING_EXPORT_URL,
+        ...opts?.tracingOptions,
       });
     }
 
