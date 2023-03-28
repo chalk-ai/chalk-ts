@@ -1,5 +1,5 @@
 import { trace } from "@opentelemetry/api";
-import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+// import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { Resource } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
@@ -35,7 +35,7 @@ export function initializeTracing(opts: OTLPExporterNodeConfigBase) {
 
   const sdk = new NodeSDK({
     traceExporter: exporter,
-    instrumentations: [getNodeAutoInstrumentations()],
+    // instrumentations: [getNodeAutoInstrumentations()],
   });
 
   sdk.configureTracerProvider(provider, processor);
