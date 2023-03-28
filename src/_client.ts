@@ -141,6 +141,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 
   async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
     return getTracer().startActiveSpan("get_run_status", async (span) => {
+      span.setAttributes({
+        runId: runId,
+      });
       const out = await v1_get_run_status({
         baseUrl: this.config.apiServer,
         pathParams: {
@@ -159,6 +162,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkTriggerResolverRunRequest
   ): Promise<ChalkTriggerResolverRunResponse> {
     return getTracer().startActiveSpan("trigger_resolver_run", async (span) => {
+      span.setAttributes({
+        resolverFqn: request.resolverFqn,
+      });
       const out = await v1_trigger_resolver_run({
         baseUrl: this.config.apiServer,
         body: {
@@ -177,6 +183,11 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
     return getTracer().startActiveSpan("query", async (span) => {
+      span.setAttributes({
+        correlationId: request.correlationId,
+        previewDeploymentId: request.previewDeploymentId,
+        queryName: request.queryName,
+      });
       const rawResult = await v1_query_online({
         baseUrl: this.config.apiServer,
         body: {
@@ -231,6 +242,10 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
     return await getTracer().startActiveSpan("upload_single", async (span) => {
+      span.setAttributes({
+        correlationId: request.correlationId,
+        previewDeploymentId: request.previewDeploymentId,
+      });
       const rawResult = await v1_upload_single({
         baseUrl: this.config.apiServer,
         body: {
