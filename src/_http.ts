@@ -128,6 +128,8 @@ function createEndpoint<
       span.setAttributes({
         request_path: opts.path,
         method: opts.method,
+        activeEnvironment: callArgs.headers?.["X-Chalk-Env-Id"],
+        apiServer: callArgs.baseUrl,
       });
 
       const headers = new isoHeaders();

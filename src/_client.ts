@@ -147,6 +147,10 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 
   async whoami(): Promise<ChalkWhoamiResponse> {
     return getTracer().startActiveSpan("who_am_i", async (span) => {
+      span.setAttributes({
+        activeEnvironment: this.config.activeEnvironment,
+        apiServer: this.config.apiServer,
+      });
       const out = await v1_who_am_i({
         baseUrl: this.config.apiServer,
         headers: this.getDefaultHeaders(),
@@ -162,6 +166,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     return getTracer().startActiveSpan("get_run_status", async (span) => {
       span.setAttributes({
         runId: runId,
+        activeEnvironment: this.config.activeEnvironment,
+        apiServer: this.config.apiServer,
       });
       const out = await v1_get_run_status({
         baseUrl: this.config.apiServer,
@@ -183,6 +189,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     return getTracer().startActiveSpan("trigger_resolver_run", async (span) => {
       span.setAttributes({
         resolverFqn: request.resolverFqn,
+        activeEnvironment: this.config.activeEnvironment,
+        apiServer: this.config.apiServer,
       });
       const out = await v1_trigger_resolver_run({
         baseUrl: this.config.apiServer,
@@ -206,6 +214,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         correlationId: request.correlationId,
         previewDeploymentId: request.previewDeploymentId,
         queryName: request.queryName,
+        activeEnvironment: this.config.activeEnvironment,
+        apiServer: this.config.apiServer,
       });
       const rawResult = await v1_query_online({
         baseUrl: this.config.apiServer,
@@ -264,6 +274,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       span.setAttributes({
         correlationId: request.correlationId,
         previewDeploymentId: request.previewDeploymentId,
+        activeEnvironment: this.config.activeEnvironment,
+        apiServer: this.config.apiServer,
       });
       const rawResult = await v1_upload_single({
         baseUrl: this.config.apiServer,
