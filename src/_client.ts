@@ -1,3 +1,4 @@
+import debounce = require("lodash.debounce");
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import {
@@ -73,6 +74,8 @@ function valueWithEnvFallback(
   );
 }
 
+const AUTH_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   implements ChalkClientInterface<TFeatureMap>
 {
@@ -108,6 +111,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {
+    this.debouncedRefreshAuth();
     return v1_who_am_i({
       baseUrl: this.config.apiServer,
       headers: this.getDefaultHeaders(),
@@ -116,6 +120,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
+    this.debouncedRefreshAuth();
     return v1_get_run_status({
       baseUrl: this.config.apiServer,
       pathParams: {
@@ -129,6 +134,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async triggerResolverRun(
     request: ChalkTriggerResolverRunRequest
   ): Promise<ChalkTriggerResolverRunResponse> {
+    this.debouncedRefreshAuth();
     return v1_trigger_resolver_run({
       baseUrl: this.config.apiServer,
       body: {
@@ -142,6 +148,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
+    this.debouncedRefreshAuth();
     const rawResult = await v1_query_online({
       baseUrl: this.config.apiServer,
       body: {
@@ -188,6 +195,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async uploadSingle(
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
+    this.debouncedRefreshAuth();
     const rawResult = await v1_upload_single({
       baseUrl: this.config.apiServer,
       body: {
@@ -216,4 +224,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       "User-Agent": "chalk-ts v1.11.3",
     };
   }
+
+  private debouncedRefreshAuth = debounce(() => {
+    this.credentials.refreshInBackground();
+  }, AUTH_REFRESH_INTERVAL_MS);
 }

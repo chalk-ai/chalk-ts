@@ -8,11 +8,12 @@
     "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'"
   },
   "dependencies": {
+    "lodash.debounce": "^4.0.8",
     "node-fetch": "^2.6.6"
   },
   "devDependencies": {
     "@types/jest": "^29.2.2",
-    "@types/node": "^18.11.9",
+    "@types/lodash.debounce": "^4.0.7",
     "jest": "^29.3.1",
     "prettier": "^2.7.1",
     "ts-jest": "^29.0.3",
