@@ -1,7 +1,7 @@
 import { SpanStatusCode } from "@opentelemetry/api";
 import { chalkError, ChalkError, isChalkError } from "./_errors";
 import { getTracer } from "./_tracing";
-import { ChalkClientConfig } from "./_types";
+import { ChalkClientConfig, CustomFetchClient } from "./_types";
 import { urlJoin } from "./_utils";
 
 export interface ChalkHttpHeaders {
@@ -78,11 +78,15 @@ interface ClientCredentials {
 export class CredentialsHolder {
   private credentials: ClientCredentials | null = null;
 
-  constructor(private config: ChalkClientConfig) {}
+  constructor(
+    private config: ChalkClientConfig,
+    private http: ChalkHTTPService
+  ) {}
+
   async get() {
     if (this.credentials == null) {
       try {
-        return (this.credentials = await v1_oauth_token({
+        return (this.credentials = await this.http.v1_oauth_token({
           baseUrl: this.config.apiServer,
           body: {
             client_id: this.config.clientId,
@@ -91,6 +95,7 @@ export class CredentialsHolder {
           },
         }));
       } catch (e) {
+        console.error(e);
         if (e instanceof Error) {
           throw chalkError(e.message);
         } else {
@@ -109,127 +114,6 @@ export class CredentialsHolder {
   }
 }
 
-function createEndpoint<
-  TPath extends string,
-  TAuthKind extends "required" | "none",
-  TRequestBody = never,
-  TResponseBody = never
->(opts: {
-  path: TPath;
-  authKind: TAuthKind;
-  method: "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
-  requestBody?: TRequestBody;
-  responseBody?: TResponseBody;
-}) {
-  const makeRequest = async (
-    callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
-  ) => {
-    return getTracer().startActiveSpan("api_request", async (span) => {
-      span.setAttributes({
-        request_path: opts.path,
-        method: opts.method,
-        activeEnvironment: callArgs.headers?.["X-Chalk-Env-Id"],
-        apiServer: callArgs.baseUrl,
-      });
-
-      const headers = new isoHeaders();
-      headers.set("Accept", APPLICATION_JSON);
-      headers.set("Content-Type", APPLICATION_JSON);
-      headers.set("User-Agent", "chalk-ts v1.11.3");
-
-      let credentials = await callArgs.credentials?.get();
-      if (credentials != null) {
-        headers.set("Authorization", `Bearer ${credentials.access_token}`);
-      }
-
-      if (credentials?.primary_environment != null) {
-        headers.set("X-Chalk-Env-Id", credentials.primary_environment);
-      }
-
-      if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
-        headers.set("X-Chalk-Env-Id", callArgs.headers["X-Chalk-Env-Id"]);
-      }
-
-      const body =
-        callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
-
-      let result = await isoFetch(urlJoin(callArgs.baseUrl, opts.path), {
-        method: opts.method,
-        headers,
-        body,
-      });
-
-      if (result.status < 200 || result.status >= 300) {
-        const errorText = await result.text();
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: errorText,
-        });
-        throw new ChalkError(errorText, {
-          httpStatus: result.status,
-          httpStatusText: result.statusText,
-        });
-      }
-
-      span.setStatus({
-        code: SpanStatusCode.OK,
-      });
-      span.end();
-      return result.json() as TResponseBody;
-    });
-  };
-
-  return async (callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>) => {
-    try {
-      return await makeRequest(callArgs);
-    } catch (e) {
-      if (
-        isChalkError(e) &&
-        e.httpStatus == 401 &&
-        opts.authKind === "required"
-      ) {
-        callArgs.credentials?.clear();
-        return makeRequest(callArgs);
-      } else {
-        // re-throw the error if we aren't recovering from it
-        throw e;
-      }
-    }
-  };
-}
-
-export const v1_who_am_i = createEndpoint({
-  method: "GET",
-  path: "/v1/who-am-i",
-  authKind: "required",
-  responseBody: null! as {
-    user: string;
-  },
-});
-
-export const v1_get_run_status = createEndpoint({
-  method: "GET",
-  path: "/v1/runs/{run_id}",
-  authKind: "required",
-  responseBody: null! as {
-    id: string;
-    status: "received" | "succeeded" | "failed";
-  },
-});
-
-export const v1_trigger_resolver_run = createEndpoint({
-  method: "POST",
-  path: "/v1/runs/trigger",
-  authKind: "required",
-  requestBody: null! as {
-    resolver_fqn: string;
-  },
-  responseBody: null! as {
-    id: string;
-    status: "received" | "succeeded" | "failed";
-  },
-});
-
 interface ChalkErrorData {
   code: string;
   category: string;
@@ -243,82 +127,220 @@ interface ChalkErrorData {
   resolver?: string;
 }
 
-export const v1_query_online = createEndpoint({
-  method: "POST",
-  path: "/v1/query/online",
-  authKind: "required",
-  requestBody: null! as {
-    inputs: {
-      [fqn: string]: any;
-    };
-    outputs: string[];
-    staleness?: {
-      [fqn: string]: string | undefined;
-    };
-    context?: {
-      environment?: string;
-      tags?: string[];
-    };
-    deployment_id?: string;
-    correlation_id?: string;
-    query_name?: string;
-    meta?: {
-      [key: string]: string;
-    };
-  },
-  responseBody: null! as {
-    data: {
-      field: string;
-      value: any;
-      error?: ChalkErrorData;
-      ts: string;
-    }[];
-    errors?: ChalkErrorData[];
-  },
-});
+export class ChalkHTTPService {
+  private fetchClient: CustomFetchClient;
+  private fetchHeaders: typeof Headers;
 
-export const v1_upload_single = createEndpoint({
-  method: "POST",
-  path: "/v1/upload/single",
-  authKind: "required",
-  requestBody: null! as {
-    inputs: {
-      [fqn: string]: any;
-    };
-    outputs: string[];
-    staleness?: {
-      [fqn: string]: string | undefined;
-    };
-    context?: {
-      environment?: string;
-      tags?: string[];
-    };
-    deployment_id?: string;
-    correlation_id?: string;
-    query_name?: string;
-    meta?: {
-      [key: string]: string;
-    };
-  },
-  responseBody: null! as {
-    data: {
-      field: string;
-      value: any;
-      error?: ChalkErrorData;
-      ts: string;
-    }[];
-    errors?: ChalkErrorData[];
-  },
-});
+  constructor(fetchClient?: CustomFetchClient, fetchHeaders?: typeof Headers) {
+    this.fetchClient = fetchClient ?? isoFetch;
+    this.fetchHeaders = fetchHeaders ?? isoHeaders;
+  }
 
-export const v1_oauth_token = createEndpoint({
-  method: "POST",
-  path: "/v1/oauth/token",
-  authKind: "none",
-  requestBody: null! as {
-    client_id: string;
-    client_secret: string;
-    grant_type: string;
-  },
-  responseBody: null! as ClientCredentials,
-});
+  private createEndpoint<
+    TPath extends string,
+    TAuthKind extends "required" | "none",
+    TRequestBody = never,
+    TResponseBody = never
+  >(opts: {
+    path: TPath;
+    authKind: TAuthKind;
+    method: "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+    requestBody?: TRequestBody;
+    responseBody?: TResponseBody;
+  }) {
+    const makeRequest = async (
+      callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
+    ) => {
+      return getTracer().startActiveSpan("api_request", async (span) => {
+        span.setAttributes({
+          request_path: opts.path,
+          method: opts.method,
+          activeEnvironment: callArgs.headers?.["X-Chalk-Env-Id"],
+          apiServer: callArgs.baseUrl,
+        });
+
+        const headers = new this.fetchHeaders();
+        headers.set("Accept", APPLICATION_JSON);
+        headers.set("Content-Type", APPLICATION_JSON);
+        headers.set("User-Agent", "chalk-ts v1.11.3");
+
+        let credentials = await callArgs.credentials?.get();
+        if (credentials != null) {
+          headers.set("Authorization", `Bearer ${credentials.access_token}`);
+        }
+
+        if (credentials?.primary_environment != null) {
+          headers.set("X-Chalk-Env-Id", credentials.primary_environment);
+        }
+
+        if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
+          headers.set("X-Chalk-Env-Id", callArgs.headers["X-Chalk-Env-Id"]);
+        }
+
+        const body =
+          callArgs.body !== undefined
+            ? JSON.stringify(callArgs.body)
+            : undefined;
+
+        let result = await this.fetchClient(
+          urlJoin(callArgs.baseUrl, opts.path),
+          {
+            method: opts.method,
+            headers,
+            body,
+          }
+        );
+
+        if (result.status < 200 || result.status >= 300) {
+          const errorText = await result.text();
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: errorText,
+          });
+          throw new ChalkError(errorText, {
+            httpStatus: result.status,
+            httpStatusText: result.statusText,
+          });
+        }
+
+        span.setStatus({
+          code: SpanStatusCode.OK,
+        });
+        span.end();
+        return result.json() as TResponseBody;
+      });
+    };
+
+    return async (
+      callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
+    ) => {
+      try {
+        return await makeRequest(callArgs);
+      } catch (e) {
+        if (
+          isChalkError(e) &&
+          e.httpStatus == 401 &&
+          opts.authKind === "required"
+        ) {
+          callArgs.credentials?.clear();
+          return makeRequest(callArgs);
+        } else {
+          // re-throw the error if we aren't recovering from it
+          throw e;
+        }
+      }
+    };
+  }
+
+  public v1_who_am_i = this.createEndpoint({
+    method: "GET",
+    path: "/v1/who-am-i",
+    authKind: "required",
+    responseBody: null! as {
+      user: string;
+    },
+  });
+
+  public v1_get_run_status = this.createEndpoint({
+    method: "GET",
+    path: "/v1/runs/{run_id}",
+    authKind: "required",
+    responseBody: null! as {
+      id: string;
+      status: "received" | "succeeded" | "failed";
+    },
+  });
+
+  public v1_trigger_resolver_run = this.createEndpoint({
+    method: "POST",
+    path: "/v1/runs/trigger",
+    authKind: "required",
+    requestBody: null! as {
+      resolver_fqn: string;
+    },
+    responseBody: null! as {
+      id: string;
+      status: "received" | "succeeded" | "failed";
+    },
+  });
+
+  public v1_query_online = this.createEndpoint({
+    method: "POST",
+    path: "/v1/query/online",
+    authKind: "required",
+    requestBody: null! as {
+      inputs: {
+        [fqn: string]: any;
+      };
+      outputs: string[];
+      staleness?: {
+        [fqn: string]: string | undefined;
+      };
+      context?: {
+        environment?: string;
+        tags?: string[];
+      };
+      deployment_id?: string;
+      correlation_id?: string;
+      query_name?: string;
+      meta?: {
+        [key: string]: string;
+      };
+    },
+    responseBody: null! as {
+      data: {
+        field: string;
+        value: any;
+        error?: ChalkErrorData;
+        ts: string;
+      }[];
+      errors?: ChalkErrorData[];
+    },
+  });
+
+  public v1_upload_single = this.createEndpoint({
+    method: "POST",
+    path: "/v1/upload/single",
+    authKind: "required",
+    requestBody: null! as {
+      inputs: {
+        [fqn: string]: any;
+      };
+      outputs: string[];
+      staleness?: {
+        [fqn: string]: string | undefined;
+      };
+      context?: {
+        environment?: string;
+        tags?: string[];
+      };
+      deployment_id?: string;
+      correlation_id?: string;
+      query_name?: string;
+      meta?: {
+        [key: string]: string;
+      };
+    },
+    responseBody: null! as {
+      data: {
+        field: string;
+        value: any;
+        error?: ChalkErrorData;
+        ts: string;
+      }[];
+      errors?: ChalkErrorData[];
+    },
+  });
+
+  public v1_oauth_token = this.createEndpoint({
+    method: "POST",
+    path: "/v1/oauth/token",
+    authKind: "none",
+    requestBody: null! as {
+      client_id: string;
+      client_secret: string;
+      grant_type: string;
+    },
+    responseBody: null! as ClientCredentials,
+  });
+}
