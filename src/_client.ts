@@ -230,6 +230,12 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
           meta: request.queryMeta,
           query_name: request.queryName,
           staleness: request.staleness,
+          encoding_options: request.encodingOptions
+            ? {
+                encode_structs_as_objects:
+                  request.encodingOptions.encodeStructsAsObjects,
+              }
+            : undefined,
         },
         headers: this.getDefaultHeaders(),
         credentials: this.credentials,

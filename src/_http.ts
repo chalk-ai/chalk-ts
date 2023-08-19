@@ -265,7 +265,7 @@ export const v1_query_online = createEndpoint({
     meta?: {
       [key: string]: string;
     };
-    encoding_options: {
+    encoding_options?: {
       encode_structs_as_objects?: boolean;
     };
   },
