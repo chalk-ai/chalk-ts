@@ -58,6 +58,40 @@ maybe("integration tests", () => {
       expect(result.data["user.id"].value).toBe(2);
       expect(result.data["user.gender"].value).toBe("f");
     });
+
+    it("query alternate struct encodings", async () => {
+      const result = await client.query({
+        inputs: {
+          "user.id": 1,
+        },
+        outputs: ["user.id", "user.franchise_set"],
+        encodingOptions: {
+          encodeStructsAsObjects: true,
+        },
+      });
+
+      expect(Object.keys(result.data).length).toBe(2);
+      expect(result.data["user.id"].value).toBe(1);
+      expect(
+        (result.data["user.franchise_set"].value as any)["locations"][0]
+      ).toEqual({
+            coordinates: [
+              {
+                lat: 41.9,
+                lng: 71.9,
+              },
+              {
+                lat: 42.8,
+                lng: 72.8,
+              },
+            ],
+            latlng: {
+              lat: 42,
+              lng: 71,
+            },
+            owners: ["Alice", "Bob"],
+      });
+    });
   });
 
   afterAll(() => {

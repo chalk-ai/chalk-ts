@@ -28,6 +28,9 @@ export interface ChalkOnlineQueryRequest<
   queryMeta?: {
     [key: string]: string;
   };
+  encodingOptions?: {
+    encodeStructsAsObjects?: boolean;
+  };
 }
 
 export type ChalkOnlineQueryResponseStatusKind =
