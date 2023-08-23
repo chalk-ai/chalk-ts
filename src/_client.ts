@@ -1,14 +1,6 @@
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
-import {
-  ChalkHttpHeaders,
-  CredentialsHolder,
-  v1_get_run_status,
-  v1_query_online,
-  v1_trigger_resolver_run,
-  v1_upload_single,
-  v1_who_am_i,
-} from "./_http";
+import { ChalkHttpHeaders, ChalkHTTPService, CredentialsHolder } from "./_http";
 import {
   ChalkClientInterface,
   ChalkGetRunStatusResponse,
@@ -23,6 +15,7 @@ import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
   ChalkScalar,
+  CustomFetchClient,
 } from "./_types";
 import { fromEntries } from "./_utils";
 
@@ -52,6 +45,20 @@ export interface ChalkClientOpts {
    * If not specified and unset by your environment, an error will be thrown on client creation
    */
   activeEnvironment?: string;
+
+  /**
+   * A custom fetch client that will replace the fetch polyfill used by default.
+   *
+   * If not provided, the client will use the default fetch polyfill (native fetch with node-fetch as a fallback).
+   */
+  fetch?: CustomFetchClient;
+
+  /**
+   * A custom fetch headers object that will replace the fetch Headers polyfill used by default.
+   *
+   * If not provided, the client will use the default fetch Headers polyfill (native fetch with node-fetch as a fallback).
+   */
+  fetchHeaders?: typeof Headers;
 }
 
 function valueWithEnvFallback(
@@ -77,6 +84,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   implements ChalkClientInterface<TFeatureMap>
 {
   private config: ChalkClientConfig;
+  private http: ChalkHTTPService;
   private credentials;
 
   constructor(opts?: {
@@ -84,6 +92,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     clientSecret?: string;
     apiServer?: string;
     activeEnvironment?: string;
+    fetch?: CustomFetchClient;
+    fetchHeaders?: typeof Headers;
   }) {
     this.config = {
       activeEnvironment:
@@ -104,11 +114,13 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       ),
     };
 
-    this.credentials = new CredentialsHolder(this.config);
+    this.http = new ChalkHTTPService(opts?.fetch, opts?.fetchHeaders);
+
+    this.credentials = new CredentialsHolder(this.config, this.http);
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {
-    return v1_who_am_i({
+    return this.http.v1_who_am_i({
       baseUrl: this.config.apiServer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
@@ -116,7 +128,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
-    return v1_get_run_status({
+    return this.http.v1_get_run_status({
       baseUrl: this.config.apiServer,
       pathParams: {
         run_id: runId,
@@ -129,7 +141,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async triggerResolverRun(
     request: ChalkTriggerResolverRunRequest
   ): Promise<ChalkTriggerResolverRunResponse> {
-    return v1_trigger_resolver_run({
+    return this.http.v1_trigger_resolver_run({
       baseUrl: this.config.apiServer,
       body: {
         resolver_fqn: request.resolverFqn,
@@ -142,7 +154,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
-    const rawResult = await v1_query_online({
+    const rawResult = await this.http.v1_query_online({
       baseUrl: this.config.apiServer,
       body: {
         inputs: request.inputs,
@@ -155,13 +167,20 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         meta: request.queryMeta,
         query_name: request.queryName,
         staleness: request.staleness,
+        encoding_options: request.encodingOptions
+          ? {
+              encode_structs_as_objects:
+                request.encodingOptions.encodeStructsAsObjects,
+            }
+          : undefined,
       },
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
     });
 
     if (rawResult.errors != null && rawResult.errors.length > 0) {
-      throw chalkError(rawResult.errors.map((e) => e.message).join("; "), {
+      const errorText = rawResult.errors.map((e) => e.message).join("; ");
+      throw chalkError(errorText, {
         info: rawResult.errors,
       });
     }
@@ -188,7 +207,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async uploadSingle(
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
-    const rawResult = await v1_upload_single({
+    const rawResult = await this.http.v1_upload_single({
       baseUrl: this.config.apiServer,
       body: {
         inputs: request.features,
@@ -204,7 +223,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     });
 
     if (rawResult.errors != null && rawResult.errors.length > 0) {
-      throw chalkError(rawResult.errors.map((e) => e.message).join("; "), {
+      const errorText = rawResult.errors.map((e) => e.message).join("; ");
+      throw chalkError(errorText, {
         info: rawResult.errors,
       });
     }

@@ -5,9 +5,7 @@ export interface ChalkGetRunStatusResponse {
   status: ChalkResolverRunStatus;
 }
 
-export interface ChalkUploadSingleRequest<
-  TFeatureMap,
-> {
+export interface ChalkUploadSingleRequest<TFeatureMap> {
   features: Partial<TFeatureMap>;
   previewDeploymentId?: string;
   correlationId?: string;
@@ -29,6 +27,9 @@ export interface ChalkOnlineQueryRequest<
   queryName?: string;
   queryMeta?: {
     [key: string]: string;
+  };
+  encodingOptions?: {
+    encodeStructsAsObjects?: boolean;
   };
 }
 
