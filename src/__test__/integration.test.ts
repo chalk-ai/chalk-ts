@@ -23,6 +23,37 @@ maybe("integration tests", () => {
     jest.setTimeout(30_000);
   });
 
+  describe("query with injected fetch", () => {
+    it("should use the injected fetch client", async () => {
+      // sneak a fetch in that returns a recognizable response
+      const injectedFetch = (req: any, init: any): any =>
+        Promise.resolve({
+          status: 200,
+          json: () => ({
+            data: [
+              {
+                field: "user.id",
+                value: "injected!",
+                ts: "2023-01-01",
+              },
+            ],
+          }),
+        });
+
+      const injectedClient = new ChalkClient<FraudTemplateFeatures>({
+        clientId: process.env.CI_CHALK_CLIENT_ID,
+        clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+        fetch: injectedFetch,
+      });
+
+      const result = await injectedClient.query({
+        inputs: { "user.id": 1 },
+        outputs: ["user.id"],
+      });
+      expect(result.data["user.id"].value).toBe("injected!");
+    });
+  });
+
   describe("query fraud-template", () => {
     it("query user.id", async () => {
       const result = await client.query({

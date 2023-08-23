@@ -5,6 +5,14 @@ export interface ChalkClientConfig {
   activeEnvironment: string | undefined;
 }
 
+export interface CustomFetchClient<
+  Req = RequestInfo | URL,
+  ReqInit = RequestInit,
+  Resp = Response
+> {
+  (input: Req, init?: ReqInit | undefined): Promise<Resp>;
+}
+
 export interface ChalkEnvironmentVariables {
   _CHALK_CLIENT_ID: string;
   _CHALK_CLIENT_SECRET: string;
