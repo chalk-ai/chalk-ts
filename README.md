@@ -1,7 +1,7 @@
 # @chalk-ai/client
 
 [![npm version](https://img.shields.io/npm/v/@chalk-ai/client?label=%40chalk-ai%2Fclient&logo=npm)](https://www.npmjs.com/package/@chalk-ai/client)
-![CI](https://img.shields.io/github/workflow/status/chalk-ai/chalk-ts/check/main)
+![CI](https://img.shields.io/github/actions/workflow/status/chalk-ai/chalk-ts/check.yml?branch=main)
 
 TypeScript client for Chalk.
 
@@ -11,6 +11,14 @@ TypeScript client for Chalk.
 $ yarn add @chalk-ai/client
 ```
 
+## Generate Types
+
+Starting in your Chalk project directory, run:
+
+```sh
+$ chalk codegen typescript --out=generated_types.ts
+```
+
 ## Usage
 
 ### Modern JavaScript ES6
@@ -18,12 +26,17 @@ $ yarn add @chalk-ai/client
 ```ts
 import { ChalkClient } from "@chalk-ai/client";
 
-interface Features {
+// Import your generated types (recommended)
+import { FeaturesType } from "local/generated_types";
+
+// Alternatively, define features you want to pull using the client
+// as an interface with the feature type and feature name.
+interface FeaturesType {
   "user.id": string;
   "user.socure_score": number;
 }
 
-const client = new ChalkClient<Features>();
+const client = new ChalkClient<FeaturesType>();
 
 const result = await client.query({
   inputs: {
@@ -32,6 +45,10 @@ const result = await client.query({
   outputs: ["user.socure_score"],
 });
 
+// The property `.data` has auto-complete based on the
+// list provided in `output` above. So if you try to pull
+// a feature that wasn't requested, you will see an error
+// in type checking.
 console.log(result.data["user.socure_score"].value);
 ```
 
@@ -40,21 +57,23 @@ console.log(result.data["user.socure_score"].value);
 ```ts
 var ChalkClient = require("@chalk-ai/client").ChalkClient;
 
-interface Features {
+interface FeaturesType {
   "user.id": string;
   "user.socure_score": number;
 }
 
-var client = new ChalkClient<Features>();
+var client = new ChalkClient<FeaturesType>();
 
-client.query({
-  inputs: {
-    "user.id": "1",
-  },
-  outputs: ["user.socure_score"],
-}).then((result) => {
-  console.log(result.data["user.socure_score"].value);
-});
+client
+  .query({
+    inputs: {
+      "user.id": "1",
+    },
+    outputs: ["user.socure_score"],
+  })
+  .then((result) => {
+    console.log(result.data["user.socure_score"].value);
+  });
 ```
 
 ## Constructor options
@@ -86,17 +105,31 @@ new ChalkClient({
    * If not specified and unset by your environment, an error will be thrown on client creation
    */
   activeEnvironment?: string;
+
+  /**
+   * A custom fetch client that will replace the fetch polyfill used by default.
+   *
+   * If not provided, the client will use the default fetch polyfill (native fetch with node-fetch as a fallback).
+   */
+  fetch?: CustomFetchClient;
+
+  /**
+   * A custom fetch headers object that will replace the fetch Headers polyfill used by default.
+   *
+   * If not provided, the client will use the default fetch Headers polyfill (native fetch with node-fetch as a fallback).
+   */
+  fetchHeaders?: typeof Headers;
 })
 ```
 
 ### Supported environment variables
 
-| Variable      | Kind | Description |
-| ------------- | ---- | ------------- |
-| `process.env._CHALK_CLIENT_ID`  | **Required** | Your Chalk client ID. You must specify this environment variable or pass an explicit `clientId` value when constructing your ChalkClient |
-| `process.env._CHALK_CLIENT_SECRET` | **Required** | Your Chalk client secret. You must specify this environment variable or pass an explicit `clientSecret` value when constructing your ChalkClient |
-| `process.env._CHALK_ACTIVE_ENVIRONMENT` | Optional | The environment that your client should connect to. If not specified, the client will query your project's default environment |
-| `process.env._CHALK_API_SERVER` | Optional | The API server that the client will communicate with. This defaults to https://api.chalk.ai which should be sufficient for most consumers |
+| Variable                                | Kind         | Description                                                                                                                                      |
+| --------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `process.env._CHALK_CLIENT_ID`          | **Required** | Your Chalk client ID. You must specify this environment variable or pass an explicit `clientId` value when constructing your ChalkClient         |
+| `process.env._CHALK_CLIENT_SECRET`      | **Required** | Your Chalk client secret. You must specify this environment variable or pass an explicit `clientSecret` value when constructing your ChalkClient |
+| `process.env._CHALK_ACTIVE_ENVIRONMENT` | Optional     | The environment that your client should connect to. If not specified, the client will query your project's default environment                   |
+| `process.env._CHALK_API_SERVER`         | Optional     | The API server that the client will communicate with. This defaults to https://api.chalk.ai which should be sufficient for most consumers        |
 
 You can find relevant variables to use with your Chalk Client by
 running `chalk config` with the Chalk command line tool.
