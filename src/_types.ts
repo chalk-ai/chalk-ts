@@ -18,8 +18,6 @@ export interface ChalkEnvironmentVariables {
   _CHALK_CLIENT_SECRET: string;
   _CHALK_API_SERVER: string;
   _CHALK_ACTIVE_ENVIRONMENT: string;
-  _CHALK_TRACING_EXPORT_URL: string;
-  _CHALK_TRACING_ACTIVE: string;
 }
 
 /**

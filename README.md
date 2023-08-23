@@ -107,21 +107,6 @@ new ChalkClient({
   activeEnvironment?: string;
 
   /**
-   * Tracing options that will be forwarded to the OTLP Trace Exporter. Traces are exported using http.
-   * Traces can be exported to an OpenTelemetry collector and exported to any compatible tracing backend,
-   * or can be exported to any compatible tracing backend directly.
-   *
-   * `url:` URL to export OpenTelemetry traces to. Defaults to http://localhost:4318/v1/traces.
-   * If not specified, will use the environment variable _CHALK_TRACING_EXPORT_URL.
-   *
-   * `headers:` Headers to send with the trace http requests.
-   *
-   * `tracingActive:` Boolean that indicates whether to collect and export traces. Defaults to `false`.
-   * If not specified, will use the environment variable _CHALK_TRACING_ACTIVE.
-   */
-  tracingOptions?: TracingOptions;
-
-  /**
    * A custom fetch client that will replace the fetch polyfill used by default.
    *
    * If not provided, the client will use the default fetch polyfill (native fetch with node-fetch as a fallback).
@@ -145,8 +130,6 @@ new ChalkClient({
 | `process.env._CHALK_CLIENT_SECRET`      | **Required** | Your Chalk client secret. You must specify this environment variable or pass an explicit `clientSecret` value when constructing your ChalkClient |
 | `process.env._CHALK_ACTIVE_ENVIRONMENT` | Optional     | The environment that your client should connect to. If not specified, the client will query your project's default environment                   |
 | `process.env._CHALK_API_SERVER`         | Optional     | The API server that the client will communicate with. This defaults to https://api.chalk.ai which should be sufficient for most consumers        |
-| `process.env._CHALK_TRACING_EXPORT_URL` | Optional     | The url you would like your client to export OpenTelemetry traces to. This defaults to http://localhost:4318/v1/traces.                          |
-| `process.env._CHALK_TRACING_ACTIVE`     | Optional     | Boolean indicating whether the client should collect and export trace data. This defaults to `false`                                             |
 
 You can find relevant variables to use with your Chalk Client by
 running `chalk config` with the Chalk command line tool.
