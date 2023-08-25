@@ -31,6 +31,9 @@ export interface ChalkOnlineQueryRequest<
   encodingOptions?: {
     encodeStructsAsObjects?: boolean;
   };
+
+  // `now` should be an ISO-formatted "zoned datetime" or "instant" string.
+  now?: string;
 }
 
 export type ChalkOnlineQueryResponseStatusKind =
