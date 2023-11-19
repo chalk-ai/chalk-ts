@@ -5,9 +5,12 @@
     "build": "tsc",
     "prepack": "rm -rf build/ && yarn build && rm -rf build/__test__",
     "test": "jest",
-    "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'"
+    "test:watch": "jest --watch",
+    "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'",
+    "test:integration:watch": "CHALK_INTEGRATION=1 jest --watch -t='integration tests'"
   },
   "dependencies": {
+    "apache-arrow": "^14.0.1",
     "node-fetch": "^2.6.6"
   },
   "devDependencies": {

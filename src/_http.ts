@@ -62,6 +62,7 @@ type EndpointCallArgs<
   };
 
 const APPLICATION_JSON = "application/json;charset=utf-8";
+const APPLICATION_OCTET = "application/octet-stream";
 
 interface ClientCredentials {
   access_token: string;
@@ -130,7 +131,7 @@ export class ChalkHTTPService {
   private fetchHeaders: typeof Headers;
 
   constructor(fetchClient?: CustomFetchClient, fetchHeaders?: typeof Headers) {
-    this.fetchClient = fetchClient ?? isoFetch;
+    this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
     this.fetchHeaders = fetchHeaders ?? isoHeaders;
   }
 
@@ -145,13 +146,19 @@ export class ChalkHTTPService {
     method: "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
     requestBody?: TRequestBody;
     responseBody?: TResponseBody;
+    binaryResponseBody?: boolean;
   }) {
     const makeRequest = async (
       callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
-    ) => {
+    ): Promise<TResponseBody> => {
       const headers = new this.fetchHeaders();
-      headers.set("Accept", APPLICATION_JSON);
-      headers.set("Content-Type", APPLICATION_JSON);
+      if (opts.binaryResponseBody) {
+        headers.set("Accept", APPLICATION_OCTET);
+        headers.set("Content-Type", APPLICATION_OCTET);
+      } else {
+        headers.set("Accept", APPLICATION_JSON);
+        headers.set("Content-Type", APPLICATION_JSON);
+      }
       headers.set("User-Agent", "chalk-ts v1.11.3");
 
       const credentials = await callArgs.credentials?.get();
@@ -168,14 +175,18 @@ export class ChalkHTTPService {
       }
 
       const body =
-        callArgs.body !== undefined ? JSON.stringify(callArgs.body) : undefined;
+        callArgs.body !== undefined
+          ? !opts.binaryResponseBody
+            ? JSON.stringify(callArgs.body)
+            : callArgs.body
+          : undefined;
 
       const result = await this.fetchClient(
         urlJoin(callArgs.baseUrl, opts.path),
         {
           method: opts.method,
           headers,
-          body,
+          body: body as any,
         }
       );
 
@@ -187,7 +198,11 @@ export class ChalkHTTPService {
         });
       }
 
-      return result.json() as TResponseBody;
+      if (opts.binaryResponseBody) {
+        return result.arrayBuffer() as any;
+      } else {
+        return result.json() as any as TResponseBody;
+      }
     };
 
     return async (
@@ -279,6 +294,14 @@ export class ChalkHTTPService {
       }[];
       errors?: ChalkErrorData[];
     },
+  });
+
+  public v1_query_feather = this.createEndpoint({
+    method: "POST",
+    path: "/v1/query/feather",
+    authKind: "required",
+    requestBody: null! as ArrayBufferLike,
+    binaryResponseBody: true,
   });
 
   public v1_upload_single = this.createEndpoint({
