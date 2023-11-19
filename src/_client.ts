@@ -1,3 +1,5 @@
+import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
+import { parseByteModel } from "./_bulk_response";
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import { ChalkHttpHeaders, ChalkHTTPService, CredentialsHolder } from "./_http";
@@ -6,6 +8,8 @@ import {
   ChalkGetRunStatusResponse,
   ChalkOnlineQueryRequest,
   ChalkOnlineQueryResponse,
+  ChalkOnlineBulkQueryRequest,
+  ChalkOnlineBulkQueryResponse,
   ChalkTriggerResolverRunRequest,
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
@@ -202,6 +206,87 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
           },
         ])
       ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
+    };
+  }
+
+  async queryBulk<TOutput extends keyof TFeatureMap>(
+    request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
+  ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
+    const onlineQueryJsonBody = {
+      inputs: request.inputs as any,
+      outputs: request.outputs as string[],
+      context: {
+        tags: request.scopeTags,
+      },
+      correlation_id: request.correlationId,
+      deployment_id: request.previewDeploymentId,
+      meta: request.queryMeta,
+      query_name: request.queryName,
+      staleness: request.staleness,
+      now: request.now,
+    };
+
+    const header = {
+      ...onlineQueryJsonBody,
+      feather_body_type: "RECORD_BATCHES",
+      response_compression_scheme: "uncompressed",
+      client_supports_64bit: false,
+    };
+    delete header["inputs"];
+
+    let utf8Encode = new TextEncoder();
+    let utf8Decode = new TextDecoder();
+    const magicBytes = utf8Encode.encode("chal1"); // magic str
+    const jsonedHeader = JSON.stringify(header);
+
+    const headerBytes = utf8Encode.encode(jsonedHeader);
+
+    const arrowTable = tableFromArrays(request.inputs as any);
+    const bodyBytes = tableToIPC(arrowTable);
+
+    const arrayBuffer = Buffer.alloc(
+      magicBytes.length + headerBytes.length + bodyBytes.length + 2 * 8
+    );
+
+    let offset = 0;
+
+    arrayBuffer.write("chal1", 0);
+    offset += magicBytes.length;
+
+    arrayBuffer.writeBigInt64BE(BigInt(headerBytes.length), offset);
+    offset += 8;
+
+    arrayBuffer.set(headerBytes, offset);
+    offset += headerBytes.length;
+
+    arrayBuffer.writeBigInt64BE(BigInt(bodyBytes.length), offset);
+    offset += 8;
+
+    arrayBuffer.set(bodyBytes, offset);
+
+    const rawResult = await this.http.v1_query_feather({
+      baseUrl: this.config.apiServer,
+      body: arrayBuffer.buffer,
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
+    });
+
+    const result = Buffer.from(rawResult);
+
+    const outer = parseByteModel(result);
+
+    const inner = parseByteModel(
+      outer.concatenatedSerializableByteObjects.subarray(
+        0,
+        outer.attrAndByteOffsetForSerializables["query_results_bytes"]
+      )
+    );
+
+    const innerInner = parseByteModel(inner.concatenatedByteObjects);
+    const ipcTable = tableFromIPC(innerInner.concatenatedByteObjects);
+
+    return {
+      data: ipcTable.toArray() as any,
     };
   }
 

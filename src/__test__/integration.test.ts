@@ -123,5 +123,23 @@ maybe("integration tests", () => {
         owners: ["Alice", "Bob"],
       });
     });
+
+    it("query_bulk fraud template", async () => {
+      const result = await client.queryBulk({
+        inputs: {
+          "user.id": [1, 2] as any,
+        },
+        outputs: ["user.id", "user.full_name"],
+        encodingOptions: {
+          encodeStructsAsObjects: true,
+        },
+      });
+
+      expect(Object.keys(result.data).length).toBe(2);
+      expect(result.data[0]["user.id"]).toEqual(1);
+      expect(result.data[0]["user.full_name"]).toEqual("Donna Davis");
+      expect(result.data[1]["user.id"]).toEqual(2);
+      expect(result.data[1]["user.full_name"]).toEqual("William Johnson");
+    });
   });
 });

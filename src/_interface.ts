@@ -53,6 +53,39 @@ export interface ChalkOnlineQueryResponse<
   };
 }
 
+export interface ChalkOnlineBulkQueryRequest<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+> {
+  inputs: Partial<TFeatureMap>;
+  outputs: TOutput[];
+  staleness?: {
+    [K in keyof TFeatureMap]?: string;
+  };
+  scopeTags?: string[];
+  previewDeploymentId?: string;
+  correlationId?: string;
+  queryName?: string;
+  queryMeta?: {
+    [key: string]: string;
+  };
+  encodingOptions?: {
+    encodeStructsAsObjects?: boolean;
+  };
+
+  // `now` should be an ISO-formatted "zoned datetime" or "instant" string.
+  now?: string;
+}
+
+export interface ChalkOnlineBulkQueryResponse<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+> {
+  data: {
+    [K in TOutput]: TFeatureMap[K];
+  }[];
+}
+
 export type ChalkResolverRunStatus = "received" | "succeeded" | "failed";
 
 export interface ChalkTriggerResolverRunRequest {
