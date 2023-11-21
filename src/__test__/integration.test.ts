@@ -127,7 +127,7 @@ maybe("integration tests", () => {
     it("query_bulk fraud template", async () => {
       const result = await client.queryBulk({
         inputs: {
-          "user.id": [1, 2] as any,
+          "user.id": [1, 2],
         },
         outputs: ["user.id", "user.full_name"],
         encodingOptions: {
