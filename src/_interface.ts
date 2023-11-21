@@ -57,7 +57,7 @@ export interface ChalkOnlineBulkQueryRequest<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
-  inputs: Partial<TFeatureMap>;
+  inputs: Partial<{ [K in keyof TFeatureMap]: TFeatureMap[K][] }>;
   outputs: TOutput[];
   staleness?: {
     [K in keyof TFeatureMap]?: string;
