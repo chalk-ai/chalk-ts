@@ -70,6 +70,34 @@ export interface ChalkOnlineQueryRequest<
   include_meta?: boolean;
 }
 
+export interface ChalkQueryMeta {
+  // The time, expressed in seconds, that Chalk spent executing this query.
+  executionDurationS: number;
+
+  // The id of the deployment that served this query.
+  deploymentId?: string;
+
+  // The id of the environment that served this query. Not intended to be human readable, but helpful for support.
+  environmentId?: string;
+
+  // The short name of the environment that served this query. For example: "dev" or "prod".
+  environmentName?: string;
+
+  // A unique ID generated and persisted by Chalk for this query. All computed features, metrics, and logs are
+  // associated with this ID. Your system can store this ID for audit and debugging workflows.
+  queryId?: string;
+
+  // At the start of query execution, Chalk computes 'datetime.now()'. This value is used to timestamp computed features.
+  queryTimestamp?: string;
+
+  // Deterministic hash of the 'structure' of the query. Queries that have the same input/output features will
+  // typically have the same hash; changes may be observed over time as we adjust implementation details.
+  queryHash?: string;
+
+  // An unstructured string containing diagnostic information about the query execution. Only included if `explain` is True.
+  explainOutput?: string;
+}
+
 export type ChalkOnlineQueryResponseStatusKind =
   | "success"
   | "partial_success"
@@ -85,6 +113,9 @@ export interface ChalkOnlineQueryResponse<
       computedAt: Date;
     };
   };
+
+  // Only included if `include_meta` is true.
+  meta?: ChalkQueryMeta;
 }
 
 export interface ChalkOnlineBulkQueryRequest<
