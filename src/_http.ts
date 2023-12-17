@@ -284,6 +284,7 @@ export class ChalkHTTPService {
       encoding_options?: {
         encode_structs_as_objects?: boolean;
       };
+      include_meta: boolean;
     },
     responseBody: null! as {
       data: {
