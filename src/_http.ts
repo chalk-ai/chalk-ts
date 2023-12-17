@@ -284,6 +284,7 @@ export class ChalkHTTPService {
       encoding_options?: {
         encode_structs_as_objects?: boolean;
       };
+      include_meta: boolean;
     },
     responseBody: null! as {
       data: {
@@ -293,6 +294,16 @@ export class ChalkHTTPService {
         ts: string;
       }[];
       errors?: ChalkErrorData[];
+      meta?: {
+        execution_duration_s: number;
+        deployment_id?: string;
+        environment_id?: string;
+        environment_name?: string;
+        query_id?: string;
+        query_timestamp?: string;
+        query_hash?: string;
+        explain_output?: string;
+      };
     },
   });
 
