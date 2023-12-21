@@ -1,3 +1,1 @@
-export const version: string = "v1.14.2";
-
-export const userAgent: string = `chalk-ts ${version}`;
+export const VERSION: string = "0.0.0";

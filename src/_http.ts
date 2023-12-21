@@ -1,7 +1,8 @@
 import { chalkError, ChalkError, isChalkError } from "./_errors";
 import { ChalkClientConfig, CustomFetchClient } from "./_types";
 import { urlJoin } from "./_utils";
-import { userAgent } from "./_version";
+
+import { USER_AGENT } from "./_user_agent";
 
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
@@ -162,7 +163,7 @@ export class ChalkHTTPService {
         headers.set("Accept", APPLICATION_JSON);
         headers.set("Content-Type", APPLICATION_JSON);
       }
-      headers.set("User-Agent", userAgent);
+      headers.set("User-Agent", USER_AGENT);
 
       const credentials: ClientCredentials | undefined =
         await callArgs.credentials?.get();
