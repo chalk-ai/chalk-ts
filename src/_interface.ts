@@ -116,6 +116,13 @@ export interface ChalkError {
   resolver?: string;
 }
 
+export interface ChalkFeatureMeta {
+  chosenResolverFqn?: string;
+  cacheHit?: boolean;
+  primitiveType?: string;
+  version?: number;
+}
+
 export interface ChalkOnlineQueryResponse<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
@@ -123,8 +130,9 @@ export interface ChalkOnlineQueryResponse<
   data: {
     [K in TOutput]: {
       value: TFeatureMap[K];
-      computedAt: Date;
+      computedAt?: Date;
       error?: ChalkError;
+      meta?: ChalkFeatureMeta;
     };
   };
 

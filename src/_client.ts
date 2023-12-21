@@ -205,8 +205,14 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
           d.field,
           {
             value: d.value,
-            computedAt: new Date(d.ts),
+            computedAt: d.ts != null ? new Date(d.ts) : undefined,
             error: d.error,
+            meta: d.meta && {
+              chosenResolverFqn: d.meta.chosen_resolver_fqn,
+              cacheHit: d.meta.cache_hit,
+              primitiveType: d.meta.primitive_type,
+              version: d.meta.version,
+            },
           },
         ])
       ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],

@@ -294,8 +294,15 @@ export class ChalkHTTPService {
       data: {
         field: string;
         value: any;
+        pkey?: null | string | number;
         error?: ChalkErrorData;
-        ts: string;
+        ts?: string;
+        meta?: {
+          chosen_resolver_fqn?: string;
+          cache_hit?: boolean;
+          primitive_type?: string;
+          version?: number;
+        };
       }[];
       errors?: ChalkErrorData[];
       meta?: {
