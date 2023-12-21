@@ -3,6 +3,7 @@ import { ChalkClientConfig, CustomFetchClient } from "./_types";
 import { urlJoin } from "./_utils";
 
 import { USER_AGENT } from "./_user_agent";
+import { ChalkErrorCategory, ChalkErrorCode } from "./_interface";
 
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
@@ -118,8 +119,8 @@ export class CredentialsHolder {
 }
 
 interface ChalkErrorData {
-  code: string;
-  category: string;
+  code: ChalkErrorCode;
+  category: ChalkErrorCategory;
   message: string;
   exception?: {
     kind: string;

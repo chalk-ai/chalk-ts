@@ -208,9 +208,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         ])
       ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
       errors:
-        rawResult.errors == null
-          ? undefined
-          : rawResult.errors.length == 0
+        rawResult.errors == null || rawResult.errors.length
           ? undefined
           : rawResult.errors,
       meta: rawResult.meta && {

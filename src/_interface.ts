@@ -103,7 +103,7 @@ export type ChalkOnlineQueryResponseStatusKind =
   | "partial_success"
   | "error";
 
-export type ErrorCode =
+export type ChalkErrorCode =
   // The query contained features that do not exist.
   | "PARSE_FAILED"
   // A resolver was required as part of running the dependency graph that could not be found.
@@ -150,15 +150,31 @@ export type ChalkErrorCategory =
   | "NETWORK";
 
 export interface ChalkError {
-  code: ErrorCode;
+  // The type of the error.
+  code: ChalkErrorCode;
+
+  // The category of the error, given in the type field for the error codes.
   category: ChalkErrorCategory;
+
+  // A readable description of the error message.
   message: string;
+
+  // The exception that caused the failure, if applicable.
   exception?: {
+    // The type of the exception.
     kind: string;
+
+    // A readable description of the exception.
     message: string;
+
+    // The stacktrace of the exception.
     stacktrace: string;
   };
+
+  // The fully qualified name of the failing feature, e.g. `user.identity.has_voip_phone`.
   feature?: string;
+
+  // The fully qualified name of the failing resolver, e.g. `my.project.get_fraud_score`.
   resolver?: string;
 }
 
