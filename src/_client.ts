@@ -184,15 +184,6 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       credentials: this.credentials,
     });
 
-    if (rawResult.errors != null && rawResult.errors.length > 0) {
-      const errorText: string = rawResult.errors
-        .map((e) => e.message)
-        .join("; ");
-      throw chalkError(errorText, {
-        info: rawResult.errors,
-      });
-    }
-
     // Alias the map values, so that TypeScript can help us construct the response.
     type FeatureEntry = ChalkOnlineQueryResponse<
       TFeatureMap,
@@ -216,6 +207,12 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
           },
         ])
       ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
+      errors:
+        rawResult.errors == null
+          ? undefined
+          : rawResult.errors.length == 0
+          ? undefined
+          : rawResult.errors,
       meta: rawResult.meta && {
         executionDurationS: rawResult.meta.execution_duration_s,
         deploymentId: rawResult.meta.deployment_id,
