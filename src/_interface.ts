@@ -195,10 +195,20 @@ export interface ChalkOnlineQueryResponse<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
+  // The output features and any query metadata.
   data: {
     [K in TOutput]: {
+      // The value of the requested feature.
+      // If an error was encountered in resolving this feature,
+      // this field will be empty.
       value: TFeatureMap[K];
+
+      // The time at which this feature was computed.
+      // This value could be significantly in the past if you're using caching.
       computedAt?: Date;
+
+      // The error code encountered in resolving this feature.
+      // If no error occurred, this field is empty.
       error?: ChalkError;
 
       // Only included if `include_meta` is true.
@@ -206,6 +216,7 @@ export interface ChalkOnlineQueryResponse<
     };
   };
 
+  // Errors encountered while running the resolvers.
   // If there are no errors, `errors` will be undefined.
   errors?: ChalkError[];
 
@@ -259,23 +270,49 @@ export interface ChalkTriggerResolverRunResponse {
 }
 
 export interface ChalkWhoamiResponse {
+  // The id of the user.
   user: string;
 }
 
 export interface ChalkClientInterface<
   TFeatureMap = Record<string, ChalkScalar>
 > {
+  /**
+   * Retrieves the status of a resolver run.
+   * See https://docs.chalk.ai/docs/runs for more information.
+   * @param runId - The run ID of the resolver run.
+   */
   getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse>;
 
+  /**
+   * Compute features values using online resolvers.
+   * See https://docs.chalk.ai/docs/query-basics for more information.
+   * @param request - The request to compute feature values, containing the features to compute.
+   */
   query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>>;
 
+  /**
+   * Upload data to Chalk for use in offline resolvers or to prime a cache.
+   * @param request - The request to upload data, containing the features to upload.
+   */
   uploadSingle(request: ChalkUploadSingleRequest<TFeatureMap>): Promise<void>;
 
+  /**
+   * Triggers a resolver to run.
+   * See https://docs.chalk.ai/docs/runs for more information.
+   * @param request - The request to trigger a resolver run, containing the resolver FQN and optional deployment ID.
+   * @returns - The run ID of the triggered resolver run.
+   */
   triggerResolverRun(
     request: ChalkTriggerResolverRunRequest
   ): Promise<ChalkTriggerResolverRunResponse>;
 
+  /**
+   * Checks the identity of your client.
+   *
+   * Useful as a sanity test of your configuration.
+   */
   whoami(): Promise<ChalkWhoamiResponse>;
 }
