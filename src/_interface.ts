@@ -103,6 +103,19 @@ export type ChalkOnlineQueryResponseStatusKind =
   | "partial_success"
   | "error";
 
+export interface ChalkError {
+  code: string;
+  category: string;
+  message: string;
+  exception?: {
+    kind: string;
+    message: string;
+    stacktrace: string;
+  };
+  feature?: string;
+  resolver?: string;
+}
+
 export interface ChalkOnlineQueryResponse<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
@@ -111,6 +124,7 @@ export interface ChalkOnlineQueryResponse<
     [K in TOutput]: {
       value: TFeatureMap[K];
       computedAt: Date;
+      error?: ChalkError;
     };
   };
 
