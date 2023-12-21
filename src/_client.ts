@@ -22,6 +22,7 @@ import {
   CustomFetchClient,
 } from "./_types";
 import { fromEntries } from "./_utils";
+import { TextEncoder } from "util";
 
 export interface ChalkClientOpts {
   /**
@@ -87,10 +88,9 @@ function valueWithEnvFallback(
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   implements ChalkClientInterface<TFeatureMap>
 {
-  private config: ChalkClientConfig;
-  private http: ChalkHTTPService;
-  private credentials;
-
+  private readonly config: ChalkClientConfig;
+  private readonly http: ChalkHTTPService;
+  private readonly credentials: CredentialsHolder;
   constructor(opts?: {
     clientId?: string;
     clientSecret?: string;
@@ -184,14 +184,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       credentials: this.credentials,
     });
 
-    if (rawResult.errors != null && rawResult.errors.length > 0) {
-      const errorText = rawResult.errors.map((e) => e.message).join("; ");
-      throw chalkError(errorText, {
-        info: rawResult.errors,
-      });
-    }
-
-    // Alias the map values so we can make TypeScript help us construct the response
+    // Alias the map values, so that TypeScript can help us construct the response.
     type FeatureEntry = ChalkOnlineQueryResponse<
       TFeatureMap,
       TOutput
@@ -203,10 +196,21 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
           d.field,
           {
             value: d.value,
-            computedAt: new Date(d.ts),
+            computedAt: d.ts != null ? new Date(d.ts) : undefined,
+            error: d.error,
+            meta: d.meta && {
+              chosenResolverFqn: d.meta.chosen_resolver_fqn,
+              cacheHit: d.meta.cache_hit,
+              primitiveType: d.meta.primitive_type,
+              version: d.meta.version,
+            },
           },
         ])
       ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
+      errors:
+        rawResult.errors == null || rawResult.errors.length
+          ? undefined
+          : rawResult.errors,
       meta: rawResult.meta && {
         executionDurationS: rawResult.meta.execution_duration_s,
         deploymentId: rawResult.meta.deployment_id,
@@ -245,10 +249,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     };
     delete header["inputs"];
 
-    let utf8Encode = new TextEncoder();
-    let utf8Decode = new TextDecoder();
-    const magicBytes = utf8Encode.encode("chal1"); // magic str
-    const jsonedHeader = JSON.stringify(header);
+    const utf8Encode: TextEncoder = new TextEncoder();
+    const magicBytes: Uint8Array = utf8Encode.encode("chal1"); // magic str
+    const jsonedHeader: string = JSON.stringify(header);
 
     const headerBytes = utf8Encode.encode(jsonedHeader);
 

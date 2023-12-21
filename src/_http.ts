@@ -2,6 +2,9 @@ import { chalkError, ChalkError, isChalkError } from "./_errors";
 import { ChalkClientConfig, CustomFetchClient } from "./_types";
 import { urlJoin } from "./_utils";
 
+import { USER_AGENT } from "./_user_agent";
+import { ChalkErrorCategory, ChalkErrorCode } from "./_interface";
+
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
   "User-Agent"?: string;
@@ -95,7 +98,9 @@ export class CredentialsHolder {
         }));
       } catch (e) {
         console.error(e);
-        if (e instanceof Error) {
+        if (isChalkError(e)) {
+          throw e;
+        } else if (e instanceof Error) {
           throw chalkError(e.message);
         } else {
           throw chalkError(
@@ -114,8 +119,8 @@ export class CredentialsHolder {
 }
 
 interface ChalkErrorData {
-  code: string;
-  category: string;
+  code: ChalkErrorCode;
+  category: ChalkErrorCategory;
   message: string;
   exception?: {
     kind: string;
@@ -151,7 +156,7 @@ export class ChalkHTTPService {
     const makeRequest = async (
       callArgs: EndpointCallArgs<TPath, TRequestBody, TAuthKind>
     ): Promise<TResponseBody> => {
-      const headers = new this.fetchHeaders();
+      const headers: Headers = new this.fetchHeaders();
       if (opts.binaryResponseBody) {
         headers.set("Accept", APPLICATION_OCTET);
         headers.set("Content-Type", APPLICATION_OCTET);
@@ -159,14 +164,15 @@ export class ChalkHTTPService {
         headers.set("Accept", APPLICATION_JSON);
         headers.set("Content-Type", APPLICATION_JSON);
       }
-      headers.set("User-Agent", "chalk-ts v1.11.3");
+      headers.set("User-Agent", USER_AGENT);
 
-      const credentials = await callArgs.credentials?.get();
+      const credentials: ClientCredentials | undefined =
+        await callArgs.credentials?.get();
       if (credentials != null) {
         headers.set("Authorization", `Bearer ${credentials.access_token}`);
       }
 
-      if (credentials?.primary_environment != null) {
+      if (credentials?.primary_environment != null && credentials != null) {
         headers.set("X-Chalk-Env-Id", credentials.primary_environment);
       }
 
@@ -290,8 +296,15 @@ export class ChalkHTTPService {
       data: {
         field: string;
         value: any;
+        pkey?: null | string | number;
         error?: ChalkErrorData;
-        ts: string;
+        ts?: string;
+        meta?: {
+          chosen_resolver_fqn?: string;
+          cache_hit?: boolean;
+          primitive_type?: string;
+          version?: number;
+        };
       }[];
       errors?: ChalkErrorData[];
       meta?: {
