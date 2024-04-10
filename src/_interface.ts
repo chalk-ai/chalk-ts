@@ -12,11 +12,11 @@ export interface ChalkUploadSingleRequest<TFeatureMap> {
   scopeTags?: string[];
 }
 
-export interface ChalkOnlineQueryRequestSimple<
+export interface ChalkOnlineBulkQueryRequestSimple<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
-  inputs: Partial<TFeatureMap>;
+  inputs: Partial<{ [K in keyof TFeatureMap]: TFeatureMap[K][] }>;
   outputs: TOutput[];
   staleness?: {
     [K in keyof TFeatureMap]?: string;
@@ -240,7 +240,7 @@ export interface ChalkOnlineMultiQueryRequest<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
-  queries: Array<ChalkOnlineQueryRequestSimple<TFeatureMap, TOutput>>;
+  queries: Array<ChalkOnlineBulkQueryRequestSimple<TFeatureMap, TOutput>>;
   previewDeploymentId?: string;
   correlationId?: string;
   queryName?: string;
