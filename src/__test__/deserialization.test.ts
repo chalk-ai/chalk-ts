@@ -249,6 +249,72 @@ describe("parseFeatherQueryResponse", () => {
     });
   });
 
+  it("should be able to handle a multi-query with three query inputs", () => {
+    const triple_bytes = fs.readFileSync(
+      path.resolve(__dirname, "binaries/uncompressed_triple.bytes")
+    );
+    const tripleData = parseFeatherQueryResponse(triple_bytes);
+
+    expect(tripleData.length).toBe(3);
+
+    expect((tripleData[2].data as StructRow[]).map((d) => d.toJSON())).toEqual([
+      {
+        "bag_of_stuff.f1": "f1",
+        "bag_of_stuff.f2": "f2",
+        "bag_of_stuff.id": 1,
+        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
+        __ts__: 1712708962424.895,
+      },
+      {
+        "bag_of_stuff.f1": "f1",
+        "bag_of_stuff.f2": "f2",
+        "bag_of_stuff.id": 2,
+        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
+        __ts__: 1712708962424.895,
+      },
+      {
+        "bag_of_stuff.f1": "f1",
+        "bag_of_stuff.f2": "f2",
+        "bag_of_stuff.id": 3,
+        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
+        __ts__: 1712708962424.895,
+      },
+      {
+        "bag_of_stuff.f1": "f1",
+        "bag_of_stuff.f2": "f2",
+        "bag_of_stuff.id": 4,
+        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
+        __ts__: 1712708962424.895,
+      },
+      {
+        "bag_of_stuff.f1": "f1",
+        "bag_of_stuff.f2": "f2",
+        "bag_of_stuff.id": 5,
+        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
+        __ts__: 1712708962424.895,
+      },
+      {
+        "bag_of_stuff.f1": "f1",
+        "bag_of_stuff.f2": "f2",
+        "bag_of_stuff.id": 6,
+        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
+        __ts__: 1712708962424.895,
+      },
+    ]);
+
+    expect(tripleData[2].meta).toEqual({
+      execution_duration_s: 0.11066776100051356,
+      deployment_id: "clut27gm900310ls69osewj7l",
+      environment_id: "tmnmwqtcbscbd",
+      environment_name: "dev",
+      query_id: "clut2p1ak001c0is6pwg9k1hn",
+      query_timestamp: "2024-04-10T00:29:22.424895+00:00",
+      query_hash:
+        "66bb6a2b30f9937171237429960bbb26ad062ca77af82c52700dcca523903976",
+      explain_output: null,
+    });
+  });
+
   it("should fail on compressed response; compression not implemented in arrow", () => {
     const single_bytes_compressed = fs.readFileSync(
       path.resolve(__dirname, "binaries/first.bytes")
