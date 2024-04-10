@@ -64,6 +64,17 @@ type EndpointCallArgs<
     headers?: ChalkHttpHeaders;
   };
 
+export interface RawQueryResponseMeta {
+  execution_duration_s: number;
+  deployment_id?: string;
+  environment_id?: string;
+  environment_name?: string;
+  query_id?: string;
+  query_timestamp?: string;
+  query_hash?: string;
+  explain_output?: string;
+}
+
 const APPLICATION_JSON = "application/json;charset=utf-8";
 const APPLICATION_OCTET = "application/octet-stream";
 
@@ -307,16 +318,7 @@ export class ChalkHTTPService {
         };
       }[];
       errors?: ChalkErrorData[];
-      meta?: {
-        execution_duration_s: number;
-        deployment_id?: string;
-        environment_id?: string;
-        environment_name?: string;
-        query_id?: string;
-        query_timestamp?: string;
-        query_hash?: string;
-        explain_output?: string;
-      };
+      meta?: RawQueryResponseMeta;
     },
   });
 

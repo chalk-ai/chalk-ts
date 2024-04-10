@@ -31,28 +31,27 @@
       }
     ],
     "meta": {
-      "execution_duration_s": 0.4206589800000984,
-      "deployment_id": "clusuova000050ms659jbbklg",
-      "environment_id": "tmnmwqtcbscbd",
-      "environment_name": "dev",
-      "query_id": "clut2998t00130js64i9m9f6r",
-      "query_timestamp": "2024-04-10T00:17:06.312231+00:00",
-      "query_hash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
-      "explain_output": null
-    },
-    "errors": []
+      "executionDurationS": 0.4206589800000984,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2998t00130js64i9m9f6r",
+      "queryTimestamp": "2024-04-10T00:17:06.312231+00:00",
+      "queryHash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
+      "explainOutput": null
+    }
   },
   {
     "data": [],
     "meta": {
-      "execution_duration_s": 0,
-      "deployment_id": "clusuova000050ms659jbbklg",
-      "environment_id": "tmnmwqtcbscbd",
-      "environment_name": null,
-      "query_id": "clut2999000140js6tgsb0009",
-      "query_timestamp": "2024-04-10T00:17:06.312231+00:00",
-      "query_hash": null,
-      "explain_output": null
+      "executionDurationS": 0,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": null,
+      "queryId": "clut2999000140js6tgsb0009",
+      "queryTimestamp": "2024-04-10T00:17:06.312231+00:00",
+      "queryHash": null,
+      "explainOutput": null
     },
     "errors": [
       {

@@ -20,6 +20,7 @@ import {
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
 } from "./_interface";
+import { mapRawResponseMeta } from "./_meta";
 import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
@@ -215,16 +216,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         rawResult.errors == null || rawResult.errors.length
           ? undefined
           : rawResult.errors,
-      meta: rawResult.meta && {
-        executionDurationS: rawResult.meta.execution_duration_s,
-        deploymentId: rawResult.meta.deployment_id,
-        environmentId: rawResult.meta.environment_id,
-        environmentName: rawResult.meta.environment_name,
-        queryId: rawResult.meta.query_id,
-        queryTimestamp: rawResult.meta.query_timestamp,
-        queryHash: rawResult.meta.query_hash,
-        explainOutput: rawResult.meta.explain_output,
-      },
+      meta: rawResult.meta ? mapRawResponseMeta(rawResult.meta) : undefined,
     };
   }
 

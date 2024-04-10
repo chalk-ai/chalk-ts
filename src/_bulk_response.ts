@@ -1,8 +1,13 @@
 import { tableFromIPC } from "apache-arrow";
+import { RawQueryResponseMeta } from "./_http";
 import { ChalkError, ChalkQueryMeta } from "./_interface";
+import { mapRawResponseMeta } from "./_meta";
 
 interface ByteModel {
-  attrs: { [key: string]: number | string };
+  attrs: { [key: string]: number | string } & {
+    errors?: string[];
+    meta?: string;
+  };
   pydantic: { [key: string]: number };
   attrAndByteOffset: { [key: string]: number };
   concatenatedByteObjects: Buffer;
@@ -124,14 +129,14 @@ export function parseFeatherQueryResponse(result: Buffer): QueryChunkResult[] {
           data: ipcTable.toArray() as any,
           meta:
             chunk.attrs.meta != null
-              ? JSON.parse(chunk.attrs.meta as string)
+              ? mapRawResponseMeta(
+                  JSON.parse(chunk.attrs.meta as string) as RawQueryResponseMeta
+                )
               : undefined,
           errors:
-            chunk.attrs.errors != null
-              ? (chunk.attrs.errors as any as string[]).map((e) =>
-                  JSON.parse(e)
-                )
-              : [],
+            chunk.attrs.errors != null && chunk.attrs.errors.length > 0
+              ? chunk.attrs.errors.map((e) => JSON.parse(e))
+              : undefined,
         });
 
         return {

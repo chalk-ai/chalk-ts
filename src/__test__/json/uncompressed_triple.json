@@ -31,16 +31,15 @@
       }
     ],
     "meta": {
-      "execution_duration_s": 0.5914828960003433,
-      "deployment_id": "clut27gm900310ls69osewj7l",
-      "environment_id": "tmnmwqtcbscbd",
-      "environment_name": "dev",
-      "query_id": "clut2p18d000l0is6kkz5w2eq",
-      "query_timestamp": "2024-04-10T00:29:22.424895+00:00",
-      "query_hash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
-      "explain_output": null
-    },
-    "errors": []
+      "executionDurationS": 0.5914828960003433,
+      "deploymentId": "clut27gm900310ls69osewj7l",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2p18d000l0is6kkz5w2eq",
+      "queryTimestamp": "2024-04-10T00:29:22.424895+00:00",
+      "queryHash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
+      "explainOutput": null
+    }
   },
   {
     "data": [
@@ -74,16 +73,15 @@
       }
     ],
     "meta": {
-      "execution_duration_s": 1.522927348999474,
-      "deployment_id": "clut27gm900310ls69osewj7l",
-      "environment_id": "tmnmwqtcbscbd",
-      "environment_name": "dev",
-      "query_id": "clut2p18m000m0is6u713983n",
-      "query_timestamp": "2024-04-10T00:29:22.424895+00:00",
-      "query_hash": "38c05bd2ead10b4c8a11d00e8e2df128952eec32ed073e53ff83980259f2308d",
-      "explain_output": null
-    },
-    "errors": []
+      "executionDurationS": 1.522927348999474,
+      "deploymentId": "clut27gm900310ls69osewj7l",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2p18m000m0is6u713983n",
+      "queryTimestamp": "2024-04-10T00:29:22.424895+00:00",
+      "queryHash": "38c05bd2ead10b4c8a11d00e8e2df128952eec32ed073e53ff83980259f2308d",
+      "explainOutput": null
+    }
   },
   {
     "data": [
@@ -131,15 +129,14 @@
       }
     ],
     "meta": {
-      "execution_duration_s": 0.11066776100051356,
-      "deployment_id": "clut27gm900310ls69osewj7l",
-      "environment_id": "tmnmwqtcbscbd",
-      "environment_name": "dev",
-      "query_id": "clut2p1ak001c0is6pwg9k1hn",
-      "query_timestamp": "2024-04-10T00:29:22.424895+00:00",
-      "query_hash": "66bb6a2b30f9937171237429960bbb26ad062ca77af82c52700dcca523903976",
-      "explain_output": null
-    },
-    "errors": []
+      "executionDurationS": 0.11066776100051356,
+      "deploymentId": "clut27gm900310ls69osewj7l",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2p1ak001c0is6pwg9k1hn",
+      "queryTimestamp": "2024-04-10T00:29:22.424895+00:00",
+      "queryHash": "66bb6a2b30f9937171237429960bbb26ad062ca77af82c52700dcca523903976",
+      "explainOutput": null
+    }
   }
 ]

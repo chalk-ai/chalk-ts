@@ -31,15 +31,14 @@
       }
     ],
     "meta": {
-      "execution_duration_s": 0.8231708729999809,
-      "deployment_id": "clusuova000050ms659jbbklg",
-      "environment_id": "tmnmwqtcbscbd",
-      "environment_name": "dev",
-      "query_id": "clut2a2y400150js6qeyml6n9",
-      "query_timestamp": "2024-04-10T00:17:44.809198+00:00",
-      "query_hash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
-      "explain_output": null
-    },
-    "errors": []
+      "executionDurationS": 0.8231708729999809,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2a2y400150js6qeyml6n9",
+      "queryTimestamp": "2024-04-10T00:17:44.809198+00:00",
+      "queryHash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
+      "explainOutput": null
+    }
   }
 ]
