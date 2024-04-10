@@ -2,7 +2,6 @@ import { StructRow } from "apache-arrow";
 import * as fs from "fs";
 import * as path from "path";
 import { parseByteModel, parseFeatherQueryResponse } from "../_bulk_response";
-import { ChalkClient } from "../_client";
 
 describe("parseByteModel", () => {
   it("should produce the expected keys", () => {
@@ -20,43 +19,6 @@ describe("parseByteModel", () => {
       "attrAndByteOffsetForSerializables",
       "concatenatedSerializableByteObjects",
     ]);
-  });
-});
-
-describe("running a query", () => {
-  it("should make a query", async () => {
-    const client = new ChalkClient<any>({
-      clientId: "token-bee0a23072ab1eca46e6e07d5e22018b",
-      clientSecret:
-        "ts-ef55de106c2f849a7ba48f0582fba3f9bdd4d92240f2ede336cfbea2c40f6a3a",
-      apiServer: "https://api.staging.chalk.ai",
-      activeEnvironment: "tmnmwqtcbscbd",
-    });
-    const result = await client.multiQuery({
-      queries: [
-        {
-          inputs: {
-            "user.id": [1, 2, 3, 4],
-          },
-          outputs: ["user.random_normal", "user.full_name"],
-        },
-        {
-          inputs: {
-            "transaction.id": [1, 2, 3, 4],
-          },
-          outputs: ["transaction.amount, transaction.user.full_name"],
-        },
-      ],
-      correlationId: "typescript-multi-query-corr-id",
-    });
-    // const result = await client.queryBulk({
-    //   inputs: {
-    //     "user.id": [1, 2, 3, 4],
-    //   },
-    //   outputs: ["user.random_normal", "user.full_name"],
-    //   correlationId: "typescript-bulk-query-corr-id",
-    // });
-    console.log(result);
   });
 });
 
