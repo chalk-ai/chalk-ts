@@ -1,0 +1,44 @@
+[
+  {
+    "data": [
+      {
+        "user.random_normal": 2.376134157180786,
+        "user.full_name": "Donna Davis",
+        "user.id": 1,
+        "user.__chalk_observed_at__": 1712708264809.198,
+        "__ts__": 1712708264809.198
+      },
+      {
+        "user.random_normal": -1.5992772579193115,
+        "user.full_name": "William Johnson",
+        "user.id": 2,
+        "user.__chalk_observed_at__": 1712708264809.198,
+        "__ts__": 1712708264809.198
+      },
+      {
+        "user.random_normal": -0.29425880312919617,
+        "user.full_name": "Jasmine Perry",
+        "user.id": 3,
+        "user.__chalk_observed_at__": 1712708264809.198,
+        "__ts__": 1712708264809.198
+      },
+      {
+        "user.random_normal": -0.15812711417675018,
+        "user.full_name": "Matthew Roth",
+        "user.id": 4,
+        "user.__chalk_observed_at__": 1712708264809.198,
+        "__ts__": 1712708264809.198
+      }
+    ],
+    "meta": {
+      "executionDurationS": 0.8231708729999809,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2a2y400150js6qeyml6n9",
+      "queryTimestamp": "2024-04-10T00:17:44.809198+00:00",
+      "queryHash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
+      "explainOutput": null
+    }
+  }
+]

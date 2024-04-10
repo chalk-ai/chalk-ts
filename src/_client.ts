@@ -1,20 +1,26 @@
-import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
-import { parseByteModel } from "./_bulk_response";
+import { parseFeatherQueryResponse } from "./_bulk_response";
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
+import {
+  IntermediateRequestBodyJSON,
+  serializeMultipleQueryInputFeather,
+} from "./_feather";
 import { ChalkHttpHeaders, ChalkHTTPService, CredentialsHolder } from "./_http";
 import {
   ChalkClientInterface,
   ChalkGetRunStatusResponse,
-  ChalkOnlineQueryRequest,
-  ChalkOnlineQueryResponse,
   ChalkOnlineBulkQueryRequest,
   ChalkOnlineBulkQueryResponse,
+  ChalkOnlineMultiQueryRequest,
+  ChalkOnlineMultiQueryResponse,
+  ChalkOnlineQueryRequest,
+  ChalkOnlineQueryResponse,
   ChalkTriggerResolverRunRequest,
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
 } from "./_interface";
+import { mapRawResponseMeta } from "./_meta";
 import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
@@ -22,7 +28,6 @@ import {
   CustomFetchClient,
 } from "./_types";
 import { fromEntries } from "./_utils";
-import { TextEncoder } from "util";
 
 export interface ChalkClientOpts {
   /**
@@ -211,25 +216,53 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         rawResult.errors == null || rawResult.errors.length
           ? undefined
           : rawResult.errors,
-      meta: rawResult.meta && {
-        executionDurationS: rawResult.meta.execution_duration_s,
-        deploymentId: rawResult.meta.deployment_id,
-        environmentId: rawResult.meta.environment_id,
-        environmentName: rawResult.meta.environment_name,
-        queryId: rawResult.meta.query_id,
-        queryTimestamp: rawResult.meta.query_timestamp,
-        queryHash: rawResult.meta.query_hash,
-        explainOutput: rawResult.meta.explain_output,
-      },
+      meta: rawResult.meta ? mapRawResponseMeta(rawResult.meta) : undefined,
+    };
+  }
+
+  async multiQuery<TOutput extends keyof TFeatureMap>(
+    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>
+  ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
+    const requests = request.queries.map(
+      (singleQuery): IntermediateRequestBodyJSON<TFeatureMap, TOutput> => {
+        return {
+          inputs: singleQuery.inputs,
+          outputs: singleQuery.outputs,
+          context: {
+            tags: singleQuery.scopeTags,
+          },
+          correlation_id: request.correlationId,
+          deployment_id: request.previewDeploymentId,
+          meta: request.queryMeta,
+          query_name: request.queryName,
+          staleness: singleQuery.staleness,
+        };
+      }
+    );
+
+    const requestBuffer = serializeMultipleQueryInputFeather(requests);
+
+    const rawResult = await this.http.v1_query_feather({
+      baseUrl: this.config.apiServer,
+      body: requestBuffer.buffer,
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
+    });
+
+    const resultBuffer = Buffer.from(rawResult);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+
+    return {
+      responses: parsedResult,
     };
   }
 
   async queryBulk<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
-    const onlineQueryJsonBody = {
-      inputs: request.inputs as any,
-      outputs: request.outputs as string[],
+    const requestBody: IntermediateRequestBodyJSON<TFeatureMap, TOutput> = {
+      inputs: request.inputs,
+      outputs: request.outputs,
       context: {
         tags: request.scopeTags,
       },
@@ -241,67 +274,20 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       now: request.now,
     };
 
-    const header = {
-      ...onlineQueryJsonBody,
-      feather_body_type: "RECORD_BATCHES",
-      response_compression_scheme: "uncompressed",
-      client_supports_64bit: false,
-    };
-    delete header["inputs"];
-
-    const utf8Encode: TextEncoder = new TextEncoder();
-    const magicBytes: Uint8Array = utf8Encode.encode("chal1"); // magic str
-    const jsonedHeader: string = JSON.stringify(header);
-
-    const headerBytes = utf8Encode.encode(jsonedHeader);
-
-    const arrowTable = tableFromArrays(request.inputs as any);
-    const bodyBytes = tableToIPC(arrowTable);
-
-    const arrayBuffer = Buffer.alloc(
-      magicBytes.length + headerBytes.length + bodyBytes.length + 2 * 8
-    );
-
-    let offset = 0;
-
-    arrayBuffer.write("chal1", 0);
-    offset += magicBytes.length;
-
-    arrayBuffer.writeBigInt64BE(BigInt(headerBytes.length), offset);
-    offset += 8;
-
-    arrayBuffer.set(headerBytes, offset);
-    offset += headerBytes.length;
-
-    arrayBuffer.writeBigInt64BE(BigInt(bodyBytes.length), offset);
-    offset += 8;
-
-    arrayBuffer.set(bodyBytes, offset);
+    const requestBuffer = serializeMultipleQueryInputFeather([requestBody]);
 
     const rawResult = await this.http.v1_query_feather({
       baseUrl: this.config.apiServer,
-      body: arrayBuffer.buffer,
+      body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
     });
 
-    const result = Buffer.from(rawResult);
+    const resultBuffer = Buffer.from(rawResult);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+    const firstAndOnlyChunk = parsedResult[0];
 
-    const outer = parseByteModel(result);
-
-    const inner = parseByteModel(
-      outer.concatenatedSerializableByteObjects.subarray(
-        0,
-        outer.attrAndByteOffsetForSerializables["query_results_bytes"]
-      )
-    );
-
-    const innerInner = parseByteModel(inner.concatenatedByteObjects);
-    const ipcTable = tableFromIPC(innerInner.concatenatedByteObjects);
-
-    return {
-      data: ipcTable.toArray() as any,
-    };
+    return firstAndOnlyChunk;
   }
 
   async uploadSingle(

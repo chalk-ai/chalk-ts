@@ -1,0 +1,69 @@
+[
+  {
+    "data": [
+      {
+        "user.random_normal": -0.6867642402648926,
+        "user.full_name": "Donna Davis",
+        "user.id": 1,
+        "user.__chalk_observed_at__": 1712708226312.231,
+        "__ts__": 1712708226312.231
+      },
+      {
+        "user.random_normal": -1.0890105962753296,
+        "user.full_name": "William Johnson",
+        "user.id": 2,
+        "user.__chalk_observed_at__": 1712708226312.231,
+        "__ts__": 1712708226312.231
+      },
+      {
+        "user.random_normal": -0.18598082661628723,
+        "user.full_name": "Jasmine Perry",
+        "user.id": 3,
+        "user.__chalk_observed_at__": 1712708226312.231,
+        "__ts__": 1712708226312.231
+      },
+      {
+        "user.random_normal": -0.10236824303865433,
+        "user.full_name": "Matthew Roth",
+        "user.id": 4,
+        "user.__chalk_observed_at__": 1712708226312.231,
+        "__ts__": 1712708226312.231
+      }
+    ],
+    "meta": {
+      "executionDurationS": 0.4206589800000984,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut2998t00130js64i9m9f6r",
+      "queryTimestamp": "2024-04-10T00:17:06.312231+00:00",
+      "queryHash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
+      "explainOutput": null
+    }
+  },
+  {
+    "data": [],
+    "meta": {
+      "executionDurationS": 0,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": null,
+      "queryId": "clut2999000140js6tgsb0009",
+      "queryTimestamp": "2024-04-10T00:17:06.312231+00:00",
+      "queryHash": null,
+      "explainOutput": null
+    },
+    "errors": [
+      {
+        "code": "PARSE_FAILED",
+        "category": "REQUEST",
+        "message": "Query output referenced undefined feature 'transaction.amount, transaction.user.full_name'",
+        "display_primary_key": null,
+        "display_primary_key_fqn": null,
+        "exception": null,
+        "feature": "transaction.amount, transaction.user.full_name",
+        "resolver": null
+      }
+    ]
+  }
+]

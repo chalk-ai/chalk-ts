@@ -1,0 +1,187 @@
+[
+  {
+    "header": {
+      "outputs": ["bar"],
+      "query_name": "Paddington",
+      "correlation_id": "9999999999",
+      "staleness": {
+        "bar": "1h"
+      },
+      "feather_body_type": "RECORD_BATCHES",
+      "response_compression_scheme": "uncompressed",
+      "client_supports_64bit": false
+    },
+    "body": {
+      "schema": {
+        "fields": [
+          {
+            "name": "foo",
+            "type": {
+              "precision": 2
+            },
+            "nullable": false,
+            "metadata": {}
+          }
+        ],
+        "metadata": {},
+        "dictionaries": {},
+        "metadataVersion": 4
+      },
+      "batches": [
+        {
+          "schema": {
+            "fields": [
+              {
+                "name": "foo",
+                "type": {
+                  "precision": 2
+                },
+                "nullable": false,
+                "metadata": {}
+              }
+            ],
+            "metadata": {},
+            "dictionaries": {},
+            "metadataVersion": 4
+          },
+          "data": {
+            "type": {
+              "children": [
+                {
+                  "name": "foo",
+                  "type": {
+                    "precision": 2
+                  },
+                  "nullable": false,
+                  "metadata": {}
+                }
+              ]
+            },
+            "children": [
+              {
+                "type": {
+                  "precision": 2
+                },
+                "children": [],
+                "offset": 0,
+                "length": 6,
+                "_nullCount": 0,
+                "stride": 1,
+                "values": {
+                  "0": 2,
+                  "1": 4,
+                  "2": 6,
+                  "3": 8,
+                  "4": 10,
+                  "5": 12
+                },
+                "nullBitmap": {}
+              }
+            ],
+            "offset": 0,
+            "length": 6,
+            "_nullCount": 0,
+            "stride": 1,
+            "nullBitmap": {}
+          }
+        }
+      ],
+      "_offsets": {
+        "0": 0,
+        "1": 6
+      }
+    }
+  },
+  {
+    "header": {
+      "outputs": ["baz", "bar"],
+      "query_name": "Josephine",
+      "correlation_id": "fun_correlation_id",
+      "staleness": {
+        "bar": "1h",
+        "baz": "1d"
+      },
+      "feather_body_type": "RECORD_BATCHES",
+      "response_compression_scheme": "uncompressed",
+      "client_supports_64bit": false
+    },
+    "body": {
+      "schema": {
+        "fields": [
+          {
+            "name": "foo",
+            "type": {
+              "precision": 2
+            },
+            "nullable": false,
+            "metadata": {}
+          }
+        ],
+        "metadata": {},
+        "dictionaries": {},
+        "metadataVersion": 4
+      },
+      "batches": [
+        {
+          "schema": {
+            "fields": [
+              {
+                "name": "foo",
+                "type": {
+                  "precision": 2
+                },
+                "nullable": false,
+                "metadata": {}
+              }
+            ],
+            "metadata": {},
+            "dictionaries": {},
+            "metadataVersion": 4
+          },
+          "data": {
+            "type": {
+              "children": [
+                {
+                  "name": "foo",
+                  "type": {
+                    "precision": 2
+                  },
+                  "nullable": false,
+                  "metadata": {}
+                }
+              ]
+            },
+            "children": [
+              {
+                "type": {
+                  "precision": 2
+                },
+                "children": [],
+                "offset": 0,
+                "length": 4,
+                "_nullCount": 0,
+                "stride": 1,
+                "values": {
+                  "0": 123,
+                  "1": 234,
+                  "2": 345,
+                  "3": 456
+                },
+                "nullBitmap": {}
+              }
+            ],
+            "offset": 0,
+            "length": 4,
+            "_nullCount": 0,
+            "stride": 1,
+            "nullBitmap": {}
+          }
+        }
+      ],
+      "_offsets": {
+        "0": 0,
+        "1": 4
+      }
+    }
+  }
+]

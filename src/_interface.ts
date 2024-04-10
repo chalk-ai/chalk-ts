@@ -12,6 +12,18 @@ export interface ChalkUploadSingleRequest<TFeatureMap> {
   scopeTags?: string[];
 }
 
+export interface ChalkOnlineBulkQueryRequestSimple<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+> {
+  inputs: Partial<{ [K in keyof TFeatureMap]: TFeatureMap[K][] }>;
+  outputs: TOutput[];
+  staleness?: {
+    [K in keyof TFeatureMap]?: string;
+  };
+  scopeTags?: string[];
+}
+
 export interface ChalkOnlineQueryRequest<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
@@ -224,6 +236,29 @@ export interface ChalkOnlineQueryResponse<
   meta?: ChalkQueryMeta;
 }
 
+export interface ChalkOnlineMultiQueryRequest<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+> {
+  queries: Array<ChalkOnlineBulkQueryRequestSimple<TFeatureMap, TOutput>>;
+  previewDeploymentId?: string;
+  correlationId?: string;
+  queryName?: string;
+  queryMeta?: {
+    [key: string]: string;
+  };
+  encodingOptions?: {
+    encodeStructsAsObjects?: boolean;
+  };
+}
+
+export interface ChalkOnlineMultiQueryResponse<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+> {
+  responses: Array<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>>;
+}
+
 export interface ChalkOnlineBulkQueryRequest<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
@@ -255,6 +290,8 @@ export interface ChalkOnlineBulkQueryResponse<
   data: {
     [K in TOutput]: TFeatureMap[K];
   }[];
+  meta?: ChalkQueryMeta;
+  errors?: ChalkError[];
 }
 
 export type ChalkResolverRunStatus = "received" | "succeeded" | "failed";
@@ -292,6 +329,33 @@ export interface ChalkClientInterface<
   query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>>;
+
+  /**
+   * Compute features values for many rows of inputs using online resolvers.
+   * See https://docs.chalk.ai/docs/query-basics for more information on online query.
+   * This method is similar to `query`, except it takes in `list` of inputs, and produces one
+   * output per row of inputs.
+   * This method is appropriate if you want to fetch the same set of features for many different
+   * input primary keys.
+   * This method contrasts with `multi_query`, which executes multiple fully independent queries.
+   * This endpoint is not available in all environments.
+   * @param request - The request to compute feature values, containing the features to compute.
+   */
+  queryBulk<TOutput extends keyof TFeatureMap>(
+    request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
+  ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>>;
+
+  /**
+   * Execute multiple queries (represented by `queries` argument) in a single request. This is useful if the
+   * queries are "rooted" in different `@features` classes -- i.e. if you want to load features for `User` and
+   * `Merchant` and there is no natural relationship object which is related to both of these classes, `multi_query`
+   * allows you to submit two independent queries.
+   *
+   * In contrast, `query_bulk` executes a single query with multiple inputs/outputs.
+   */
+  multiQuery<TOutput extends keyof TFeatureMap>(
+    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>
+  ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>>;
 
   /**
    * Upload data to Chalk for use in offline resolvers or to prime a cache.
