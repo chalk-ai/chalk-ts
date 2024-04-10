@@ -201,6 +201,15 @@ maybe("integration tests", () => {
       expect(third.meta?.queryHash).toBeDefined();
       expect(fourth.meta?.queryHash).toBeNull();
 
+      expect(first.meta).toHaveProperty("executionDurationS");
+      expect(first.meta).toHaveProperty("deploymentId");
+      expect(first.meta).toHaveProperty("environmentId");
+      expect(first.meta).toHaveProperty("environmentName");
+      expect(first.meta).toHaveProperty("queryId");
+      expect(first.meta).toHaveProperty("queryTimestamp");
+      expect(first.meta).toHaveProperty("queryHash");
+      expect(first.meta).toHaveProperty("explainOutput");
+
       expect(first.errors).toBeUndefined();
       expect(second.errors).toBeUndefined();
       expect(third.errors).toBeUndefined();
