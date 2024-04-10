@@ -1,15 +1,21 @@
-import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
-import { parseByteModel } from "./_bulk_response";
+import { tableFromArrays, tableToIPC } from "apache-arrow";
+import { TextEncoder } from "util";
+import {
+  MULTI_QUERY_MAGIC_STR,
+  parseFeatherQueryResponse,
+} from "./_bulk_response";
 import { DEFAULT_API_SERVER } from "./_const";
 import { chalkError } from "./_errors";
 import { ChalkHttpHeaders, ChalkHTTPService, CredentialsHolder } from "./_http";
 import {
   ChalkClientInterface,
   ChalkGetRunStatusResponse,
-  ChalkOnlineQueryRequest,
-  ChalkOnlineQueryResponse,
   ChalkOnlineBulkQueryRequest,
   ChalkOnlineBulkQueryResponse,
+  ChalkOnlineMultiQueryRequest,
+  ChalkOnlineMultiQueryResponse,
+  ChalkOnlineQueryRequest,
+  ChalkOnlineQueryResponse,
   ChalkTriggerResolverRunRequest,
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
@@ -22,7 +28,6 @@ import {
   CustomFetchClient,
 } from "./_types";
 import { fromEntries } from "./_utils";
-import { TextEncoder } from "util";
 
 export interface ChalkClientOpts {
   /**
@@ -224,6 +229,81 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     };
   }
 
+  async multiQuery<TOutput extends keyof TFeatureMap>(
+    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>
+  ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
+    const utf8Encode: TextEncoder = new TextEncoder();
+    const magicBytes: Uint8Array = utf8Encode.encode(MULTI_QUERY_MAGIC_STR); // magic str
+
+    const encodedHeadersAndBodies = request.queries.map((singleQuery) => {
+      const body = {
+        inputs: singleQuery.inputs as any,
+        outputs: singleQuery.outputs as string[],
+        context: {
+          tags: singleQuery.scopeTags,
+        },
+        correlation_id: request.correlationId,
+        deployment_id: request.previewDeploymentId,
+        meta: request.queryMeta,
+        query_name: request.queryName,
+        staleness: singleQuery.staleness,
+      };
+      const header = {
+        ...body,
+        feather_body_type: "RECORD_BATCHES",
+        response_compression_scheme: "uncompressed",
+        client_supports_64bit: false,
+      };
+      delete header["inputs"];
+
+      const bodyBytes = tableToIPC(tableFromArrays(body.inputs));
+      const headerBytes = utf8Encode.encode(JSON.stringify(header));
+
+      return {
+        body: bodyBytes,
+        header: headerBytes,
+      };
+    });
+
+    const totalLength = encodedHeadersAndBodies.reduce(
+      (acc, { body, header }) => acc + body.length + header.length,
+      0
+    );
+
+    const arrayBuffer = Buffer.alloc(
+      magicBytes.length + totalLength + 2 * encodedHeadersAndBodies.length * 8
+    );
+    let offset = 0;
+
+    arrayBuffer.write(MULTI_QUERY_MAGIC_STR, offset);
+    offset += magicBytes.length;
+
+    encodedHeadersAndBodies.forEach(({ header, body }) => {
+      arrayBuffer.writeBigInt64BE(BigInt(header.length), offset);
+      offset += 8;
+      arrayBuffer.set(header, offset);
+      offset += header.length;
+      arrayBuffer.writeBigInt64BE(BigInt(body.length), offset);
+      offset += 8;
+      arrayBuffer.set(body, offset);
+      offset += body.length;
+    });
+
+    const rawResult = await this.http.v1_query_feather({
+      baseUrl: this.config.apiServer,
+      body: arrayBuffer.buffer,
+      headers: this.getDefaultHeaders(),
+      credentials: this.credentials,
+    });
+
+    const resultBuffer = Buffer.from(rawResult);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+
+    return {
+      responses: parsedResult,
+    };
+  }
+
   async queryBulk<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
@@ -250,7 +330,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     delete header["inputs"];
 
     const utf8Encode: TextEncoder = new TextEncoder();
-    const magicBytes: Uint8Array = utf8Encode.encode("chal1"); // magic str
+    const magicBytes: Uint8Array = utf8Encode.encode(MULTI_QUERY_MAGIC_STR); // magic str
     const jsonedHeader: string = JSON.stringify(header);
 
     const headerBytes = utf8Encode.encode(jsonedHeader);
@@ -264,7 +344,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 
     let offset = 0;
 
-    arrayBuffer.write("chal1", 0);
+    arrayBuffer.write(MULTI_QUERY_MAGIC_STR, 0);
     offset += magicBytes.length;
 
     arrayBuffer.writeBigInt64BE(BigInt(headerBytes.length), offset);
@@ -285,23 +365,11 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       credentials: this.credentials,
     });
 
-    const result = Buffer.from(rawResult);
+    const resultBuffer = Buffer.from(rawResult);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+    const firstAndOnlyChunk = parsedResult[0];
 
-    const outer = parseByteModel(result);
-
-    const inner = parseByteModel(
-      outer.concatenatedSerializableByteObjects.subarray(
-        0,
-        outer.attrAndByteOffsetForSerializables["query_results_bytes"]
-      )
-    );
-
-    const innerInner = parseByteModel(inner.concatenatedByteObjects);
-    const ipcTable = tableFromIPC(innerInner.concatenatedByteObjects);
-
-    return {
-      data: ipcTable.toArray() as any,
-    };
+    return firstAndOnlyChunk;
   }
 
   async uploadSingle(
