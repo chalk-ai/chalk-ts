@@ -37,7 +37,10 @@ interface OnlineQueryFeatherRequestHeader<
   client_supports_64bit: false;
 }
 
-function featherHeaderFromBody<TFeatureMap, TOutput extends keyof TFeatureMap>(
+export function featherRequestHeaderFromBody<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
   body: IntermediateRequestBodyJSON<TFeatureMap, TOutput>
 ): OnlineQueryFeatherRequestHeader<TFeatureMap, TOutput> {
   const { inputs, ...rest } = body;
@@ -57,7 +60,7 @@ export function serializeMultipleQueryInputFeather<
 
   const encodedRequests = requests.map((request) => {
     const bodyBytes = tableToIPC(tableFromArrays(request.inputs as any));
-    const header = featherHeaderFromBody(request);
+    const header = featherRequestHeaderFromBody(request);
     const headerBytes = utf8Encode.encode(JSON.stringify(header));
 
     return {

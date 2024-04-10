@@ -21,12 +21,12 @@ describe("parseByteModel", () => {
   });
 });
 
-function parseByteDataToJSON(filename: string) {
+function _parseByteDataToJSON(filename: string) {
   const byte_data = fs.readFileSync(path.resolve(__dirname, filename));
   return JSON.parse(JSON.stringify(parseFeatherQueryResponse(byte_data)));
 }
 
-function readJson(filename: string) {
+function _readJson(filename: string) {
   return JSON.parse(
     fs.readFileSync(path.resolve(__dirname, filename), "utf-8")
   );
@@ -34,28 +34,28 @@ function readJson(filename: string) {
 
 describe("parseFeatherQueryResponse", () => {
   it("should handle a multi-query feather response", () => {
-    const bytes = parseByteDataToJSON("binaries/uncompressed_multi.bytes");
-    const json = readJson("json/uncompressed_multi.json");
+    const bytes = _parseByteDataToJSON("binaries/uncompressed_multi.bytes");
+    const json = _readJson("json/uncompressed_multi.json");
     expect(bytes).toMatchObject(json);
   });
 
   it("should handle a single-query feather response", () => {
-    const bytes = parseByteDataToJSON("binaries/uncompressed_single.bytes");
-    const json = readJson("json/uncompressed_single.json");
+    const bytes = _parseByteDataToJSON("binaries/uncompressed_single.bytes");
+    const json = _readJson("json/uncompressed_single.json");
     expect(bytes).toMatchObject(json);
   });
 
   it("should handle a multi-query feather response with errors in one response", () => {
-    const bytes = parseByteDataToJSON(
+    const bytes = _parseByteDataToJSON(
       "binaries/uncompressed_multi_error.bytes"
     );
-    const json = readJson("json/uncompressed_multi_error.json");
+    const json = _readJson("json/uncompressed_multi_error.json");
     expect(bytes).toMatchObject(json);
   });
 
   it("should be able to handle a multi-query with three query inputs", () => {
-    const bytes = parseByteDataToJSON("binaries/uncompressed_triple.bytes");
-    const json = readJson("json/uncompressed_triple.json");
+    const bytes = _parseByteDataToJSON("binaries/uncompressed_triple.bytes");
+    const json = _readJson("json/uncompressed_triple.json");
     expect(bytes).toMatchObject(json);
   });
 
