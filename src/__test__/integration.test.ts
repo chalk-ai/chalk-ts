@@ -32,6 +32,72 @@ maybe("integration tests", () => {
     jest.setTimeout(30_000);
   });
 
+  describe("test bad credentials", () => {
+    it("should raise an error with bad creds", async () => {
+      // can't seem to do expect().toThrow with async functions
+      let error = null;
+      try {
+        const badClient = new ChalkClient<FraudTemplateFeatures>({
+          clientId: "bogus",
+          clientSecret: "bogus",
+        });
+        const results = await badClient.query({
+          inputs: {
+            "user.id": 1,
+          },
+          outputs: ["user.full_name"],
+        });
+        console.log(results);
+      } catch (e) {
+        error = e;
+      }
+      expect((error as any).message).toEqual(
+        `{"detail":"Client ID and secret invalid","message":"Client ID and secret invalid","trace":null}\n`
+      );
+    });
+
+    it("should raise an error with bad creds for bulk query", async () => {
+      let error = null;
+      try {
+        const badClient = new ChalkClient<FraudTemplateFeatures>({
+          clientId: "bogus",
+          clientSecret: "bogus",
+        });
+        const results = await badClient.queryBulk({
+          inputs: {
+            "user.id": [1, 2],
+          },
+          outputs: ["user.full_name"],
+        });
+        console.log(results);
+      } catch (e) {
+        error = e;
+      }
+      expect((error as any).message).toEqual(
+        `{"detail":"Client ID and secret invalid","message":"Client ID and secret invalid","trace":null}\n`
+      );
+    });
+
+    it("should raise an error with NO creds for bulk query", async () => {
+      let error = null;
+      try {
+        const badClient = new ChalkClient<FraudTemplateFeatures>();
+        const results = await badClient.queryBulk({
+          inputs: {
+            "user.id": [1, 2],
+          },
+          outputs: ["user.full_name"],
+        });
+        console.log(results);
+      } catch (e) {
+        error = e;
+      }
+      expect((error as any).message).toEqual(
+        `Chalk client parameter 'clientSecret' was not specified when creating your ChalkClient, and was not present as '_CHALK_CLIENT_SECRET' in process.env. This field is required to use Chalk`
+      );
+    });
+  });
+
   describe("query with injected fetch", () => {
     it("should use the injected fetch client", async () => {
       // sneak a fetch in that returns a recognizable response
