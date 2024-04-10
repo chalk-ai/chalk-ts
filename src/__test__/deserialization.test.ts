@@ -1,4 +1,3 @@
-import { StructRow } from "apache-arrow";
 import * as fs from "fs";
 import * as path from "path";
 import { parseByteModel, parseFeatherQueryResponse } from "../_bulk_response";
@@ -22,69 +21,42 @@ describe("parseByteModel", () => {
   });
 });
 
+function parseByteDataToJSON(filename: string) {
+  const byte_data = fs.readFileSync(path.resolve(__dirname, filename));
+  return JSON.parse(JSON.stringify(parseFeatherQueryResponse(byte_data)));
+}
+
+function readJson(filename: string) {
+  return JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, filename), "utf-8")
+  );
+}
+
 describe("parseFeatherQueryResponse", () => {
   it("should handle a multi-query feather response", () => {
-    const byte_data = fs.readFileSync(
-      path.resolve(__dirname, "binaries/uncompressed_multi.bytes")
-    );
-    const parsedData = JSON.parse(
-      JSON.stringify(parseFeatherQueryResponse(byte_data))
-    );
-    const expectedJson = JSON.parse(
-      fs.readFileSync(
-        path.resolve(__dirname, "json/uncompressed_multi.json"),
-        "utf-8"
-      )
-    );
-    expect(parsedData).toMatchObject(expectedJson);
+    const bytes = parseByteDataToJSON("binaries/uncompressed_multi.bytes");
+    const json = readJson("json/uncompressed_multi.json");
+    expect(bytes).toMatchObject(json);
   });
 
   it("should handle a single-query feather response", () => {
-    const byte_data = fs.readFileSync(
-      path.resolve(__dirname, "binaries/uncompressed_single.bytes")
-    );
-    const parsedData = JSON.parse(
-      JSON.stringify(parseFeatherQueryResponse(byte_data))
-    );
-    const expectedJson = JSON.parse(
-      fs.readFileSync(
-        path.resolve(__dirname, "json/uncompressed_single.json"),
-        "utf-8"
-      )
-    );
-    expect(parsedData).toMatchObject(expectedJson);
+    const bytes = parseByteDataToJSON("binaries/uncompressed_single.bytes");
+    const json = readJson("json/uncompressed_single.json");
+    expect(bytes).toMatchObject(json);
   });
 
   it("should handle a multi-query feather response with errors in one response", () => {
-    const byte_data = fs.readFileSync(
-      path.resolve(__dirname, "binaries/uncompressed_multi_error.bytes")
+    const bytes = parseByteDataToJSON(
+      "binaries/uncompressed_multi_error.bytes"
     );
-    const parsedData = JSON.parse(
-      JSON.stringify(parseFeatherQueryResponse(byte_data))
-    );
-    const expectedJson = JSON.parse(
-      fs.readFileSync(
-        path.resolve(__dirname, "json/uncompressed_multi_error.json"),
-        "utf-8"
-      )
-    );
-    expect(parsedData).toMatchObject(expectedJson);
+    const json = readJson("json/uncompressed_multi_error.json");
+    expect(bytes).toMatchObject(json);
   });
 
   it("should be able to handle a multi-query with three query inputs", () => {
-    const byte_data = fs.readFileSync(
-      path.resolve(__dirname, "binaries/uncompressed_triple.bytes")
-    );
-    const parsedData = JSON.parse(
-      JSON.stringify(parseFeatherQueryResponse(byte_data))
-    );
-    const expectedJson = JSON.parse(
-      fs.readFileSync(
-        path.resolve(__dirname, "json/uncompressed_triple.json"),
-        "utf-8"
-      )
-    );
-    expect(parsedData).toMatchObject(expectedJson);
+    const bytes = parseByteDataToJSON("binaries/uncompressed_triple.bytes");
+    const json = readJson("json/uncompressed_triple.json");
+    expect(bytes).toMatchObject(json);
   });
 
   it("should fail on compressed response; compression not implemented in arrow", () => {
