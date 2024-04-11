@@ -32,6 +32,36 @@ maybe("integration tests", () => {
     jest.setTimeout(30_000);
   });
 
+  describe("test queryServer", () => {
+    it("should override the default server, which is api server", async () => {
+      const queryServerClient = new ChalkClient<FraudTemplateFeatures>({
+        clientId: process.env.CI_CHALK_CLIENT_ID,
+        clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+        queryServer: "https://bad-url-doesnt-work",
+      });
+
+      const whoami = await queryServerClient.whoami();
+
+      expect(whoami).toHaveProperty("user");
+      expect(whoami).toHaveProperty("environment_id");
+      expect(whoami).toHaveProperty("team_id");
+
+      let error = null;
+      try {
+        const queryResult = await queryServerClient.query({
+          inputs: {
+            "user.id": 1,
+          },
+          outputs: ["user.full_name"],
+        });
+      } catch (e) {
+        error = e;
+      }
+
+      expect((error as any).message).toEqual("fetch failed");
+    });
+  });
+
   describe("test bad credentials", () => {
     it("should raise an error with bad creds", async () => {
       // can't seem to do expect().toThrow with async functions
