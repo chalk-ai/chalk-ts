@@ -50,9 +50,8 @@ export interface ChalkClientOpts {
   apiServer?: string;
 
   /**
-   * Optional separate server URL to use for `query`, `multiQuery`, and `queryBulk` requests.
-   *
-   * If not specified, the client will use the same URL specified in `apiServer` or the default `apiServer` value as a fallback.
+   * For customers with isolated query infrastructure, the URL of the server to direct query-related traffic to.
+   * Authentication and metadata plane traffic will continue to route to apiServer.
    */
   queryServer?: string;
 
@@ -104,10 +103,10 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   private readonly http: ChalkHTTPService;
   private readonly credentials: CredentialsHolder;
   constructor(opts?: ChalkClientOpts) {
-    const apiServer: string =
+    const resolvedApiServer: string =
       opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
     const queryServer: string =
-      opts?.queryServer ?? process.env._CHALK_QUERY_SERVER ?? apiServer;
+      opts?.queryServer ?? process.env._CHALK_QUERY_SERVER ?? resolvedApiServer;
 
     this.config = {
       activeEnvironment:
@@ -119,7 +118,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         opts?.clientSecret,
         "_CHALK_CLIENT_SECRET"
       ),
-      apiServer,
+      apiServer: resolvedApiServer,
       queryServer,
       clientId: valueWithEnvFallback(
         "clientId",
@@ -299,7 +298,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
     const rawResult = await this.http.v1_upload_single({
-      baseUrl: this.config.apiServer,
+      baseUrl: this.config.queryServer,
       body: {
         inputs: request.features,
         outputs: Object.keys(request.features),
