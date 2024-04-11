@@ -33,11 +33,18 @@ maybe("integration tests", () => {
   });
 
   describe("test queryServer", () => {
-    it("should override the default server, which is api server", async () => {
+    it("should override the default server but only for queries", async () => {
+      let urlFromFetch = null;
+      const injectedFetch = async (req: any, init: any): Promise<any> => {
+        urlFromFetch = req;
+        return await fetch(req, init);
+      };
+
       const queryServerClient = new ChalkClient<FraudTemplateFeatures>({
         clientId: process.env.CI_CHALK_CLIENT_ID,
         clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
-        queryServer: "https://bad-url-doesnt-work",
+        queryServer: "https://my-test-url",
+        fetch: injectedFetch,
       });
 
       const whoami = await queryServerClient.whoami();
@@ -46,19 +53,16 @@ maybe("integration tests", () => {
       expect(whoami).toHaveProperty("environment_id");
       expect(whoami).toHaveProperty("team_id");
 
-      let error = null;
       try {
-        const queryResult = await queryServerClient.query({
+        await queryServerClient.query({
           inputs: {
             "user.id": 1,
           },
           outputs: ["user.full_name"],
         });
-      } catch (e) {
-        error = e;
-      }
+      } catch (e) {}
 
-      expect((error as any).message).toEqual("fetch failed");
+      expect(urlFromFetch).toEqual("https://my-test-url/v1/query/online");
     });
   });
 
