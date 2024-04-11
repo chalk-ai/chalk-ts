@@ -95,7 +95,7 @@ describe("ChalkClient", () => {
       apiServer: DEFAULT_API_SERVER,
       clientId: "client_id",
       clientSecret: "secret",
-        queryServer: "query serve",
+        queryServer: "query server",
     });
   });
 
