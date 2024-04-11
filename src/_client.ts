@@ -50,6 +50,12 @@ export interface ChalkClientOpts {
   apiServer?: string;
 
   /**
+   * For customers with isolated query infrastructure, the URL of the server to direct query-related traffic to.
+   * Authentication and metadata plane traffic will continue to route to apiServer.
+   */
+  queryServer?: string;
+
+  /**
    * The environment that your client will run against. This value will be read from the _CHALK_ACTIVE_ENVIRONMENT environment variable if not set explicitly.
    *
    * If not specified and unset by your environment, an error will be thrown on client creation
@@ -100,10 +106,12 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     clientId?: string;
     clientSecret?: string;
     apiServer?: string;
+    queryServer?: string;
     activeEnvironment?: string;
     fetch?: CustomFetchClient;
     fetchHeaders?: typeof Headers;
   }) {
+      const resolvedApiServer = opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
     this.config = {
       activeEnvironment:
         opts?.activeEnvironment ??
@@ -114,8 +122,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         opts?.clientSecret,
         "_CHALK_CLIENT_SECRET"
       ),
-      apiServer:
-        opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER,
+      apiServer: resolvedApiServer,
+      queryServer: opts?.queryServer ?? process.env._CHALK_QUERY_SERVER ?? resolvedApiServer,
       clientId: valueWithEnvFallback(
         "clientId",
         opts?.clientId,
@@ -164,7 +172,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
     const rawResult = await this.http.v1_query_online({
-      baseUrl: this.config.apiServer,
+      baseUrl: this.config.queryServer,
       body: {
         inputs: request.inputs,
         outputs: request.outputs as string[],
@@ -243,7 +251,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const requestBuffer = serializeMultipleQueryInputFeather(requests);
 
     const rawResult = await this.http.v1_query_feather({
-      baseUrl: this.config.apiServer,
+      baseUrl: this.config.queryServer,
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
@@ -277,7 +285,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const requestBuffer = serializeMultipleQueryInputFeather([requestBody]);
 
     const rawResult = await this.http.v1_query_feather({
-      baseUrl: this.config.apiServer,
+      baseUrl: this.config.queryServer,
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
@@ -294,7 +302,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
     const rawResult = await this.http.v1_upload_single({
-      baseUrl: this.config.apiServer,
+      baseUrl: this.config.queryServer,
       body: {
         inputs: request.features,
         outputs: Object.keys(request.features),
