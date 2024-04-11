@@ -42,6 +42,7 @@ describe("ChalkClient", () => {
       apiServer: "b",
       clientId: "c",
       clientSecret: "d",
+        queryServer: "b",
     });
   });
 
@@ -58,6 +59,7 @@ describe("ChalkClient", () => {
       apiServer: "http://localhost:8000",
       clientId: "client_id",
       clientSecret: "secret",
+        queryServer: "http://localhost:8000",
     });
   });
 
@@ -79,6 +81,21 @@ describe("ChalkClient", () => {
       apiServer: DEFAULT_API_SERVER,
       clientId: "client_id",
       clientSecret: "secret",
+        queryServer: DEFAULT_API_SERVER,
+    });
+  });
+
+  it("allows specifying a query server", () => {
+    process.env._CHALK_CLIENT_ID = "client_id";
+    process.env._CHALK_CLIENT_SECRET = "secret";
+
+    const client = new ChalkClient({queryServer: "query server"});
+    expect(getConfig(client)).toEqual<ChalkClientConfig>({
+      activeEnvironment: undefined,
+      apiServer: DEFAULT_API_SERVER,
+      clientId: "client_id",
+      clientSecret: "secret",
+        queryServer: "query server",
     });
   });
 
