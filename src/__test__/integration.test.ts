@@ -32,6 +32,40 @@ maybe("integration tests", () => {
     jest.setTimeout(30_000);
   });
 
+  describe("test queryServer", () => {
+    it("should override the default server but only for queries", async () => {
+      let urlFromFetch = null;
+      const injectedFetch = async (req: any, init: any): Promise<any> => {
+        urlFromFetch = req;
+        return await fetch(req, init);
+      };
+
+      const queryServerClient = new ChalkClient<FraudTemplateFeatures>({
+        clientId: process.env.CI_CHALK_CLIENT_ID,
+        clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+        queryServer: "https://my-test-url",
+        fetch: injectedFetch,
+      });
+
+      const whoami = await queryServerClient.whoami();
+
+      expect(whoami).toHaveProperty("user");
+      expect(whoami).toHaveProperty("environment_id");
+      expect(whoami).toHaveProperty("team_id");
+
+      try {
+        await queryServerClient.query({
+          inputs: {
+            "user.id": 1,
+          },
+          outputs: ["user.full_name"],
+        });
+      } catch (e) {}
+
+      expect(urlFromFetch).toEqual("https://my-test-url/v1/query/online");
+    });
+  });
+
   describe("test bad credentials", () => {
     it("should raise an error with bad creds", async () => {
       // can't seem to do expect().toThrow with async functions

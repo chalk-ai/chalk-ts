@@ -102,16 +102,12 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   private readonly config: ChalkClientConfig;
   private readonly http: ChalkHTTPService;
   private readonly credentials: CredentialsHolder;
-  constructor(opts?: {
-    clientId?: string;
-    clientSecret?: string;
-    apiServer?: string;
-    queryServer?: string;
-    activeEnvironment?: string;
-    fetch?: CustomFetchClient;
-    fetchHeaders?: typeof Headers;
-  }) {
-      const resolvedApiServer = opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
+  constructor(opts?: ChalkClientOpts) {
+    const resolvedApiServer: string =
+      opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
+    const queryServer: string =
+      opts?.queryServer ?? process.env._CHALK_QUERY_SERVER ?? resolvedApiServer;
+
     this.config = {
       activeEnvironment:
         opts?.activeEnvironment ??
@@ -123,7 +119,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         "_CHALK_CLIENT_SECRET"
       ),
       apiServer: resolvedApiServer,
-      queryServer: opts?.queryServer ?? process.env._CHALK_QUERY_SERVER ?? resolvedApiServer,
+      queryServer,
       clientId: valueWithEnvFallback(
         "clientId",
         opts?.clientId,
