@@ -62,6 +62,7 @@ type EndpointCallArgs<
   EndpointCallArgs_AuthKind<TAuthKind> & {
     baseUrl: string;
     headers?: ChalkHttpHeaders;
+    timeout?: number;
   };
 
 export interface RawQueryResponseMeta {
@@ -145,10 +146,12 @@ interface ChalkErrorData {
 export class ChalkHTTPService {
   private fetchClient: CustomFetchClient;
   private fetchHeaders: typeof Headers;
+  private defaultTimeout: number | undefined;
 
-  constructor(fetchClient?: CustomFetchClient, fetchHeaders?: typeof Headers) {
+  constructor(fetchClient?: CustomFetchClient, fetchHeaders?: typeof Headers, defaultTimeout?: number) {
     this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
     this.fetchHeaders = fetchHeaders ?? isoHeaders;
+    this.defaultTimeout = defaultTimeout;
   }
 
   private createEndpoint<
@@ -191,6 +194,12 @@ export class ChalkHTTPService {
         headers.set("X-Chalk-Env-Id", callArgs.headers["X-Chalk-Env-Id"]);
       }
 
+      const effectiveTimeout = callArgs.timeout ?? this.defaultTimeout;
+
+      if (effectiveTimeout != null) {
+          headers.set("X-Chalk-Timeout", effectiveTimeout.toString());
+      }
+
       const body =
         callArgs.body !== undefined
           ? !opts.binaryResponseBody
@@ -198,12 +207,14 @@ export class ChalkHTTPService {
             : callArgs.body
           : undefined;
 
+
       const result = await this.fetchClient(
         urlJoin(callArgs.baseUrl, opts.path),
         {
           method: opts.method,
           headers,
           body: body as any,
+            signal: effectiveTimeout != null ? AbortSignal.timeout(effectiveTimeout) : undefined
         }
       );
 
