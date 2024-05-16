@@ -98,6 +98,14 @@ function valueWithEnvFallback(
   );
 }
 
+export interface ChalkRequestOptions {
+    /**
+     * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
+     * specified at the client level.
+     */
+    timeout?: number;
+}
+
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   implements ChalkClientInterface<TFeatureMap>
 {
@@ -168,7 +176,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 
   async query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>,
-    timeout?: number
+    requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
     const rawResult = await this.http.v1_query_online({
       baseUrl: this.config.queryServer,
@@ -194,7 +202,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       },
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: timeout
+      timeout: requestOptions?.timeout
     });
 
     // Alias the map values, so that TypeScript can help us construct the response.
@@ -229,7 +237,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
-    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>, timeout?: number
+    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>, requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
     const requests = request.queries.map(
       (singleQuery): IntermediateRequestBodyJSON<TFeatureMap, TOutput> => {
@@ -255,7 +263,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: timeout
+      timeout: requestOptions?.timeout
     });
 
     const resultBuffer = Buffer.from(rawResult);
@@ -268,7 +276,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 
   async queryBulk<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>,
-    timeout?: number
+    requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
     const requestBody: IntermediateRequestBodyJSON<TFeatureMap, TOutput> = {
       inputs: request.inputs,
@@ -291,7 +299,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: timeout
+      timeout: requestOptions?.timeout
     });
 
     const resultBuffer = Buffer.from(rawResult);
