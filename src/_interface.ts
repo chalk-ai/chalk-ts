@@ -80,6 +80,10 @@ export interface ChalkOnlineQueryRequest<
   now?: string;
 
   include_meta?: boolean;
+
+  // Set additional options to be considered by the Chalk query planner; typically
+  // provided by Chalk support for advanced use cases or beta functionality.
+  plannerOptions?:  {[index: string]: string | boolean | number};
 }
 
 export interface ChalkQueryMeta {

@@ -320,6 +320,7 @@ export class ChalkHTTPService {
         encode_structs_as_objects?: boolean;
       };
       include_meta: boolean;
+      planner_options?: { [index: string]: string | boolean | number };
     },
     responseBody: null! as {
       data: {

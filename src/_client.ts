@@ -199,6 +199,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
             }
           : undefined,
         include_meta: !!request.include_meta,
+        planner_options: request.plannerOptions,
       },
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
