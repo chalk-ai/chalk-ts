@@ -208,28 +208,35 @@ export class ChalkHTTPService {
           : undefined;
 
 
-      const result = await this.fetchClient(
-        urlJoin(callArgs.baseUrl, opts.path),
-        {
-          method: opts.method,
-          headers,
-          body: body as any,
-            signal: effectiveTimeout != null ? AbortSignal.timeout(effectiveTimeout) : undefined
-        }
-      );
+      try {
+          const result = await this.fetchClient(
+              urlJoin(callArgs.baseUrl, opts.path),
+              {
+                  method: opts.method,
+                  headers,
+                  body: body as any,
+                  signal: effectiveTimeout != null ? AbortSignal.timeout(effectiveTimeout) : undefined
+              }
+          );
+          if (result.status < 200 || result.status >= 300) {
+            const errorText = await result.text();
+            throw new ChalkError(errorText, {
+              httpStatus: result.status,
+              httpStatusText: result.statusText,
+            });
+          }
 
-      if (result.status < 200 || result.status >= 300) {
-        const errorText = await result.text();
-        throw new ChalkError(errorText, {
-          httpStatus: result.status,
-          httpStatusText: result.statusText,
-        });
-      }
-
-      if (opts.binaryResponseBody) {
-        return result.arrayBuffer() as any;
-      } else {
-        return result.json() as any as TResponseBody;
+          if (opts.binaryResponseBody) {
+            return result.arrayBuffer() as any;
+          } else {
+            return result.json() as any as TResponseBody;
+          }
+      } catch (e) {
+          if (e instanceof DOMException) {
+              throw chalkError("Request timed out after " + effectiveTimeout + "ms");
+          } else {
+              throw e;
+          }
       }
     };
 
