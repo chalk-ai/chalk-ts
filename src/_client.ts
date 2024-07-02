@@ -20,14 +20,13 @@ import {
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
 } from "./_interface";
-import { mapRawResponseMeta } from "./_meta";
 import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
   ChalkScalar,
   CustomFetchClient,
 } from "./_types";
-import { fromEntries } from "./_utils";
+import { parseOnlineQueryResponse } from "./_response";
 
 export interface ChalkClientOpts {
   /**
@@ -218,35 +217,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       timeout: requestOptions?.timeout,
     });
 
-    // Alias the map values, so that TypeScript can help us construct the response.
-    type FeatureEntry = ChalkOnlineQueryResponse<
-      TFeatureMap,
-      TOutput
-    >["data"][any];
-
-    return {
-      data: fromEntries(
-        rawResult.data.map((d): [string, FeatureEntry] => [
-          d.field,
-          {
-            value: d.value,
-            computedAt: d.ts != null ? new Date(d.ts) : undefined,
-            error: d.error,
-            meta: d.meta && {
-              chosenResolverFqn: d.meta.chosen_resolver_fqn,
-              cacheHit: d.meta.cache_hit,
-              primitiveType: d.meta.primitive_type,
-              version: d.meta.version,
-            },
-          },
-        ])
-      ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
-      errors:
-        rawResult.errors == null || rawResult.errors.length
-          ? undefined
-          : rawResult.errors,
-      meta: rawResult.meta ? mapRawResponseMeta(rawResult.meta) : undefined,
-    };
+    return parseOnlineQueryResponse(rawResult);
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
