@@ -11,7 +11,7 @@ import {
 import { RawQueryResponseMeta } from "./_http";
 import { ChalkError, ChalkQueryMeta } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
-import { ChalkClientConfig } from "./_types";
+import { ChalkClientConfig, TimestampFormat } from "./_types";
 
 interface ByteModel {
   attrs: { [key: string]: number | string } & {
@@ -124,14 +124,17 @@ export function processArrowTable(
       continue;
     }
 
-    if (timestampFormat === "ISO_8601" && DataType.isTimestamp(vector.type)) {
+    if (
+      timestampFormat === TimestampFormat.ISO_8601 &&
+      DataType.isTimestamp(vector.type)
+    ) {
       const newVector = vectorFromArray<Date_>(
         Array.from(vector, (data) => new Date(data)),
         new Date_(DateUnit.MILLISECOND)
       );
       newTable = newTable.setChildAt(index, newVector);
     } else if (
-      timestampFormat == "EPOCH_MILLIS" &&
+      timestampFormat == TimestampFormat.EPOCH_MILLIS &&
       DataType.isDate(vector.type)
     ) {
       const newVector = vectorFromArray<Timestamp>(

@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { parseByteModel, parseFeatherQueryResponse } from "../_bulk_response";
+import { TimestampFormat } from "../_types";
 
 describe("parseByteModel", () => {
   it("should produce the expected keys", () => {
@@ -25,7 +26,9 @@ function _parseByteDataToJSON(filename: string) {
   const byte_data = fs.readFileSync(path.resolve(__dirname, filename));
   return JSON.parse(
     JSON.stringify(
-      parseFeatherQueryResponse(byte_data, { timestampFormat: "ISO_8601" })
+      parseFeatherQueryResponse(byte_data, {
+        timestampFormat: TimestampFormat.ISO_8601,
+      })
     )
   );
 }
@@ -70,7 +73,7 @@ describe("parseFeatherQueryResponse", () => {
 
     const tryToParseCompressed = () =>
       parseFeatherQueryResponse(single_bytes_compressed, {
-        timestampFormat: "ISO_8601",
+        timestampFormat: TimestampFormat.ISO_8601,
       });
 
     expect(tryToParseCompressed).toThrow(

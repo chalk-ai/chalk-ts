@@ -1,10 +1,15 @@
+export enum TimestampFormat {
+  EPOCH_MILLIS = "EPOCH_MILLIS",
+  ISO_8601 = "ISO_8601",
+}
+
 export interface ChalkClientConfig {
   activeEnvironment: string | undefined;
   apiServer: string;
   clientId: string;
   clientSecret: string;
   queryServer: string;
-  timestampFormat: "EPOCH_MILLIS" | "ISO_8601";
+  timestampFormat: TimestampFormat;
 }
 
 export interface CustomFetchClient<

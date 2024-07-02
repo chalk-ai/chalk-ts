@@ -25,6 +25,7 @@ import {
   ChalkEnvironmentVariables,
   ChalkScalar,
   CustomFetchClient,
+  TimestampFormat,
 } from "./_types";
 import { parseOnlineQueryResponse } from "./_response";
 
@@ -141,7 +142,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         "_CHALK_CLIENT_SECRET"
       ),
       queryServer,
-      timestampFormat: opts?.timestampFormat ?? "ISO_8601",
+      timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
     };
 
     this.http = new ChalkHTTPService(
