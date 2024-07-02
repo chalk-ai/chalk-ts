@@ -217,7 +217,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       timeout: requestOptions?.timeout,
     });
 
-    return parseOnlineQueryResponse(rawResult);
+    return parseOnlineQueryResponse(rawResult, this.config);
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(

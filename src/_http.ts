@@ -87,10 +87,8 @@ type InternalPrimitiveType =
   | "datetime.timedelta";
 
 export type ChalkPrimitiveType = `<class '${InternalPrimitiveType}'>`;
-export const CHALK_DATE_TYPES: Set<ChalkPrimitiveType> = new Set([
-  `<class 'datetime.date'>`,
-  `<class 'datetime.datetime'>`,
-]);
+export const CHALK_DATE_TYPES: Set<ChalkPrimitiveType | undefined | null> =
+  new Set([`<class 'datetime.date'>`, `<class 'datetime.datetime'>`]);
 
 const APPLICATION_JSON = "application/json;charset=utf-8";
 const APPLICATION_OCTET = "application/octet-stream";
@@ -159,20 +157,22 @@ interface ChalkErrorData {
   resolver?: string;
 }
 
+export interface ChalkOnlineQueryRawData {
+  field: string;
+  value: any;
+  pkey?: null | string | number;
+  error?: ChalkErrorData;
+  ts?: string;
+  meta?: {
+    chosen_resolver_fqn?: string;
+    cache_hit?: boolean;
+    primitive_type?: ChalkPrimitiveType;
+    version?: number;
+  };
+}
+
 export interface ChalkOnlineQueryRawResponse {
-  data: {
-    field: string;
-    value: any;
-    pkey?: null | string | number;
-    error?: ChalkErrorData;
-    ts?: string;
-    meta?: {
-      chosen_resolver_fqn?: string;
-      cache_hit?: boolean;
-      primitive_type?: ChalkPrimitiveType;
-      version?: number;
-    };
-  }[];
+  data: ChalkOnlineQueryRawData[];
   errors?: ChalkErrorData[];
   meta?: RawQueryResponseMeta;
 }
