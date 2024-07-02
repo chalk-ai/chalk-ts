@@ -38,7 +38,7 @@ export interface ChalkClientOpts {
   clientId?: string;
 
   /**
-   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
+   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_SECRET environment variable if not set explicitly.
    *
    * If not specified and unset by your environment, an error will be thrown on client creation
    */
@@ -99,11 +99,11 @@ function valueWithEnvFallback(
 }
 
 export interface ChalkRequestOptions {
-    /**
-     * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
-     * specified at the client level.
-     */
-    timeout?: number;
+  /**
+   * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
+   * specified at the client level.
+   */
+  timeout?: number;
 }
 
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
@@ -123,21 +123,26 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         opts?.activeEnvironment ??
         process.env._CHALK_ACTIVE_ENVIRONMENT ??
         undefined,
-      clientSecret: valueWithEnvFallback(
-        "clientSecret",
-        opts?.clientSecret,
-        "_CHALK_CLIENT_SECRET"
-      ),
       apiServer: resolvedApiServer,
-      queryServer,
       clientId: valueWithEnvFallback(
         "clientId",
         opts?.clientId,
         "_CHALK_CLIENT_ID"
       ),
+      clientSecret: valueWithEnvFallback(
+        "clientSecret",
+        opts?.clientSecret,
+        "_CHALK_CLIENT_SECRET"
+      ),
+      queryServer,
+      timestampFormat: opts?.time,
     };
 
-    this.http = new ChalkHTTPService(opts?.fetch, opts?.fetchHeaders, opts?.defaultTimeout);
+    this.http = new ChalkHTTPService(
+      opts?.fetch,
+      opts?.fetchHeaders,
+      opts?.defaultTimeout
+    );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
   }
@@ -203,7 +208,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       },
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: requestOptions?.timeout
+      timeout: requestOptions?.timeout,
     });
 
     // Alias the map values, so that TypeScript can help us construct the response.
@@ -238,7 +243,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
-    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>, requestOptions?: ChalkRequestOptions
+    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>,
+    requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
     const requests = request.queries.map(
       (singleQuery): IntermediateRequestBodyJSON<TFeatureMap, TOutput> => {
@@ -264,7 +270,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: requestOptions?.timeout
+      timeout: requestOptions?.timeout,
     });
 
     const resultBuffer = Buffer.from(rawResult);
@@ -300,7 +306,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: requestOptions?.timeout
+      timeout: requestOptions?.timeout,
     });
 
     const resultBuffer = Buffer.from(rawResult);

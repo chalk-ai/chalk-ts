@@ -88,7 +88,7 @@ new ChalkClient({
   clientId?: string;
 
   /**
-   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
+   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_SECRET environment variable if not set explicitly.
    *
    * If not specified and unset by your environment, an error will be thrown on client creation
    */

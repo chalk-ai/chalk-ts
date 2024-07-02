@@ -1,9 +1,10 @@
 export interface ChalkClientConfig {
+  activeEnvironment: string | undefined;
+  apiServer: string;
   clientId: string;
   clientSecret: string;
-  apiServer: string;
   queryServer: string;
-  activeEnvironment: string | undefined;
+  timestampFormat: "UNIX" | "ISO_8601";
 }
 
 export interface CustomFetchClient<
