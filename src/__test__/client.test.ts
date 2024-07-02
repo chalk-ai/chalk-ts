@@ -35,6 +35,7 @@ describe("ChalkClient", () => {
       apiServer: "b",
       clientId: "c",
       clientSecret: "d",
+      timestampFormat: "EPOCH_MILLIS",
     });
 
     expect(getConfig(client)).toEqual<ChalkClientConfig>({
@@ -43,6 +44,7 @@ describe("ChalkClient", () => {
       clientId: "c",
       clientSecret: "d",
       queryServer: "b",
+      timestampFormat: "EPOCH_MILLIS",
     });
   });
 
@@ -61,6 +63,7 @@ describe("ChalkClient", () => {
       clientId: "client_id",
       clientSecret: "secret",
       queryServer: "http://localhost:1337",
+      timestampFormat: "ISO_8601",
     });
   });
 
@@ -83,6 +86,7 @@ describe("ChalkClient", () => {
       clientId: "client_id",
       clientSecret: "secret",
       queryServer: DEFAULT_API_SERVER,
+      timestampFormat: "ISO_8601",
     });
   });
 
@@ -97,6 +101,7 @@ describe("ChalkClient", () => {
       clientId: "client_id",
       clientSecret: "secret",
       queryServer: "query server",
+      timestampFormat: "ISO_8601",
     });
   });
 

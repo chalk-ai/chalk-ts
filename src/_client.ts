@@ -76,6 +76,13 @@ export interface ChalkClientOpts {
    */
   fetchHeaders?: typeof Headers;
 
+  /**
+   * The format to use for date-type data.
+   *
+   * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS"
+   */
+  timestampFormat?: ChalkClientConfig["timestampFormat"];
+
   defaultTimeout?: number;
 }
 
@@ -135,7 +142,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         "_CHALK_CLIENT_SECRET"
       ),
       queryServer,
-      timestampFormat: opts?.time,
+      timestampFormat: opts?.timestampFormat ?? "ISO_8601",
     };
 
     this.http = new ChalkHTTPService(
@@ -274,7 +281,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     });
 
     const resultBuffer = Buffer.from(rawResult);
-    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer, this.config);
 
     return {
       responses: parsedResult,
@@ -310,7 +317,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     });
 
     const resultBuffer = Buffer.from(rawResult);
-    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer, this.config);
     const firstAndOnlyChunk = parsedResult[0];
 
     return firstAndOnlyChunk;

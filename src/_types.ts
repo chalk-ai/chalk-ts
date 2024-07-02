@@ -4,7 +4,7 @@ export interface ChalkClientConfig {
   clientId: string;
   clientSecret: string;
   queryServer: string;
-  timestampFormat: "UNIX" | "ISO_8601";
+  timestampFormat: "EPOCH_MILLIS" | "ISO_8601";
 }
 
 export interface CustomFetchClient<

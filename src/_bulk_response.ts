@@ -1,7 +1,17 @@
-import { tableFromIPC } from "apache-arrow";
+import {
+  tableFromIPC,
+  DataType,
+  Table,
+  vectorFromArray,
+  Date_,
+  DateUnit,
+  Timestamp,
+  TimeUnit,
+} from "apache-arrow";
 import { RawQueryResponseMeta } from "./_http";
 import { ChalkError, ChalkQueryMeta } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
+import { ChalkClientConfig } from "./_types";
 
 interface ByteModel {
   attrs: { [key: string]: number | string } & {
@@ -103,7 +113,42 @@ interface QueryChunkResultsWithOffset {
   chunkResults: QueryChunkResult[];
 }
 
-export function parseFeatherQueryResponse(result: Buffer): QueryChunkResult[] {
+export function processArrowTable(
+  table: Table,
+  { timestampFormat }: Pick<ChalkClientConfig, "timestampFormat">
+): Table {
+  let newTable = table;
+  for (let index = 0; index < table.numCols; index++) {
+    const vector = table.getChildAt(index);
+    if (!vector) {
+      continue;
+    }
+
+    if (timestampFormat === "ISO_8601" && DataType.isTimestamp(vector.type)) {
+      const newVector = vectorFromArray<Date_>(
+        Array.from(vector, (data) => new Date(data)),
+        new Date_(DateUnit.MILLISECOND)
+      );
+      newTable = newTable.setChildAt(index, newVector);
+    } else if (
+      timestampFormat == "EPOCH_MILLIS" &&
+      DataType.isDate(vector.type)
+    ) {
+      const newVector = vectorFromArray<Timestamp>(
+        Array.from(vector, (data) => new Date(data)),
+        new Timestamp(TimeUnit.MILLISECOND)
+      );
+      newTable = newTable.setChildAt(index, newVector);
+    }
+  }
+
+  return newTable;
+}
+
+export function parseFeatherQueryResponse(
+  result: Buffer,
+  config: Pick<ChalkClientConfig, "timestampFormat">
+): QueryChunkResult[] {
   const outer = parseByteModel(result);
 
   const inner = parseByteModel(
@@ -124,7 +169,10 @@ export function parseFeatherQueryResponse(result: Buffer): QueryChunkResult[] {
             acc.offset + val.value
           )
         );
-        const ipcTable = tableFromIPC(chunk.concatenatedByteObjects);
+        const ipcTable = processArrowTable(
+          tableFromIPC(chunk.concatenatedByteObjects),
+          config
+        );
         acc.chunkResults.push({
           data: ipcTable.toArray() as any,
           meta:

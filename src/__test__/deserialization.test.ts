@@ -23,7 +23,11 @@ describe("parseByteModel", () => {
 
 function _parseByteDataToJSON(filename: string) {
   const byte_data = fs.readFileSync(path.resolve(__dirname, filename));
-  return JSON.parse(JSON.stringify(parseFeatherQueryResponse(byte_data)));
+  return JSON.parse(
+    JSON.stringify(
+      parseFeatherQueryResponse(byte_data, { timestampFormat: "ISO_8601" })
+    )
+  );
 }
 
 function _readJson(filename: string) {
@@ -65,7 +69,9 @@ describe("parseFeatherQueryResponse", () => {
     );
 
     const tryToParseCompressed = () =>
-      parseFeatherQueryResponse(single_bytes_compressed);
+      parseFeatherQueryResponse(single_bytes_compressed, {
+        timestampFormat: "ISO_8601",
+      });
 
     expect(tryToParseCompressed).toThrow(
       "Record batch compression not implemented"
