@@ -19,13 +19,13 @@ import {
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
+  TimestampFormat,
 } from "./_interface";
 import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
   ChalkScalar,
   CustomFetchClient,
-  TimestampFormat,
 } from "./_types";
 import { parseOnlineQueryResponse } from "./_response";
 
@@ -145,7 +145,11 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
     };
 
-    this.http = new ChalkHTTPService(opts?.fetch, opts?.fetchHeaders, opts?.defaultTimeout);
+    this.http = new ChalkHTTPService(
+      opts?.fetch,
+      opts?.fetchHeaders,
+      opts?.defaultTimeout
+    );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
   }
