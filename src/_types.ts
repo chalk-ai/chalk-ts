@@ -1,7 +1,5 @@
-export enum TimestampFormat {
-  EPOCH_MILLIS = "EPOCH_MILLIS",
-  ISO_8601 = "ISO_8601",
-}
+import { TimestampFormat } from "./_interface";
+
 
 export interface ChalkClientConfig {
   activeEnvironment: string | undefined;

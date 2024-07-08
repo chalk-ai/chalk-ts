@@ -1,9 +1,13 @@
-import { ChalkScalar, TimestampFormat } from "./_types";
-export type { TimestampFormat };
+import { ChalkScalar } from "./_types";
 
 export interface ChalkGetRunStatusResponse {
   id: string;
   status: ChalkResolverRunStatus;
+}
+
+export enum TimestampFormat {
+  EPOCH_MILLIS = "EPOCH_MILLIS",
+  ISO_8601 = "ISO_8601",
 }
 
 export interface ChalkUploadSingleRequest<TFeatureMap> {

@@ -1,0 +1,86 @@
+[
+  {
+    "data": [
+      {
+        "user.random_normal": -2.504300832748413,
+        "user.full_name": "Donna Davis",
+        "user.id": 1,
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
+      },
+      {
+        "user.random_normal": -1.4988536834716797,
+        "user.full_name": "William Johnson",
+        "user.id": 2,
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
+      },
+      {
+        "user.random_normal": 1.758903980255127,
+        "user.full_name": "Jasmine Perry",
+        "user.id": 3,
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
+      },
+      {
+        "user.random_normal": 1.3693839311599731,
+        "user.full_name": "Matthew Roth",
+        "user.id": 4,
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
+      }
+    ],
+    "meta": {
+      "executionDurationS": 0.84107918899997,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut28wrt00110js6ygjq3lh4",
+      "queryTimestamp": "2024-04-10T00:16:50.149395+00:00",
+      "queryHash": "354c5201ef4248bbc78810f4d987d506d5fa3b98ee2579b7f715896a96e080e5",
+      "explainOutput": null
+    }
+  },
+  {
+    "data": [
+      {
+        "transaction.amount": 623,
+        "transaction.user.full_name": "Norma Fisher",
+        "transaction.id": 1,
+        "transaction.ts": 1675322153833.177,
+        "__ts__": 1712708210149.395
+      },
+      {
+        "transaction.amount": 597,
+        "transaction.user.full_name": "Norma Fisher",
+        "transaction.id": 2,
+        "transaction.ts": 1674313291406.393,
+        "__ts__": 1712708210149.395
+      },
+      {
+        "transaction.amount": 514,
+        "transaction.user.full_name": "Norma Fisher",
+        "transaction.id": 3,
+        "transaction.ts": 1675490035989.8472,
+        "__ts__": 1712708210149.395
+      },
+      {
+        "transaction.amount": 902,
+        "transaction.user.full_name": "Norma Fisher",
+        "transaction.id": 4,
+        "transaction.ts": 1677039917026.701,
+        "__ts__": 1712708210149.395
+      }
+    ],
+    "meta": {
+      "executionDurationS": 1.2813234230000035,
+      "deploymentId": "clusuova000050ms659jbbklg",
+      "environmentId": "tmnmwqtcbscbd",
+      "environmentName": "dev",
+      "queryId": "clut28ws200120js64ydzykju",
+      "queryTimestamp": "2024-04-10T00:16:50.149395+00:00",
+      "queryHash": "38c05bd2ead10b4c8a11d00e8e2df128952eec32ed073e53ff83980259f2308d",
+      "explainOutput": null
+    }
+  }
+]

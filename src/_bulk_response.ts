@@ -9,9 +9,9 @@ import {
   TimeUnit,
 } from "apache-arrow";
 import { RawQueryResponseMeta } from "./_http";
-import { ChalkError, ChalkQueryMeta } from "./_interface";
+import { ChalkError, ChalkQueryMeta, TimestampFormat } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
-import { ChalkClientConfig, TimestampFormat } from "./_types";
+import { ChalkClientConfig } from "./_types";
 
 interface ByteModel {
   attrs: { [key: string]: number | string } & {
