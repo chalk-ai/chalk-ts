@@ -22,12 +22,15 @@ describe("parseByteModel", () => {
   });
 });
 
-function _parseByteDataToJSON(filename: string) {
+function _parseByteDataToJSON(
+  filename: string,
+  timestampFormat: TimestampFormat = TimestampFormat.ISO_8601
+) {
   const byte_data = fs.readFileSync(path.resolve(__dirname, filename));
   return JSON.parse(
     JSON.stringify(
       parseFeatherQueryResponse(byte_data, {
-        timestampFormat: TimestampFormat.ISO_8601,
+        timestampFormat,
       })
     )
   );

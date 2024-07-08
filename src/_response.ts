@@ -15,10 +15,10 @@ type FeatureEntry<
 
 const processDataValue = (
   d: ChalkOnlineQueryRawData,
-  { timestampFormat }: Pick<ChalkClientConfig, "timestampFormat">
+  shouldConvertTimestampsToMillis = false
 ): ChalkScalar => {
   if (
-    timestampFormat === "EPOCH_MILLIS" &&
+    shouldConvertTimestampsToMillis &&
     CHALK_DATE_TYPES.has(d.meta?.primitive_type)
   ) {
     return new Date(d.value).getTime();
@@ -34,13 +34,16 @@ export const parseOnlineQueryResponse = <
   rawResult: ChalkOnlineQueryRawResponse,
   config: Pick<ChalkClientConfig, "timestampFormat">
 ): ChalkOnlineQueryResponse<TFeatureMap, TOutput> => {
+  const shouldConvertTimestampsToMillis =
+    config.timestampFormat === "EPOCH_MILLIS";
+
   return {
     data: fromEntries(
       rawResult.data.map((d): [string, FeatureEntry] => {
         return [
           d.field,
           {
-            value: processDataValue(d, config),
+            value: processDataValue(d, shouldConvertTimestampsToMillis),
             computedAt: d.ts != null ? new Date(d.ts) : undefined,
             error: d.error,
             meta: d.meta && {
