@@ -5,6 +5,11 @@ export interface ChalkGetRunStatusResponse {
   status: ChalkResolverRunStatus;
 }
 
+export enum TimestampFormat {
+  EPOCH_MILLIS = "EPOCH_MILLIS",
+  ISO_8601 = "ISO_8601",
+}
+
 export interface ChalkUploadSingleRequest<TFeatureMap> {
   features: Partial<TFeatureMap>;
   previewDeploymentId?: string;
@@ -83,7 +88,7 @@ export interface ChalkOnlineQueryRequest<
 
   // Set additional options to be considered by the Chalk query planner; typically
   // provided by Chalk support for advanced use cases or beta functionality.
-  plannerOptions?:  {[index: string]: string | boolean | number};
+  plannerOptions?: { [index: string]: string | boolean | number };
 }
 
 export interface ChalkQueryMeta {

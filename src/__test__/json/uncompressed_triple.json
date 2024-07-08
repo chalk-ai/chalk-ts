@@ -5,29 +5,29 @@
         "user.random_normal": 0.20071464776992798,
         "user.full_name": "Donna Davis",
         "user.id": 1,
-        "user.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "user.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "user.random_normal": 1.5254939794540405,
         "user.full_name": "William Johnson",
         "user.id": 2,
-        "user.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "user.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "user.random_normal": 0.30414295196533203,
         "user.full_name": "Jasmine Perry",
         "user.id": 3,
-        "user.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "user.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "user.random_normal": -0.2956961393356323,
         "user.full_name": "Matthew Roth",
         "user.id": 4,
-        "user.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "user.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       }
     ],
     "meta": {
@@ -47,29 +47,29 @@
         "transaction.amount": 623,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 1,
-        "transaction.ts": 1675322153833.177,
-        "__ts__": 1712708962424.895
+        "transaction.ts": "2023-02-02T07:15:53.833Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "transaction.amount": 597,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 2,
-        "transaction.ts": 1674313291406.393,
-        "__ts__": 1712708962424.895
+        "transaction.ts": "2023-01-21T15:01:31.406Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "transaction.amount": 514,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 3,
-        "transaction.ts": 1675490035989.8472,
-        "__ts__": 1712708962424.895
+        "transaction.ts": "2023-02-04T05:53:55.989Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "transaction.amount": 902,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 4,
-        "transaction.ts": 1677039917026.701,
-        "__ts__": 1712708962424.895
+        "transaction.ts": "2023-02-22T04:25:17.026Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       }
     ],
     "meta": {
@@ -89,43 +89,43 @@
         "bag_of_stuff.f1": "f1",
         "bag_of_stuff.f2": "f2",
         "bag_of_stuff.id": 1,
-        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "bag_of_stuff.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "bag_of_stuff.f1": "f1",
         "bag_of_stuff.f2": "f2",
         "bag_of_stuff.id": 2,
-        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "bag_of_stuff.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "bag_of_stuff.f1": "f1",
         "bag_of_stuff.f2": "f2",
         "bag_of_stuff.id": 3,
-        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "bag_of_stuff.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "bag_of_stuff.f1": "f1",
         "bag_of_stuff.f2": "f2",
         "bag_of_stuff.id": 4,
-        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "bag_of_stuff.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "bag_of_stuff.f1": "f1",
         "bag_of_stuff.f2": "f2",
         "bag_of_stuff.id": 5,
-        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "bag_of_stuff.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       },
       {
         "bag_of_stuff.f1": "f1",
         "bag_of_stuff.f2": "f2",
         "bag_of_stuff.id": 6,
-        "bag_of_stuff.__chalk_observed_at__": 1712708962424.895,
-        "__ts__": 1712708962424.895
+        "bag_of_stuff.__chalk_observed_at__": "2024-04-10T00:29:22.424Z",
+        "__ts__": "2024-04-10T00:29:22.424Z"
       }
     ],
     "meta": {

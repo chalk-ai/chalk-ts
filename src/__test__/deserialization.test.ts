@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { parseByteModel, parseFeatherQueryResponse } from "../_bulk_response";
+import { TimestampFormat } from "../_interface";
 
 describe("parseByteModel", () => {
   it("should produce the expected keys", () => {
@@ -21,9 +22,18 @@ describe("parseByteModel", () => {
   });
 });
 
-function _parseByteDataToJSON(filename: string) {
+function _parseByteDataToJSON(
+  filename: string,
+  timestampFormat: TimestampFormat = TimestampFormat.ISO_8601
+) {
   const byte_data = fs.readFileSync(path.resolve(__dirname, filename));
-  return JSON.parse(JSON.stringify(parseFeatherQueryResponse(byte_data)));
+  return JSON.parse(
+    JSON.stringify(
+      parseFeatherQueryResponse(byte_data, {
+        timestampFormat,
+      })
+    )
+  );
 }
 
 function _readJson(filename: string) {
@@ -36,6 +46,15 @@ describe("parseFeatherQueryResponse", () => {
   it("should handle a multi-query feather response", () => {
     const bytes = _parseByteDataToJSON("binaries/uncompressed_multi.bytes");
     const json = _readJson("json/uncompressed_multi.json");
+    expect(bytes).toMatchObject(json);
+  });
+
+  it("should handle a feather response with epoch_millis timestamp option passed in", () => {
+    const bytes = _parseByteDataToJSON(
+      "binaries/uncompressed_multi.bytes",
+      TimestampFormat.EPOCH_MILLIS
+    );
+    const json = _readJson("json/uncompressed_multi_epoch_millis.json");
     expect(bytes).toMatchObject(json);
   });
 
@@ -65,7 +84,9 @@ describe("parseFeatherQueryResponse", () => {
     );
 
     const tryToParseCompressed = () =>
-      parseFeatherQueryResponse(single_bytes_compressed);
+      parseFeatherQueryResponse(single_bytes_compressed, {
+        timestampFormat: TimestampFormat.ISO_8601,
+      });
 
     expect(tryToParseCompressed).toThrow(
       "Record batch compression not implemented"

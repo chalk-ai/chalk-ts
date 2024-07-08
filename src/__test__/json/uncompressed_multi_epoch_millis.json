@@ -5,29 +5,29 @@
         "user.random_normal": -2.504300832748413,
         "user.full_name": "Donna Davis",
         "user.id": 1,
-        "user.__chalk_observed_at__": "2024-04-10T00:16:50.149Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
       },
       {
         "user.random_normal": -1.4988536834716797,
         "user.full_name": "William Johnson",
         "user.id": 2,
-        "user.__chalk_observed_at__": "2024-04-10T00:16:50.149Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
       },
       {
         "user.random_normal": 1.758903980255127,
         "user.full_name": "Jasmine Perry",
         "user.id": 3,
-        "user.__chalk_observed_at__": "2024-04-10T00:16:50.149Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
       },
       {
         "user.random_normal": 1.3693839311599731,
         "user.full_name": "Matthew Roth",
         "user.id": 4,
-        "user.__chalk_observed_at__": "2024-04-10T00:16:50.149Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "user.__chalk_observed_at__": 1712708210149.395,
+        "__ts__": 1712708210149.395
       }
     ],
     "meta": {
@@ -47,29 +47,29 @@
         "transaction.amount": 623,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 1,
-        "transaction.ts": "2023-02-02T07:15:53.833Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "transaction.ts": 1675322153833.177,
+        "__ts__": 1712708210149.395
       },
       {
         "transaction.amount": 597,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 2,
-        "transaction.ts": "2023-01-21T15:01:31.406Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "transaction.ts": 1674313291406.393,
+        "__ts__": 1712708210149.395
       },
       {
         "transaction.amount": 514,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 3,
-        "transaction.ts": "2023-02-04T05:53:55.989Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "transaction.ts": 1675490035989.8472,
+        "__ts__": 1712708210149.395
       },
       {
         "transaction.amount": 902,
         "transaction.user.full_name": "Norma Fisher",
         "transaction.id": 4,
-        "transaction.ts": "2023-02-22T04:25:17.026Z",
-        "__ts__": "2024-04-10T00:16:50.149Z"
+        "transaction.ts": 1677039917026.701,
+        "__ts__": 1712708210149.395
       }
     ],
     "meta": {

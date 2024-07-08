@@ -76,6 +76,20 @@ export interface RawQueryResponseMeta {
   explain_output?: string;
 }
 
+type InternalPrimitiveType =
+  | "str"
+  | "int"
+  | "float"
+  | "bool"
+  | "datetime.date"
+  | "datetime.datetime"
+  | "datetime.time"
+  | "datetime.timedelta";
+
+export type ChalkPrimitiveType = `<class '${InternalPrimitiveType}'>`;
+export const CHALK_DATE_TYPES: Set<ChalkPrimitiveType | undefined | null> =
+  new Set([`<class 'datetime.date'>`, `<class 'datetime.datetime'>`]);
+
 const APPLICATION_JSON = "application/json;charset=utf-8";
 const APPLICATION_OCTET = "application/octet-stream";
 
@@ -143,12 +157,36 @@ interface ChalkErrorData {
   resolver?: string;
 }
 
+export interface ChalkOnlineQueryRawData {
+  field: string;
+  value: any;
+  pkey?: null | string | number;
+  error?: ChalkErrorData;
+  ts?: string;
+  meta?: {
+    chosen_resolver_fqn?: string;
+    cache_hit?: boolean;
+    primitive_type?: ChalkPrimitiveType;
+    version?: number;
+  };
+}
+
+export interface ChalkOnlineQueryRawResponse {
+  data: ChalkOnlineQueryRawData[];
+  errors?: ChalkErrorData[];
+  meta?: RawQueryResponseMeta;
+}
+
 export class ChalkHTTPService {
   private fetchClient: CustomFetchClient;
   private fetchHeaders: typeof Headers;
   private defaultTimeout: number | undefined;
 
-  constructor(fetchClient?: CustomFetchClient, fetchHeaders?: typeof Headers, defaultTimeout?: number) {
+  constructor(
+    fetchClient?: CustomFetchClient,
+    fetchHeaders?: typeof Headers,
+    defaultTimeout?: number
+  ) {
     this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
     this.fetchHeaders = fetchHeaders ?? isoHeaders;
     this.defaultTimeout = defaultTimeout;
@@ -197,7 +235,7 @@ export class ChalkHTTPService {
       const effectiveTimeout = callArgs.timeout ?? this.defaultTimeout;
 
       if (effectiveTimeout != null) {
-          headers.set("X-Chalk-Timeout", effectiveTimeout.toString());
+        headers.set("X-Chalk-Timeout", effectiveTimeout.toString());
       }
 
       const body =
@@ -207,36 +245,40 @@ export class ChalkHTTPService {
             : callArgs.body
           : undefined;
 
-
       try {
-          const result = await this.fetchClient(
-              urlJoin(callArgs.baseUrl, opts.path),
-              {
-                  method: opts.method,
-                  headers,
-                  body: body as any,
-                  signal: effectiveTimeout != null ? AbortSignal.timeout(effectiveTimeout) : undefined
-              }
-          );
-          if (result.status < 200 || result.status >= 300) {
-            const errorText = await result.text();
-            throw new ChalkError(errorText, {
-              httpStatus: result.status,
-              httpStatusText: result.statusText,
-            });
+        const result = await this.fetchClient(
+          urlJoin(callArgs.baseUrl, opts.path),
+          {
+            method: opts.method,
+            headers,
+            body: body as any,
+            signal:
+              effectiveTimeout != null
+                ? AbortSignal.timeout(effectiveTimeout)
+                : undefined,
           }
+        );
+        if (result.status < 200 || result.status >= 300) {
+          const errorText = await result.text();
+          throw new ChalkError(errorText, {
+            httpStatus: result.status,
+            httpStatusText: result.statusText,
+          });
+        }
 
-          if (opts.binaryResponseBody) {
-            return result.arrayBuffer() as any;
-          } else {
-            return result.json() as any as TResponseBody;
-          }
+        if (opts.binaryResponseBody) {
+          return result.arrayBuffer() as any;
+        } else {
+          return result.json() as any as TResponseBody;
+        }
       } catch (e) {
-          if (e instanceof DOMException) {
-              throw chalkError("Request timed out after " + effectiveTimeout + "ms");
-          } else {
-              throw e;
-          }
+        if (e instanceof DOMException) {
+          throw chalkError(
+            "Request timed out after " + effectiveTimeout + "ms"
+          );
+        } else {
+          throw e;
+        }
       }
     };
 
@@ -322,23 +364,7 @@ export class ChalkHTTPService {
       include_meta: boolean;
       planner_options?: { [index: string]: string | boolean | number };
     },
-    responseBody: null! as {
-      data: {
-        field: string;
-        value: any;
-        pkey?: null | string | number;
-        error?: ChalkErrorData;
-        ts?: string;
-        meta?: {
-          chosen_resolver_fqn?: string;
-          cache_hit?: boolean;
-          primitive_type?: string;
-          version?: number;
-        };
-      }[];
-      errors?: ChalkErrorData[];
-      meta?: RawQueryResponseMeta;
-    },
+    responseBody: null! as ChalkOnlineQueryRawResponse,
   });
 
   public v1_query_feather = this.createEndpoint({

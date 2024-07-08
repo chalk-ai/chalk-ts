@@ -19,15 +19,15 @@ import {
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
+  TimestampFormat,
 } from "./_interface";
-import { mapRawResponseMeta } from "./_meta";
 import {
   ChalkClientConfig,
   ChalkEnvironmentVariables,
   ChalkScalar,
   CustomFetchClient,
 } from "./_types";
-import { fromEntries } from "./_utils";
+import { parseOnlineQueryResponse } from "./_response";
 
 export interface ChalkClientOpts {
   /**
@@ -38,7 +38,7 @@ export interface ChalkClientOpts {
   clientId?: string;
 
   /**
-   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
+   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_SECRET environment variable if not set explicitly.
    *
    * If not specified and unset by your environment, an error will be thrown on client creation
    */
@@ -76,6 +76,13 @@ export interface ChalkClientOpts {
    */
   fetchHeaders?: typeof Headers;
 
+  /**
+   * The format to use for date-type data.
+   *
+   * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS" as number of milliseconds since epoch
+   */
+  timestampFormat?: ChalkClientConfig["timestampFormat"];
+
   defaultTimeout?: number;
 }
 
@@ -99,11 +106,11 @@ function valueWithEnvFallback(
 }
 
 export interface ChalkRequestOptions {
-    /**
-     * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
-     * specified at the client level.
-     */
-    timeout?: number;
+  /**
+   * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
+   * specified at the client level.
+   */
+  timeout?: number;
 }
 
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
@@ -123,21 +130,26 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         opts?.activeEnvironment ??
         process.env._CHALK_ACTIVE_ENVIRONMENT ??
         undefined,
-      clientSecret: valueWithEnvFallback(
-        "clientSecret",
-        opts?.clientSecret,
-        "_CHALK_CLIENT_SECRET"
-      ),
       apiServer: resolvedApiServer,
-      queryServer,
       clientId: valueWithEnvFallback(
         "clientId",
         opts?.clientId,
         "_CHALK_CLIENT_ID"
       ),
+      clientSecret: valueWithEnvFallback(
+        "clientSecret",
+        opts?.clientSecret,
+        "_CHALK_CLIENT_SECRET"
+      ),
+      queryServer,
+      timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
     };
 
-    this.http = new ChalkHTTPService(opts?.fetch, opts?.fetchHeaders, opts?.defaultTimeout);
+    this.http = new ChalkHTTPService(
+      opts?.fetch,
+      opts?.fetchHeaders,
+      opts?.defaultTimeout
+    );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
   }
@@ -203,42 +215,18 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       },
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: requestOptions?.timeout
+      timeout: requestOptions?.timeout,
     });
 
-    // Alias the map values, so that TypeScript can help us construct the response.
-    type FeatureEntry = ChalkOnlineQueryResponse<
-      TFeatureMap,
-      TOutput
-    >["data"][any];
-
-    return {
-      data: fromEntries(
-        rawResult.data.map((d): [string, FeatureEntry] => [
-          d.field,
-          {
-            value: d.value,
-            computedAt: d.ts != null ? new Date(d.ts) : undefined,
-            error: d.error,
-            meta: d.meta && {
-              chosenResolverFqn: d.meta.chosen_resolver_fqn,
-              cacheHit: d.meta.cache_hit,
-              primitiveType: d.meta.primitive_type,
-              version: d.meta.version,
-            },
-          },
-        ])
-      ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
-      errors:
-        rawResult.errors == null || rawResult.errors.length
-          ? undefined
-          : rawResult.errors,
-      meta: rawResult.meta ? mapRawResponseMeta(rawResult.meta) : undefined,
-    };
+    return parseOnlineQueryResponse<TFeatureMap, TOutput>(
+      rawResult,
+      this.config
+    );
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
-    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>, requestOptions?: ChalkRequestOptions
+    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>,
+    requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
     const requests = request.queries.map(
       (singleQuery): IntermediateRequestBodyJSON<TFeatureMap, TOutput> => {
@@ -264,11 +252,11 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: requestOptions?.timeout
+      timeout: requestOptions?.timeout,
     });
 
     const resultBuffer = Buffer.from(rawResult);
-    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer, this.config);
 
     return {
       responses: parsedResult,
@@ -300,11 +288,11 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: requestBuffer.buffer,
       headers: this.getDefaultHeaders(),
       credentials: this.credentials,
-      timeout: requestOptions?.timeout
+      timeout: requestOptions?.timeout,
     });
 
     const resultBuffer = Buffer.from(rawResult);
-    const parsedResult = parseFeatherQueryResponse(resultBuffer);
+    const parsedResult = parseFeatherQueryResponse(resultBuffer, this.config);
     const firstAndOnlyChunk = parsedResult[0];
 
     return firstAndOnlyChunk;
