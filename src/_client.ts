@@ -79,7 +79,7 @@ export interface ChalkClientOpts {
   /**
    * The format to use for date-type data.
    *
-   * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS"
+   * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS" as number of milliseconds since epoch
    */
   timestampFormat?: ChalkClientConfig["timestampFormat"];
 

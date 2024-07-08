@@ -119,6 +119,13 @@ new ChalkClient({
    * If not provided, the client will use the default fetch Headers polyfill (native fetch with node-fetch as a fallback).
    */
   fetchHeaders?: typeof Headers;
+
+  /**
+   * The format to use for date-type data.
+   *
+   * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS" as number of milliseconds since epoch
+   */
+  timestampFormat?: TimestampFormat.ISO_8601 | TimestampFormat.EPOCH_MILLIS;
 })
 ```
 
