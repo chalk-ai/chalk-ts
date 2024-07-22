@@ -57,9 +57,9 @@ export const parseOnlineQueryResponse = <
       })
     ) as ChalkOnlineQueryResponse<TFeatureMap, TOutput>["data"],
     errors:
-      rawResult.errors == null || rawResult.errors.length
-        ? undefined
-        : rawResult.errors,
+      rawResult.errors != null && rawResult.errors.length > 0
+        ? rawResult.errors
+        : undefined,
     meta: rawResult.meta ? mapRawResponseMeta(rawResult.meta) : undefined,
   };
 };
