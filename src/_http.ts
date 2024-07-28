@@ -162,6 +162,7 @@ export interface ChalkOnlineQueryRawData {
   value: any;
   pkey?: null | string | number;
   error?: ChalkErrorData;
+  valid?: boolean;
   ts?: string;
   meta?: {
     chosen_resolver_fqn?: string;

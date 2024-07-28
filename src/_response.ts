@@ -46,6 +46,7 @@ export const parseOnlineQueryResponse = <
             value: processDataValue(d, shouldConvertTimestampsToMillis),
             computedAt: d.ts != null ? new Date(d.ts) : undefined,
             error: d.error,
+            valid: d.valid,
             meta: d.meta && {
               chosenResolverFqn: d.meta.chosen_resolver_fqn,
               cacheHit: d.meta.cache_hit,
