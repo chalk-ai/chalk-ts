@@ -232,6 +232,9 @@ export interface ChalkOnlineQueryResponse<
       // If no error occurred, this field is empty.
       error?: ChalkError;
 
+      // If an error occurred resolving this feature, this field will be 'false'.
+      valid?: boolean;
+
       // Only included if `include_meta` is true.
       meta?: ChalkFeatureMeta;
     };
