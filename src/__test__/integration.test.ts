@@ -86,7 +86,7 @@ maybe("integration tests", () => {
         error = e;
       }
       expect((error as any).message).toEqual(
-        `{"detail":"Client ID and secret invalid","message":"Client ID and secret invalid","trace":null}\n`
+        `{"detail":"Client ID and secret are invalid","message":"Client ID and secret are invalid","trace":null}\n`
       );
     });
 
@@ -108,7 +108,7 @@ maybe("integration tests", () => {
         error = e;
       }
       expect((error as any).message).toEqual(
-        `{"detail":"Client ID and secret invalid","message":"Client ID and secret invalid","trace":null}\n`
+        `{"detail":"Client ID and secret are invalid","message":"Client ID and secret are invalid","trace":null}\n`
       );
     });
 
@@ -127,7 +127,7 @@ maybe("integration tests", () => {
         error = e;
       }
       expect((error as any).message).toEqual(
-        `Chalk client parameter 'clientSecret' was not specified when creating your ChalkClient, and was not present as '_CHALK_CLIENT_SECRET' in process.env. This field is required to use Chalk`
+        `Chalk client parameter 'clientId' was not specified when creating your ChalkClient, and was not present as '_CHALK_CLIENT_ID' in process.env. This field is required to use Chalk`
       );
     });
   });
@@ -246,9 +246,9 @@ maybe("integration tests", () => {
       });
 
       expect(Object.keys(result.data).length).toBe(2);
-      expect(result.data[0]["user.id"]).toEqual(1);
+      expect(result.data[0]["user.id"]).toEqual(BigInt(1));
       expect(result.data[0]["user.full_name"]).toEqual("Donna Davis");
-      expect(result.data[1]["user.id"]).toEqual(2);
+      expect(result.data[1]["user.id"]).toEqual(BigInt(2));
       expect(result.data[1]["user.full_name"]).toEqual("William Johnson");
 
       expect(result.meta).toBeDefined();
