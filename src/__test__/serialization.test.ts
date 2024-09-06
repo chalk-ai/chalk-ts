@@ -34,7 +34,7 @@ describe("featherRequestHeaderFromBody", () => {
       },
       feather_body_type: "RECORD_BATCHES",
       response_compression_scheme: "uncompressed",
-      client_supports_64bit: false,
+      client_supports_64bit: true,
     });
   });
 

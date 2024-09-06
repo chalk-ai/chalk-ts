@@ -3,10 +3,9 @@ import {
   DataType,
   Table,
   vectorFromArray,
-  Date_,
-  DateUnit,
   Timestamp,
   TimeUnit,
+  Utf8,
 } from "apache-arrow";
 import { RawQueryResponseMeta } from "./_http";
 import { ChalkError, ChalkQueryMeta, TimestampFormat } from "./_interface";
@@ -128,9 +127,9 @@ export function processArrowTable(
       timestampFormat === TimestampFormat.ISO_8601 &&
       DataType.isTimestamp(vector.type)
     ) {
-      const newVector = vectorFromArray<Date_>(
-        Array.from(vector, (data) => new Date(data)),
-        new Date_(DateUnit.MILLISECOND)
+      const newVector = vectorFromArray<Utf8>(
+        Array.from(vector, (data) => (new Date(data)).toISOString()),
+        new Utf8()
       );
       newTable = newTable.setChildAt(index, newVector);
     } else if (
@@ -141,6 +140,7 @@ export function processArrowTable(
         Array.from(vector, (data) => new Date(data)),
         new Timestamp(TimeUnit.MILLISECOND)
       );
+
       newTable = newTable.setChildAt(index, newVector);
     }
   }

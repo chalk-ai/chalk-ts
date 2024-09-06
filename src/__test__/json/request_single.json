@@ -9,7 +9,7 @@
       },
       "feather_body_type": "RECORD_BATCHES",
       "response_compression_scheme": "uncompressed",
-      "client_supports_64bit": false
+      "client_supports_64bit": true
     },
     "body": {
       "schema": {
@@ -19,7 +19,7 @@
             "type": {
               "precision": 2
             },
-            "nullable": false,
+            "nullable": true,
             "metadata": {}
           }
         ],
@@ -36,7 +36,7 @@
                 "type": {
                   "precision": 2
                 },
-                "nullable": false,
+                "nullable": true,
                 "metadata": {}
               }
             ],
@@ -52,7 +52,7 @@
                   "type": {
                     "precision": 2
                   },
-                  "nullable": false,
+                  "nullable": true,
                   "metadata": {}
                 }
               ]
