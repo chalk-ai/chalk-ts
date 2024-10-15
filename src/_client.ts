@@ -56,11 +56,20 @@ export interface ChalkClientOpts {
   queryServer?: string;
 
   /**
-   * The environment that your client will run against. This value will be read from the _CHALK_ACTIVE_ENVIRONMENT environment variable if not set explicitly.
+   * The environment that your client will run against.
+   * This value will be read from the _CHALK_ACTIVE_ENVIRONMENT environment variable if not set explicitly.
    *
    * If not specified and unset by your environment, an error will be thrown on client creation
    */
   activeEnvironment?: string;
+
+  /**
+   * If specified, Chalk will route all requests from this client instance to the relevant branch.
+   * This value will be read from the _CHALK_BRANCH environment variable if not set explicitly.
+   *
+   * Some methods allow you to override this instance-level branch configuration by passing in a `branch` argument.
+   */
+  branch?: string;
 
   /**
    * A custom fetch client that will replace the fetch polyfill used by default.
@@ -107,6 +116,11 @@ function valueWithEnvFallback(
 
 export interface ChalkRequestOptions {
   /**
+   * If specified, Chalk will route this request to the relevant branch. Overrides the branch passed in to the
+   * client initialization.
+   */
+  branch?: string;
+  /**
    * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
    * specified at the client level.
    */
@@ -131,6 +145,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         process.env._CHALK_ACTIVE_ENVIRONMENT ??
         undefined,
       apiServer: resolvedApiServer,
+      branch: opts?.branch ?? process.env._CHALK_BRANCH ?? undefined,
       clientId: valueWithEnvFallback(
         "clientId",
         opts?.clientId,
@@ -157,7 +172,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async whoami(): Promise<ChalkWhoamiResponse> {
     return this.http.v1_who_am_i({
       baseUrl: this.config.apiServer,
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(),
       credentials: this.credentials,
     });
   }
@@ -168,7 +183,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       pathParams: {
         run_id: runId,
       },
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(),
       credentials: this.credentials,
     });
   }
@@ -181,7 +196,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: {
         resolver_fqn: request.resolverFqn,
       },
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(),
       credentials: this.credentials,
     });
   }
@@ -213,7 +228,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         include_meta: !!request.include_meta,
         planner_options: request.plannerOptions,
       },
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
     });
@@ -250,7 +265,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const rawResult = await this.http.v1_query_feather({
       baseUrl: this.config.queryServer,
       body: requestBuffer.buffer,
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
     });
@@ -286,7 +301,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const rawResult = await this.http.v1_query_feather({
       baseUrl: this.config.queryServer,
       body: requestBuffer.buffer,
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
     });
@@ -312,7 +327,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         correlation_id: request.correlationId,
         deployment_id: request.previewDeploymentId,
       },
-      headers: this.getDefaultHeaders(),
+      headers: this.getHeaders(),
       credentials: this.credentials,
     });
 
@@ -324,10 +339,17 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     }
   }
 
-  private getDefaultHeaders(): ChalkHttpHeaders {
-    return {
+  private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
+    const headers: ChalkHttpHeaders = {
       "X-Chalk-Env-Id": this.config.activeEnvironment,
       "User-Agent": "chalk-ts v1.17.0",
     };
+
+    const branch = requestOptions?.branch ?? this.config.branch;
+    if (branch != null) {
+      headers["X-Chalk-Branch-Id"] = branch;
+    }
+
+    return headers;
   }
 }

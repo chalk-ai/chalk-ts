@@ -1,9 +1,9 @@
 import { TimestampFormat } from "./_interface";
 
-
 export interface ChalkClientConfig {
   activeEnvironment: string | undefined;
   apiServer: string;
+  branch: string | undefined;
   clientId: string;
   clientSecret: string;
   queryServer: string;
@@ -24,6 +24,7 @@ export interface ChalkEnvironmentVariables {
   _CHALK_API_SERVER: string;
   _CHALK_QUERY_SERVER: string;
   _CHALK_ACTIVE_ENVIRONMENT: string;
+  _CHALK_BRANCH: string;
 }
 
 /**

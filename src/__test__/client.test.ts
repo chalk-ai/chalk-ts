@@ -34,16 +34,18 @@ describe("ChalkClient", () => {
     const client = new ChalkClient({
       activeEnvironment: "a",
       apiServer: "b",
-      clientId: "c",
-      clientSecret: "d",
+      branch: "c",
+      clientId: "d",
+      clientSecret: "e",
       timestampFormat: TimestampFormat.EPOCH_MILLIS,
     });
 
     expect(getConfig(client)).toEqual<ChalkClientConfig>({
       activeEnvironment: "a",
       apiServer: "b",
-      clientId: "c",
-      clientSecret: "d",
+      branch: "c",
+      clientId: "d",
+      clientSecret: "e",
       queryServer: "b",
       timestampFormat: TimestampFormat.EPOCH_MILLIS,
     });
@@ -52,6 +54,7 @@ describe("ChalkClient", () => {
   it("reads from environment variables when set", () => {
     process.env._CHALK_ACTIVE_ENVIRONMENT = "env";
     process.env._CHALK_API_SERVER = "http://localhost:8000";
+    process.env._CHALK_BRANCH = "not_a_real_branch";
     process.env._CHALK_CLIENT_ID = "client_id";
     process.env._CHALK_CLIENT_SECRET = "secret";
     process.env._CHALK_QUERY_SERVER = "http://localhost:1337";
@@ -61,6 +64,7 @@ describe("ChalkClient", () => {
     expect(getConfig(client)).toEqual<ChalkClientConfig>({
       activeEnvironment: "env",
       apiServer: "http://localhost:8000",
+      branch: "not_a_real_branch",
       clientId: "client_id",
       clientSecret: "secret",
       queryServer: "http://localhost:1337",
@@ -84,6 +88,7 @@ describe("ChalkClient", () => {
     expect(getConfig(client)).toEqual<ChalkClientConfig>({
       activeEnvironment: undefined,
       apiServer: DEFAULT_API_SERVER,
+      branch: undefined,
       clientId: "client_id",
       clientSecret: "secret",
       queryServer: DEFAULT_API_SERVER,
@@ -99,6 +104,7 @@ describe("ChalkClient", () => {
     expect(getConfig(client)).toEqual<ChalkClientConfig>({
       activeEnvironment: undefined,
       apiServer: DEFAULT_API_SERVER,
+      branch: undefined,
       clientId: "client_id",
       clientSecret: "secret",
       queryServer: "query server",
