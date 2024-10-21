@@ -7,6 +7,7 @@ import { ChalkErrorCategory, ChalkErrorCode } from "./_interface";
 
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
+  "X-Chalk-Branch-Id"?: string;
   "User-Agent"?: string;
 }
 
@@ -237,6 +238,10 @@ export class ChalkHTTPService {
 
       if (effectiveTimeout != null) {
         headers.set("X-Chalk-Timeout", effectiveTimeout.toString());
+      }
+
+      if (callArgs.headers?.["X-Chalk-Branch-Id"] != null) {
+        headers.set("X-Chalk-Branch-Id", callArgs.headers["X-Chalk-Branch-Id"]);
       }
 
       const body =
