@@ -1,6 +1,6 @@
 import { parseFeatherQueryResponse } from "./_bulk_response";
 import { DEFAULT_API_SERVER } from "./_const";
-import { chalkError } from "./_errors";
+import { ChalkError } from "./_errors";
 import {
   IntermediateRequestBodyJSON,
   serializeMultipleQueryInputFeather,
@@ -333,7 +333,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
 
     if (rawResult.errors != null && rawResult.errors.length > 0) {
       const errorText = rawResult.errors.map((e) => e.message).join("; ");
-      throw chalkError(errorText, {
+      throw new ChalkError(errorText, {
         info: rawResult.errors,
       });
     }

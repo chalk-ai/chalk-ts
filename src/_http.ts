@@ -1,9 +1,9 @@
-import { chalkError, ChalkError, isChalkError } from "./_errors";
+import { ChalkError, isChalkError } from "./_errors";
 import { ChalkClientConfig, CustomFetchClient } from "./_types";
 import { urlJoin } from "./_utils";
 
 import { USER_AGENT } from "./_user_agent";
-import { ChalkErrorCategory, ChalkErrorCode } from "./_interface";
+import { ChalkErrorData } from "./_interface";
 
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
@@ -128,9 +128,9 @@ export class CredentialsHolder {
         if (isChalkError(e)) {
           throw e;
         } else if (e instanceof Error) {
-          throw chalkError(e.message);
+          throw new ChalkError(e.message);
         } else {
-          throw chalkError(
+          throw new ChalkError(
             "Unable to authenticate to Chalk servers. Please check your environment config"
           );
         }
@@ -143,19 +143,6 @@ export class CredentialsHolder {
   clear() {
     this.credentials = null;
   }
-}
-
-interface ChalkErrorData {
-  code: ChalkErrorCode;
-  category: ChalkErrorCategory;
-  message: string;
-  exception?: {
-    kind: string;
-    message: string;
-    stacktrace: string;
-  };
-  feature?: string;
-  resolver?: string;
 }
 
 export interface ChalkOnlineQueryRawData {
@@ -279,7 +266,7 @@ export class ChalkHTTPService {
         }
       } catch (e) {
         if (e instanceof DOMException) {
-          throw chalkError(
+          throw new ChalkError(
             "Request timed out after " + effectiveTimeout + "ms"
           );
         } else {
