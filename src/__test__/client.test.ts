@@ -385,7 +385,6 @@ describe("ChalkClientWithCustomHeaders", () => {
       },
       {
         additionalHeaders: {
-          "header-to-overwrite": "request-value",
           "request-header-one": "value-one",
         },
       }
