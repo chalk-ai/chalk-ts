@@ -23,6 +23,7 @@ maybe("integration tests", () => {
     client = new ChalkClient<FraudTemplateFeatures>({
       clientId: process.env.CI_CHALK_CLIENT_ID,
       clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+      apiServer: "https://api.chalk.ai",
     });
   });
 
