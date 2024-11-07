@@ -93,6 +93,9 @@ export const CHALK_DATE_TYPES: Set<ChalkPrimitiveType | undefined | null> =
 
 const APPLICATION_JSON = "application/json;charset=utf-8";
 const APPLICATION_OCTET = "application/octet-stream";
+const CHALK_QUERY_SERVER_DIRECT_HEADERS = {
+  "X-Chalk-Deployment-Type": "engine",
+};
 
 interface ClientCredentials {
   access_token: string;
@@ -183,15 +186,18 @@ export class ChalkHTTPService {
   private fetchClient: CustomFetchClient;
   private fetchHeaders: typeof Headers;
   private defaultTimeout: number | undefined;
+  private additionalHeaders: Record<string, string> | undefined;
 
   constructor(
     fetchClient?: CustomFetchClient,
     fetchHeaders?: typeof Headers,
-    defaultTimeout?: number
+    defaultTimeout?: number,
+    additionalHeaders?: Record<string, string>
   ) {
     this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
     this.fetchHeaders = fetchHeaders ?? isoHeaders;
     this.defaultTimeout = defaultTimeout;
+    this.additionalHeaders = additionalHeaders;
   }
 
   private createEndpoint<
@@ -202,6 +208,7 @@ export class ChalkHTTPService {
   >(opts: {
     path: TPath;
     authKind: TAuthKind;
+    endpointHeaders?: Record<string, string>;
     method: "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
     requestBody?: TRequestBody;
     responseBody?: TResponseBody;
@@ -226,12 +233,10 @@ export class ChalkHTTPService {
         headers.set("Authorization", `Bearer ${credentials.access_token}`);
       }
 
+      // the environment header from the credentials will be overridden by any
+      // environment that is set locally via callArgs.headers
       if (credentials?.primary_environment != null && credentials != null) {
         headers.set("X-Chalk-Env-Id", credentials.primary_environment);
-      }
-
-      if (callArgs.headers?.["X-Chalk-Env-Id"] != null) {
-        headers.set("X-Chalk-Env-Id", callArgs.headers["X-Chalk-Env-Id"]);
       }
 
       const effectiveTimeout = callArgs.timeout ?? this.defaultTimeout;
@@ -240,8 +245,25 @@ export class ChalkHTTPService {
         headers.set("X-Chalk-Timeout", effectiveTimeout.toString());
       }
 
-      if (callArgs.headers?.["X-Chalk-Branch-Id"] != null) {
-        headers.set("X-Chalk-Branch-Id", callArgs.headers["X-Chalk-Branch-Id"]);
+      // Explicit precedence:
+      // 1. callArgs.headers are provided at the time the function is called.
+      // 2. this.additionalHeaders are provided when the client is created.
+      // 3. opts.endpointHeaders are provided when the endpoint is created.
+      // So call site > client > endpoint
+      if (opts.endpointHeaders != null) {
+        for (const [key, value] of Object.entries(opts.endpointHeaders)) {
+          headers.set(key, value);
+        }
+      }
+      if (this.additionalHeaders != null) {
+        for (const [key, value] of Object.entries(this.additionalHeaders)) {
+          headers.set(key, value);
+        }
+      }
+      if (callArgs.headers != null) {
+        for (const [key, value] of Object.entries(callArgs.headers)) {
+          headers.set(key, value);
+        }
       }
 
       const body =
@@ -345,6 +367,7 @@ export class ChalkHTTPService {
     method: "POST",
     path: "/v1/query/online",
     authKind: "required",
+    endpointHeaders: CHALK_QUERY_SERVER_DIRECT_HEADERS,
     requestBody: null! as {
       inputs: {
         [fqn: string]: any;
@@ -377,6 +400,7 @@ export class ChalkHTTPService {
     method: "POST",
     path: "/v1/query/feather",
     authKind: "required",
+    endpointHeaders: CHALK_QUERY_SERVER_DIRECT_HEADERS,
     requestBody: null! as ArrayBufferLike,
     binaryResponseBody: true,
   });

@@ -72,6 +72,11 @@ export interface ChalkClientOpts {
   branch?: string;
 
   /**
+   * Additional headers to include in all requests made by this client instance.
+   */
+  additionalHeaders?: Record<string, string>;
+
+  /**
    * A custom fetch client that will replace the fetch polyfill used by default.
    *
    * If not provided, the client will use the default fetch polyfill (native fetch with node-fetch as a fallback).
@@ -79,7 +84,8 @@ export interface ChalkClientOpts {
   fetch?: CustomFetchClient;
 
   /**
-   * A custom fetch headers object that will replace the fetch Headers polyfill used by default.
+   * A custom fetch headers object that will replace the fetch Headers polyfill used by default. This is primarily for use
+   * with a custom fetch client, and is not the preferred way to add additional headers to requests.
    *
    * If not provided, the client will use the default fetch Headers polyfill (native fetch with node-fetch as a fallback).
    */
@@ -125,6 +131,10 @@ export interface ChalkRequestOptions {
    * specified at the client level.
    */
   timeout?: number;
+  /**
+   * Additional headers to include in this request. These headers will be merged with the headers provided at the client level.
+   */
+  additionalHeaders?: Record<string, string>;
 }
 
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
@@ -163,7 +173,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     this.http = new ChalkHTTPService(
       opts?.fetch,
       opts?.fetchHeaders,
-      opts?.defaultTimeout
+      opts?.defaultTimeout,
+      opts?.additionalHeaders
     );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
@@ -340,14 +351,19 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
-    const headers: ChalkHttpHeaders = {
-      "X-Chalk-Env-Id": this.config.activeEnvironment,
-      "User-Agent": "chalk-ts v1.17.0",
-    };
+    const headers: ChalkHttpHeaders = this.config.activeEnvironment
+      ? {
+          "X-Chalk-Env-Id": this.config.activeEnvironment,
+        }
+      : {};
 
     const branch = requestOptions?.branch ?? this.config.branch;
     if (branch != null) {
       headers["X-Chalk-Branch-Id"] = branch;
+    }
+
+    if (requestOptions?.additionalHeaders != null) {
+      Object.assign(headers, requestOptions.additionalHeaders);
     }
 
     return headers;
