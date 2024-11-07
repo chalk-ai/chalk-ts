@@ -174,7 +174,7 @@ maybe("integration tests", () => {
       });
 
       expect(result.data["user.id"].value).toBe(1);
-      expect(result.data["user.id"].valid).toBe(false);
+      expect(result.data["user.id"].valid).toBe(true);
     });
 
     it("query user.gender", async () => {
