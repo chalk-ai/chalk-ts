@@ -508,7 +508,7 @@ __metadata:
   dependencies:
     "@types/jest": ^29.5.11
     "@types/node": ^18.11.9
-    apache-arrow: ^17.0.0
+    apache-arrow: ^18.0.0
     jest: ^29.7.0
     node-fetch: ^2.6.6
     prettier: ^2.7.1
@@ -1176,9 +1176,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:^17.0.0":
-  version: 17.0.0
-  resolution: "apache-arrow@npm:17.0.0"
+"apache-arrow@npm:^18.0.0":
+  version: 18.0.0
+  resolution: "apache-arrow@npm:18.0.0"
   dependencies:
     "@swc/helpers": ^0.5.11
     "@types/command-line-args": ^5.2.3
@@ -1190,8 +1190,8 @@ __metadata:
     json-bignum: ^0.0.3
     tslib: ^2.6.2
   bin:
-    arrow2csv: bin/arrow2csv.cjs
-  checksum: 0533010044b36ec5b3c5d8def3f28039ffdab5381d0e21f4623f5136edceb76abd472a4d231cfac6308848af1cb2d1e4093792a2d826e19333e02a0294a236f6
+    arrow2csv: bin/arrow2csv.js
+  checksum: 81e2032bb8d4e75d729e27b4b14b20f0438586fd24c5c406b8388ca5705e2ae32cc5071f237b7f3eceba7ee9bf9d20659d0d80957ff2104192c605d408d8facc
   languageName: node
   linkType: hard
 
