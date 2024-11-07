@@ -7,6 +7,9 @@ function getConfig(client: ChalkClient): ChalkClientConfig {
   return (client as any).config;
 }
 
+const isoHeaders: typeof Headers =
+  typeof Headers !== "undefined" ? Headers : require("node-fetch").Headers;
+
 describe("ChalkClient", () => {
   let originalEnv: any;
   beforeAll(() => {
@@ -149,7 +152,7 @@ describe("ChalkClientWithCustomHeaders", () => {
         }),
       });
     };
-    class FetchHeadersTest extends Headers {
+    class FetchHeadersTest extends isoHeaders {
       constructor(init?: HeadersInit) {
         super(init);
         Object.entries({ "test-header-key": "test-header-value" }).forEach(
