@@ -23,6 +23,7 @@ maybe("integration tests", () => {
     client = new ChalkClient<FraudTemplateFeatures>({
       clientId: process.env.CI_CHALK_CLIENT_ID,
       clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+      apiServer: "https://api.chalk.ai",
     });
   });
 
@@ -173,7 +174,7 @@ maybe("integration tests", () => {
       });
 
       expect(result.data["user.id"].value).toBe(1);
-      expect(result.data["user.id"].valid).toBe(false);
+      expect(result.data["user.id"].valid).toBe(true);
     });
 
     it("query user.gender", async () => {
