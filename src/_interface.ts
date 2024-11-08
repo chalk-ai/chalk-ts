@@ -170,7 +170,7 @@ export type ChalkErrorCategory =
   // connection failed, or an error occurred within Chalk.
   | "NETWORK";
 
-export interface ChalkError {
+export interface ChalkErrorData {
   // The type of the error.
   code: ChalkErrorCode;
 
@@ -230,7 +230,7 @@ export interface ChalkOnlineQueryResponse<
 
       // The error code encountered in resolving this feature.
       // If no error occurred, this field is empty.
-      error?: ChalkError;
+      error?: ChalkErrorData;
 
       // If an error occurred resolving this feature, this field will be 'false'.
       valid?: boolean;
@@ -242,7 +242,7 @@ export interface ChalkOnlineQueryResponse<
 
   // Errors encountered while running the resolvers.
   // If there are no errors, `errors` will be undefined.
-  errors?: ChalkError[];
+  errors?: ChalkErrorData[];
 
   // Only included if `include_meta` is true.
   meta?: ChalkQueryMeta;
@@ -303,7 +303,7 @@ export interface ChalkOnlineBulkQueryResponse<
     [K in TOutput]: TFeatureMap[K];
   }[];
   meta?: ChalkQueryMeta;
-  errors?: ChalkError[];
+  errors?: ChalkErrorData[];
 }
 
 export type ChalkResolverRunStatus = "received" | "succeeded" | "failed";

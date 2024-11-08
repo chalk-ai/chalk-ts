@@ -8,7 +8,7 @@ import {
   Utf8,
 } from "apache-arrow";
 import { RawQueryResponseMeta } from "./_http";
-import { ChalkError, ChalkQueryMeta, TimestampFormat } from "./_interface";
+import { ChalkErrorData, ChalkQueryMeta, TimestampFormat } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
 import { ChalkClientConfig } from "./_types";
 
@@ -81,7 +81,6 @@ export function parseByteModel(raw: Buffer): ByteModel {
   }
 
   const concatenatedByteObjects2 = raw.subarray(offset, bodyLen2 + offset);
-  offset += bodyLen2;
 
   return {
     attrs: JSON.parse(decoder.decode(attrsBytes)),
@@ -104,7 +103,7 @@ export function sortJsonDictByKeys(json: {
 export interface QueryChunkResult {
   data: any[];
   meta?: ChalkQueryMeta;
-  errors?: ChalkError[];
+  errors?: ChalkErrorData[];
 }
 
 interface QueryChunkResultsWithOffset {
@@ -128,7 +127,7 @@ export function processArrowTable(
       DataType.isTimestamp(vector.type)
     ) {
       const newVector = vectorFromArray<Utf8>(
-        Array.from(vector, (data) => (new Date(data)).toISOString()),
+        Array.from(vector, (data) => new Date(data).toISOString()),
         new Utf8()
       );
       newTable = newTable.setChildAt(index, newVector);

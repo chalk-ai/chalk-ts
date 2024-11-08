@@ -1,25 +1,17 @@
-
-interface ChalkErrorInfo {
-  code: string;
-  category: string;
-  message: string;
-
-  feature?: string;
-  resolver?: string;
-}
+import { ChalkErrorData } from "./_interface";
 
 interface ChalkErrorExtra {
   httpStatus?: number;
   httpStatusText?: string;
-  info?: ChalkErrorInfo[];
+  info?: ChalkErrorData[];
 }
 
 export class ChalkError extends Error {
   public httpStatus: number | undefined;
   public httpStatusText: string | undefined;
-  public info: ChalkErrorInfo[];
+  public info: ChalkErrorData[];
 
-  constructor(message: string, extra: ChalkErrorExtra) {
+  constructor(message: string, extra: ChalkErrorExtra = {}) {
     super(message);
     this.name = ChalkError.name;
     this.httpStatus = extra.httpStatus;
@@ -28,10 +20,6 @@ export class ChalkError extends Error {
   }
 }
 
-export function isChalkError(error: any): error is ChalkError {
+export function isChalkError(error: unknown): error is ChalkError {
   return error instanceof ChalkError;
-}
-
-export function chalkError(message: string, extra?: ChalkErrorExtra) {
-  return new ChalkError(message, extra ?? {});
 }
