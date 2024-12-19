@@ -27,60 +27,87 @@ interface ByteModel {
 export const MULTI_QUERY_MAGIC_STR = "chal1";
 export const MULTI_QUERY_RESPONSE_MAGIC_STR = "CHALK_BYTE_TRANSMISSION";
 
-export function parseByteModel(raw: Buffer): ByteModel {
-  const decoder = new TextDecoder();
-
-  let offset = 0;
-
-  const responseMagicBytes = raw.subarray(
+const assertBufferBeginsWithMagicString = (
+  buf: Buffer,
+  decoder: TextDecoder,
+  offset = 0
+): number => {
+  const responseMagicBytes = buf.subarray(
     offset,
     offset + MULTI_QUERY_RESPONSE_MAGIC_STR.length
   );
-  offset += MULTI_QUERY_RESPONSE_MAGIC_STR.length;
   if (decoder.decode(responseMagicBytes) !== MULTI_QUERY_RESPONSE_MAGIC_STR) {
     throw new Error(
-      "Bulk query response was not prefixed with appropriate string constant"
+      "Bulk query response was not prefixed with appropriate string constant, got "
     );
   }
 
-  let curLen = Number(raw.readBigUInt64BE(offset));
-  offset += 8;
-  const attrsBytes = raw.subarray(offset, curLen + offset);
-  offset += curLen;
+  return offset + +MULTI_QUERY_RESPONSE_MAGIC_STR.length;
+};
 
-  curLen = Number(raw.readBigUint64BE(offset));
-  offset += 8;
-  const pydanticBytes = raw.subarray(offset, curLen + offset);
-  offset += curLen;
+const readBufferFromOffset = (
+  buf: Buffer,
+  offset: number
+): [subBuffer: Buffer, newOffset: number] => {
+  const bufLength = Number(buf.readBigUInt64BE(offset));
+  const offsetFromContent = offset + 8;
+  const subBuffer = buf.subarray(
+    offsetFromContent,
+    offsetFromContent + bufLength
+  );
 
-  curLen = Number(raw.readBigUint64BE(offset));
-  offset += 8;
-  const jsonStr = decoder.decode(raw.subarray(offset, curLen + offset));
-  const jsonParsed = JSON.parse(jsonStr);
-  offset += curLen;
+  return [subBuffer, offsetFromContent + bufLength];
+};
+
+export function parseByteModel(raw: Buffer): ByteModel {
+  const decoder = new TextDecoder();
+
+  const offsetFromMagicString = assertBufferBeginsWithMagicString(raw, decoder);
+
+  const [attrsBytes, offsetFromAttrs] = readBufferFromOffset(
+    raw,
+    offsetFromMagicString
+  );
+  const [pydanticBytes, offsetFromPydantic] = readBufferFromOffset(
+    raw,
+    offsetFromAttrs
+  );
+
+  const [jsonBytes, offsetFromJSON] = readBufferFromOffset(
+    raw,
+    offsetFromPydantic
+  );
+
+  const jsonParsed = JSON.parse(decoder.decode(jsonBytes));
 
   let bodyLen = 0;
 
-  for (let k in jsonParsed) {
+  for (const k in jsonParsed) {
     bodyLen += jsonParsed[k];
   }
 
-  const concatenatedByteObjects = raw.subarray(offset, bodyLen + offset);
-  offset += bodyLen;
+  const concatenatedByteObjects = raw.subarray(
+    offsetFromJSON,
+    bodyLen + offsetFromJSON
+  );
+  const offsetFromBytes = offsetFromJSON + bodyLen;
 
-  curLen = Number(raw.readBigUint64BE(offset));
-  offset += 8;
-  const jsonStr2 = decoder.decode(raw.subarray(offset, curLen + offset));
-  const jsonParsed2 = JSON.parse(jsonStr2);
-  offset += curLen;
+  const [jsonBytes2, offsetFromJSONBytes2] = readBufferFromOffset(
+    raw,
+    offsetFromBytes
+  );
+  const jsonParsed2 = JSON.parse(decoder.decode(jsonBytes2));
 
   let bodyLen2 = 0;
 
-  for (let k in jsonParsed2) {
+  for (const k in jsonParsed2) {
     bodyLen2 += jsonParsed2[k];
   }
 
-  const concatenatedByteObjects2 = raw.subarray(offset, bodyLen2 + offset);
+  const concatenatedByteObjects2 = raw.subarray(
+    offsetFromJSONBytes2,
+    bodyLen2 + offsetFromJSONBytes2
+  );
 
   return {
     attrs: JSON.parse(decoder.decode(attrsBytes)),
