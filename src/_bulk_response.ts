@@ -38,7 +38,7 @@ const assertBufferBeginsWithMagicString = (
   );
   if (decoder.decode(responseMagicBytes) !== MULTI_QUERY_RESPONSE_MAGIC_STR) {
     throw new Error(
-      "Bulk query response was not prefixed with appropriate string constant, got "
+      "Bulk query response was not prefixed with appropriate string constant"
     );
   }
 
