@@ -267,6 +267,11 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
           meta: request.queryMeta,
           query_name: request.queryName,
           staleness: singleQuery.staleness,
+          planner_options: {
+            pack_groups_into_structs: true,
+            // arrow JS implementation cannot handle large lists, must send option to allow parsing
+            pack_groups_avoid_large_list: true,
+          },
         };
       }
     );
@@ -306,7 +311,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       staleness: request.staleness,
       planner_options: {
         pack_groups_into_structs: true,
+        // arrow JS implementation cannot handle large lists, must send option to allow parsing
         pack_groups_avoid_large_list: true,
+        ...request.plannerOptions,
       },
       now: request.now,
     };

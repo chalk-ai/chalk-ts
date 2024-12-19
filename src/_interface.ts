@@ -293,6 +293,9 @@ export interface ChalkOnlineBulkQueryRequest<
 
   // `now` should be an ISO-formatted "zoned datetime" or "instant" string.
   now?: string;
+  // Set additional options to be considered by the Chalk query planner; typically
+  // provided by Chalk support for advanced use cases or beta functionality.
+  plannerOptions?: { [index: string]: string | boolean | number };
 }
 
 export interface ChalkOnlineBulkQueryResponse<
