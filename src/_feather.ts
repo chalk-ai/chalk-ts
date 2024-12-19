@@ -15,6 +15,7 @@ export interface IntermediateRequestBodyJSON<
   meta?: {
     [key: string]: string;
   };
+  planner_options?: Record<string, unknown>;
   query_name?: string;
   staleness?: {
     [K in keyof TFeatureMap]?: string;

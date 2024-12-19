@@ -304,6 +304,10 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       meta: request.queryMeta,
       query_name: request.queryName,
       staleness: request.staleness,
+      planner_options: {
+        pack_groups_into_structs: true,
+        pack_groups_avoid_large_list: true,
+      },
       now: request.now,
     };
 
@@ -350,9 +354,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     }
   }
 
-  private getHeaders(
-    requestOptions?: ChalkRequestOptions,
-  ): ChalkHttpHeaders {
+  private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
     const headers: ChalkHttpHeaders = this.config.activeEnvironment
       ? {
           "X-Chalk-Env-Id": this.config.activeEnvironment,
