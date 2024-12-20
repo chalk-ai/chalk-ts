@@ -10,6 +10,9 @@ export interface IntermediateRequestBodyJSON<
   context?: {
     tags?: string[];
   };
+  query_context?: {
+    [key: string]: string | number | boolean;
+  };
   correlation_id?: string;
   deployment_id?: string;
   meta?: {

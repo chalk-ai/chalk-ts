@@ -66,6 +66,11 @@ export interface ChalkOnlineQueryRequest<
     [key: string]: string;
   };
 
+  // Optional context parameters that will be passed with the query
+  query_context?: {
+    [key: string]: string | number | boolean;
+  };
+
   encodingOptions?: {
     encodeStructsAsObjects?: boolean;
   };
@@ -259,6 +264,10 @@ export interface ChalkOnlineMultiQueryRequest<
   queryMeta?: {
     [key: string]: string;
   };
+  // Optional context parameters that will be passed with the query
+  query_context?: {
+    [key: string]: string | number | boolean;
+  };
   encodingOptions?: {
     encodeStructsAsObjects?: boolean;
   };
@@ -287,6 +296,12 @@ export interface ChalkOnlineBulkQueryRequest<
   queryMeta?: {
     [key: string]: string;
   };
+
+  // Optional context parameters that will be passed with the query
+  query_context?: {
+    [key: string]: string | number | boolean;
+  };
+
   encodingOptions?: {
     encodeStructsAsObjects?: boolean;
   };

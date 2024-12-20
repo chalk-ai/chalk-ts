@@ -356,6 +356,9 @@ export class ChalkHTTPService {
         environment?: string;
         tags?: string[];
       };
+      query_context?: {
+        [key: string]: string | number | boolean;
+      };
       deployment_id?: string;
       correlation_id?: string;
       query_name?: string;
