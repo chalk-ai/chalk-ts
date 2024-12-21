@@ -67,7 +67,7 @@ export interface ChalkOnlineQueryRequest<
   };
 
   // Optional context parameters that will be passed with the query
-  query_context?: {
+  queryContext?: {
     [key: string]: string | number | boolean;
   };
 
@@ -265,7 +265,7 @@ export interface ChalkOnlineMultiQueryRequest<
     [key: string]: string;
   };
   // Optional context parameters that will be passed with the query
-  query_context?: {
+  queryContext?: {
     [key: string]: string | number | boolean;
   };
   encodingOptions?: {
@@ -298,7 +298,7 @@ export interface ChalkOnlineBulkQueryRequest<
   };
 
   // Optional context parameters that will be passed with the query
-  query_context?: {
+  queryContext?: {
     [key: string]: string | number | boolean;
   };
 
