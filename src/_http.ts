@@ -8,7 +8,7 @@ import { ChalkErrorData } from "./_interface";
 /**
  * An interface recording available headers that can be sent to the chalk engine to change its behavior.
  * */
-export interface ChalkHttpHeaders {
+export interface ChalkHttpHeadersStrict {
   "X-Chalk-Env-Id"?: string;
   "X-Chalk-Branch-Id"?: string;
   /**
@@ -21,6 +21,9 @@ export interface ChalkHttpHeaders {
   "X-Chalk-Features-Versioned"?: boolean;
   "User-Agent"?: string;
 }
+
+export type ChalkHttpHeaders = ChalkHttpHeadersStrict &
+  Record<string, string | boolean | number>;
 
 const isoFetch: typeof fetch =
   typeof fetch !== "undefined" ? fetch : require("node-fetch");
@@ -181,13 +184,13 @@ export class ChalkHTTPService {
   private fetchClient: CustomFetchClient;
   private fetchHeaders: typeof Headers;
   private defaultTimeout: number | undefined;
-  private additionalHeaders: Record<string, string> | undefined;
+  private additionalHeaders: ChalkHttpHeaders | undefined;
 
   constructor(
     fetchClient?: CustomFetchClient,
     fetchHeaders?: typeof Headers,
     defaultTimeout?: number,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders?: ChalkHttpHeaders
   ) {
     this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
     this.fetchHeaders = fetchHeaders ?? isoHeaders;
@@ -245,12 +248,12 @@ export class ChalkHTTPService {
       // So call site > client
       if (this.additionalHeaders != null) {
         for (const [key, value] of Object.entries(this.additionalHeaders)) {
-          headers.set(key, value);
+          headers.set(key, `${value}`);
         }
       }
       if (callArgs.headers != null) {
         for (const [key, value] of Object.entries(callArgs.headers)) {
-          headers.set(key, value);
+          headers.set(key, `${value}`);
         }
       }
 
