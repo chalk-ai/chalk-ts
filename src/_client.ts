@@ -365,11 +365,13 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
-    const headers: ChalkHttpHeaders = this.config.activeEnvironment
-      ? {
-          "X-Chalk-Env-Id": this.config.activeEnvironment,
-        }
-      : {};
+    const headers: ChalkHttpHeaders = {
+      "X-Chalk-Features-Versioned": true,
+    };
+
+    if (this.config.activeEnvironment) {
+      headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
+    }
 
     const branch = requestOptions?.branch ?? this.config.branch;
     if (branch != null) {

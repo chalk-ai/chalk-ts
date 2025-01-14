@@ -8,6 +8,7 @@ import { ChalkErrorData } from "./_interface";
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
   "X-Chalk-Branch-Id"?: string;
+  "X-Chalk-Features-Versioned"?: boolean;
   "User-Agent"?: string;
 }
 

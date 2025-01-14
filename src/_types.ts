@@ -38,4 +38,18 @@ declare global {
   }
 }
 
-export type ChalkScalar = string | number | boolean;
+export type ChalkScalarArray = Array<ChalkScalar>;
+
+export interface ChalkScalarObject {
+  [key: string]: ChalkScalar;
+}
+
+/**
+ * Represents a scalar feature value returned by chalk. ChalkScalars
+ */
+export type ChalkScalar =
+  | string
+  | number
+  | boolean
+  | ChalkScalarArray
+  | ChalkScalarObject;
