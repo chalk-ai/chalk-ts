@@ -134,7 +134,8 @@ export interface ChalkRequestOptions {
   /**
    * Additional headers to include in this request. These headers will be merged with the headers provided at the client level.
    */
-  additionalHeaders?: Record<string, string>;
+  additionalHeaders?: ChalkHttpHeaders &
+    Record<string, string | number | boolean>;
 }
 
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
@@ -365,9 +366,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
-    const headers: ChalkHttpHeaders = {
-      "X-Chalk-Features-Versioned": true,
-    };
+    const headers: ChalkHttpHeaders = {};
 
     if (this.config.activeEnvironment) {
       headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;

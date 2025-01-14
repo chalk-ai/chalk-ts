@@ -5,9 +5,19 @@ import { urlJoin } from "./_utils";
 import { USER_AGENT } from "./_user_agent";
 import { ChalkErrorData } from "./_interface";
 
+/**
+ * An interface recording available headers that can be sent to the chalk engine to change its behavior.
+ * */
 export interface ChalkHttpHeaders {
   "X-Chalk-Env-Id"?: string;
   "X-Chalk-Branch-Id"?: string;
+  /**
+   * If true, assumes explicit versioning of the versions and ignores default.
+   * This also means that the output data shape always matches the query requested output.
+   *
+   * ex. class.versioned_feature with a default v2 will return the v1 resolver data under the
+   * field "class.versioned_feature", instead of v2 resolver data on the field "class.versioned_feature@v2"
+   * */
   "X-Chalk-Features-Versioned"?: boolean;
   "User-Agent"?: string;
 }
