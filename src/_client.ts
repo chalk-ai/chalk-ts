@@ -370,7 +370,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
-    const headers: ChalkHttpHeadersStrict = {};
+    const headers: ChalkHttpHeadersStrict = {
+      "X-Chalk-Deployment-Type": "engine",
+    };
 
     if (this.config.activeEnvironment) {
       headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
