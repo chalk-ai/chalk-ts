@@ -38,7 +38,8 @@ interface OnlineQueryFeatherRequestHeader<
   // these are the only currently supported values
   feather_body_type: "RECORD_BATCHES";
   response_compression_scheme: "uncompressed";
-  client_supports_64bit: true;
+  client_supports_64bit: false;
+  client_supported_64bit_types: string[];
 }
 
 export function featherRequestHeaderFromBody<
@@ -52,7 +53,8 @@ export function featherRequestHeaderFromBody<
     ...rest,
     feather_body_type: "RECORD_BATCHES",
     response_compression_scheme: "uncompressed",
-    client_supports_64bit: true,
+    client_supports_64bit: false,
+    client_supported_64bit_types: ["Int64", "LargeBinary"],
   };
 }
 

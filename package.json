@@ -7,7 +7,7 @@
     "prepack": "rm -rf build/ && yarn build && rm -rf build/__test__",
     "test": "jest src/__test__",
     "test:watch": "jest --watch",
-    "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests'",
+    "test:integration": "CHALK_INTEGRATION=1 jest -t='integration tests' --maxWorkers=1",
     "test:integration:watch": "CHALK_INTEGRATION=1 jest --watch -t='integration tests'"
   },
   "dependencies": {
