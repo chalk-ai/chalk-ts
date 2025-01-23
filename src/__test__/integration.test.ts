@@ -89,7 +89,6 @@ maybe("integration tests", () => {
             },
             outputs: ["user.full_name"],
           });
-          console.log(results);
         } catch (e) {
           error = e;
         }
