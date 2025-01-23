@@ -278,6 +278,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
             pack_groups_into_structs: true,
             // arrow JS implementation cannot handle large lists, must send option to allow parsing
             pack_groups_avoid_large_list: true,
+            ...request.plannerOptions,
           },
         };
       }
