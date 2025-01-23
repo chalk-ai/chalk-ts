@@ -108,13 +108,12 @@ maybe("integration tests", () => {
             clientId: "bogus",
             clientSecret: "bogus",
           });
-          const results = await badClient.queryBulk({
+          await badClient.queryBulk({
             inputs: {
               "user.id": [1, 2],
             },
             outputs: ["user.full_name"],
           });
-          console.log(results);
         } catch (e) {
           error = e;
         }
@@ -131,13 +130,12 @@ maybe("integration tests", () => {
         let error = null;
         try {
           const badClient = new ChalkClient<FraudTemplateFeatures>();
-          const results = await badClient.queryBulk({
+          await badClient.queryBulk({
             inputs: {
               "user.id": [1, 2],
             },
             outputs: ["user.full_name"],
           });
-          console.log(results);
         } catch (e) {
           error = e;
         }
@@ -285,7 +283,6 @@ maybe("integration tests", () => {
         });
 
         expect(Object.keys(result.data).length).toBe(2);
-        console.log(result);
         expect(result.data[0]["user.id"]).toEqual(BigInt(1));
         expect(result.data[0]["user.full_name"]).toEqual("Donna Davis");
         expect(result.data[1]["user.id"]).toEqual(BigInt(2));
