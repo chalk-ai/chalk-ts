@@ -326,7 +326,6 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       },
       now: request.now,
     };
-    console.log("hello!", requestBody);
 
     const requestBuffer = serializeMultipleQueryInputFeather([requestBody]);
 
