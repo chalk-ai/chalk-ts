@@ -49,7 +49,7 @@ describe("ChalkClient", () => {
       branch: "c",
       clientId: "d",
       clientSecret: "e",
-      queryServer: "b",
+      queryServer: undefined,
       timestampFormat: TimestampFormat.EPOCH_MILLIS,
     });
   });
@@ -94,7 +94,7 @@ describe("ChalkClient", () => {
       branch: undefined,
       clientId: "client_id",
       clientSecret: "secret",
-      queryServer: DEFAULT_API_SERVER,
+      queryServer: undefined,
       timestampFormat: TimestampFormat.ISO_8601,
     });
   });
