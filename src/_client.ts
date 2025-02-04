@@ -81,6 +81,8 @@ export interface ChalkClientOpts {
    */
   additionalHeaders?: ChalkHttpHeaders;
 
+  defaultTimeout?: number;
+
   /**
    * A custom fetch client that will replace the fetch polyfill used by default.
    *
@@ -103,7 +105,12 @@ export interface ChalkClientOpts {
    */
   timestampFormat?: ChalkClientConfig["timestampFormat"];
 
-  defaultTimeout?: number;
+  /**
+   * If true, uses
+   *
+   * Defaults to false, the legacy behavior of this client. This will change at the next major release.
+   */
+  useQueryServerFromCredentialExchange?: boolean;
 }
 
 function valueWithEnvFallback(
@@ -151,8 +158,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   constructor(opts?: ChalkClientOpts) {
     const resolvedApiServer: string =
       opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
-    const queryServer: string =
-      opts?.queryServer ?? process.env._CHALK_QUERY_SERVER ?? resolvedApiServer;
+    const queryServer: string | undefined =
+      opts?.queryServer ?? process.env._CHALK_QUERY_SERVER;
 
     this.config = {
       activeEnvironment:
@@ -173,6 +180,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       ),
       queryServer,
       timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
+      useQueryServerFromCredentialExchange:
+        opts?.useQueryServerFromCredentialExchange ?? false,
     };
 
     this.http = new ChalkHTTPService(
@@ -183,6 +192,21 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
+  }
+
+  async getQueryServer(): Promise<string> {
+    if (this.config.queryServer) {
+      return this.config.queryServer;
+    }
+
+    if (!this.config.useQueryServerFromCredentialExchange) {
+      return this.config.queryServer || this.config.apiServer;
+    }
+
+    const { engines, primary_environment } = await this.credentials.get();
+    const envId = this.config.activeEnvironment || primary_environment;
+    const engineForEnvironment = envId ? engines?.[envId] : null;
+    return engineForEnvironment || this.config.apiServer;
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {
@@ -222,7 +246,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
     const rawResult = await this.http.v1_query_online({
-      baseUrl: this.config.queryServer,
+      baseUrl: await this.getQueryServer(),
       body: {
         inputs: request.inputs,
         outputs: request.outputs as string[],
@@ -287,7 +311,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const requestBuffer = serializeMultipleQueryInputFeather(requests);
 
     const rawResult = await this.http.v1_query_feather({
-      baseUrl: this.config.queryServer,
+      baseUrl: await this.getQueryServer(),
       body: requestBuffer.buffer,
       headers: this.getHeaders(requestOptions),
       credentials: this.credentials,
@@ -330,7 +354,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const requestBuffer = serializeMultipleQueryInputFeather([requestBody]);
 
     const rawResult = await this.http.v1_query_feather({
-      baseUrl: this.config.queryServer,
+      baseUrl: await this.getQueryServer(),
       body: requestBuffer.buffer,
       headers: this.getHeaders(requestOptions),
       credentials: this.credentials,
@@ -348,7 +372,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkUploadSingleRequest<TFeatureMap>
   ): Promise<void> {
     const rawResult = await this.http.v1_upload_single({
-      baseUrl: this.config.queryServer,
+      baseUrl: await this.getQueryServer(),
       body: {
         inputs: request.features,
         outputs: Object.keys(request.features),

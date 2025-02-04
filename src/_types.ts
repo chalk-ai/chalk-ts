@@ -6,8 +6,9 @@ export interface ChalkClientConfig {
   branch: string | undefined;
   clientId: string;
   clientSecret: string;
-  queryServer: string;
+  queryServer: string | undefined;
   timestampFormat: TimestampFormat;
+  useQueryServerFromCredentialExchange: boolean;
 }
 
 export interface CustomFetchClient<
