@@ -180,6 +180,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       ),
       queryServer,
       timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
+      useQueryServerFromCredentialExchange:
+        opts?.useQueryServerFromCredentialExchange ?? false,
     };
 
     this.http = new ChalkHTTPService(
@@ -195,6 +197,10 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async getQueryServer(): Promise<string> {
     if (this.config.queryServer) {
       return this.config.queryServer;
+    }
+
+    if (!this.config.useQueryServerFromCredentialExchange) {
+      return this.config.queryServer || this.config.apiServer;
     }
 
     const { engines, primary_environment } = await this.credentials.get();
