@@ -8,6 +8,7 @@ export interface ChalkClientConfig {
   clientSecret: string;
   queryServer: string | undefined;
   timestampFormat: TimestampFormat;
+  useQueryServerFromCredentialExchange: boolean;
 }
 
 export interface CustomFetchClient<
