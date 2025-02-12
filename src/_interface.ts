@@ -271,6 +271,7 @@ export interface ChalkOnlineMultiQueryRequest<
   encodingOptions?: {
     encodeStructsAsObjects?: boolean;
   };
+  plannerOptions?: { [key: string]: string | number | boolean };
 }
 
 export interface ChalkOnlineMultiQueryResponse<

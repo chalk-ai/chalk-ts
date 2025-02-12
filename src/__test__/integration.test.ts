@@ -89,7 +89,6 @@ maybe("integration tests", () => {
             },
             outputs: ["user.full_name"],
           });
-          console.log(results);
         } catch (e) {
           error = e;
         }
@@ -109,13 +108,12 @@ maybe("integration tests", () => {
             clientId: "bogus",
             clientSecret: "bogus",
           });
-          const results = await badClient.queryBulk({
+          await badClient.queryBulk({
             inputs: {
               "user.id": [1, 2],
             },
             outputs: ["user.full_name"],
           });
-          console.log(results);
         } catch (e) {
           error = e;
         }
@@ -132,13 +130,12 @@ maybe("integration tests", () => {
         let error = null;
         try {
           const badClient = new ChalkClient<FraudTemplateFeatures>();
-          const results = await badClient.queryBulk({
+          await badClient.queryBulk({
             inputs: {
               "user.id": [1, 2],
             },
             outputs: ["user.full_name"],
           });
-          console.log(results);
         } catch (e) {
           error = e;
         }

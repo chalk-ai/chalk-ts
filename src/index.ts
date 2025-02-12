@@ -1,6 +1,6 @@
 export { ChalkClient, ChalkClientOpts } from "./_client";
 export { ChalkError, isChalkError } from "./_errors";
-export { CredentialsHolder } from "./_http";
+export { CredentialsHolder, ChalkHttpHeaders } from "./_http";
 export {
   ChalkClientInterface,
   ChalkErrorData,
@@ -19,3 +19,4 @@ export {
   ChalkWhoamiResponse,
   TimestampFormat,
 } from "./_interface";
+export { ChalkScalar } from "./_types";

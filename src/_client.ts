@@ -5,7 +5,12 @@ import {
   IntermediateRequestBodyJSON,
   serializeMultipleQueryInputFeather,
 } from "./_feather";
-import { ChalkHttpHeaders, ChalkHTTPService, CredentialsHolder } from "./_http";
+import {
+  ChalkHttpHeaders,
+  ChalkHttpHeadersStrict,
+  ChalkHTTPService,
+  CredentialsHolder,
+} from "./_http";
 import {
   ChalkClientInterface,
   ChalkGetRunStatusResponse,
@@ -74,7 +79,7 @@ export interface ChalkClientOpts {
   /**
    * Additional headers to include in all requests made by this client instance.
    */
-  additionalHeaders?: Record<string, string>;
+  additionalHeaders?: ChalkHttpHeaders;
 
   /**
    * A custom fetch client that will replace the fetch polyfill used by default.
@@ -134,7 +139,7 @@ export interface ChalkRequestOptions {
   /**
    * Additional headers to include in this request. These headers will be merged with the headers provided at the client level.
    */
-  additionalHeaders?: Record<string, string>;
+  additionalHeaders?: ChalkHttpHeaders;
 }
 
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
@@ -273,6 +278,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
             pack_groups_into_structs: true,
             // arrow JS implementation cannot handle large lists, must send option to allow parsing
             pack_groups_avoid_large_list: true,
+            ...request.plannerOptions,
           },
         };
       }
@@ -365,11 +371,13 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
-    const headers: ChalkHttpHeaders = this.config.activeEnvironment
-      ? {
-          "X-Chalk-Env-Id": this.config.activeEnvironment,
-        }
-      : {};
+    const headers: ChalkHttpHeadersStrict = {
+      "X-Chalk-Deployment-Type": "engine",
+    };
+
+    if (this.config.activeEnvironment) {
+      headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
+    }
 
     const branch = requestOptions?.branch ?? this.config.branch;
     if (branch != null) {
@@ -380,6 +388,6 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       Object.assign(headers, requestOptions.additionalHeaders);
     }
 
-    return headers;
+    return headers as ChalkHttpHeaders;
   }
 }
