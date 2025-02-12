@@ -203,17 +203,20 @@ export class ChalkHTTPService {
     private fetchHeaders: typeof Headers;
     private defaultTimeout: number | undefined;
     private additionalHeaders: Record<string, string> | undefined;
+    private maxNetworkRetries: number;
 
     constructor(
         fetchClient?: CustomFetchClient,
         fetchHeaders?: typeof Headers,
         defaultTimeout?: number,
-        additionalHeaders?: Record<string, string>
+        additionalHeaders?: Record<string, string>,
+        maxNetworkRetries: number = 3
     ) {
         this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
         this.fetchHeaders = fetchHeaders ?? isoHeaders;
         this.defaultTimeout = defaultTimeout;
         this.additionalHeaders = additionalHeaders;
+        this.maxNetworkRetries = maxNetworkRetries;
     }
 
     private createEndpoint<
@@ -293,7 +296,7 @@ export class ChalkHTTPService {
                             effectiveTimeout != null
                                 ? AbortSignal.timeout(effectiveTimeout)
                                 : undefined,
-                    }, 3
+                    }, this.maxNetworkRetries
                 );
                 if (result.status < 200 || result.status >= 300) {
                     const errorText = await result.text();
