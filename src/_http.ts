@@ -237,7 +237,7 @@ export class ChalkHTTPService {
     fetchClient?: CustomFetchClient,
     fetchHeaders?: typeof Headers,
     defaultTimeout?: number,
-    additionalHeaders?: Record<string, string>,
+    additionalHeaders?: ChalkHttpHeaders,
     maxNetworkRetries: number = 3
   ) {
     this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
