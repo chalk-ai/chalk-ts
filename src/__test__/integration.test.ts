@@ -16,7 +16,7 @@ interface FraudTemplateFeatures {
 }
 
 const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
-const INTEGRATION_TEST_TIMEOUT = 10_000; // 10s
+const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
 maybe("integration tests", () => {
   let client: ChalkClient;
@@ -31,7 +31,7 @@ maybe("integration tests", () => {
   beforeEach(() => {
     // Cold-starts for a preview deployment can be slow, so we allow a very generous timeout
     // for all of our outbound network calls
-    jest.setTimeout(30_000);
+    jest.setTimeout(INTEGRATION_TEST_TIMEOUT);
   });
 
   describe("test queryServer", () => {
