@@ -232,6 +232,31 @@ maybe("integration tests", () => {
     );
 
     it(
+      "query simple user directly to query server",
+      async () => {
+        const directQueryClient = (client =
+          new ChalkClient<FraudTemplateFeatures>({
+            clientId: process.env.CI_CHALK_CLIENT_ID,
+            clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+            apiServer: "https://api.chalk.ai",
+            useQueryServerFromCredentialExchange: true,
+          }));
+
+        const result = await directQueryClient.query({
+          inputs: {
+            "user.id": 2,
+          },
+          outputs: ["user.id", "user.gender"],
+        });
+
+        expect(Object.keys(result.data).length).toBe(2);
+        expect(result.data["user.id"].value).toBe(2);
+        expect(result.data["user.gender"].value).toBe("f");
+      },
+      INTEGRATION_TEST_TIMEOUT
+    );
+
+    it(
       "query alternate struct encodings",
       async () => {
         const result = await client.query({
