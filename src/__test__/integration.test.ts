@@ -16,7 +16,7 @@ interface FraudTemplateFeatures {
 }
 
 const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
-const INTEGRATION_TEST_TIMEOUT = 10_000; // 10s
+const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
 maybe("integration tests", () => {
   let client: ChalkClient;
@@ -31,7 +31,7 @@ maybe("integration tests", () => {
   beforeEach(() => {
     // Cold-starts for a preview deployment can be slow, so we allow a very generous timeout
     // for all of our outbound network calls
-    jest.setTimeout(30_000);
+    jest.setTimeout(INTEGRATION_TEST_TIMEOUT);
   });
 
   describe("test queryServer", () => {
@@ -218,6 +218,31 @@ maybe("integration tests", () => {
       "query user.id and user.gender",
       async () => {
         const result = await client.query({
+          inputs: {
+            "user.id": 2,
+          },
+          outputs: ["user.id", "user.gender"],
+        });
+
+        expect(Object.keys(result.data).length).toBe(2);
+        expect(result.data["user.id"].value).toBe(2);
+        expect(result.data["user.gender"].value).toBe("f");
+      },
+      INTEGRATION_TEST_TIMEOUT
+    );
+
+    it(
+      "query simple user directly to query server",
+      async () => {
+        const directQueryClient = (client =
+          new ChalkClient<FraudTemplateFeatures>({
+            clientId: process.env.CI_CHALK_CLIENT_ID,
+            clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+            apiServer: "https://api.chalk.ai",
+            useQueryServerFromCredentialExchange: true,
+          }));
+
+        const result = await directQueryClient.query({
           inputs: {
             "user.id": 2,
           },

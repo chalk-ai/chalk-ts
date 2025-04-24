@@ -49,8 +49,9 @@ describe("ChalkClient", () => {
       branch: "c",
       clientId: "d",
       clientSecret: "e",
-      queryServer: "b",
+      queryServer: undefined,
       timestampFormat: TimestampFormat.EPOCH_MILLIS,
+      useQueryServerFromCredentialExchange: false,
     });
   });
 
@@ -72,6 +73,7 @@ describe("ChalkClient", () => {
       clientSecret: "secret",
       queryServer: "http://localhost:1337",
       timestampFormat: TimestampFormat.ISO_8601,
+      useQueryServerFromCredentialExchange: false,
     });
   });
 
@@ -94,8 +96,9 @@ describe("ChalkClient", () => {
       branch: undefined,
       clientId: "client_id",
       clientSecret: "secret",
-      queryServer: DEFAULT_API_SERVER,
+      queryServer: undefined,
       timestampFormat: TimestampFormat.ISO_8601,
+      useQueryServerFromCredentialExchange: false,
     });
   });
 
@@ -112,6 +115,7 @@ describe("ChalkClient", () => {
       clientSecret: "secret",
       queryServer: "query server",
       timestampFormat: TimestampFormat.ISO_8601,
+      useQueryServerFromCredentialExchange: false,
     });
   });
 
