@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@connectrpc/connect": "^2.0.2",
+    "@connectrpc/connect-node": "^2.0.2",
     "apache-arrow": "^18.0.0",
     "node-fetch": "^2.6.6"
   },

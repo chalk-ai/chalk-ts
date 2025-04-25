@@ -507,6 +507,7 @@ __metadata:
   resolution: "@chalk-ai/client@workspace:."
   dependencies:
     "@connectrpc/connect": ^2.0.2
+    "@connectrpc/connect-node": ^2.0.2
     "@types/jest": ^29.5.11
     "@types/node": ^18.11.9
     apache-arrow: ^18.0.0
@@ -517,6 +518,16 @@ __metadata:
     typescript: ^4.9.5
   languageName: unknown
   linkType: soft
+
+"@connectrpc/connect-node@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "@connectrpc/connect-node@npm:2.0.2"
+  peerDependencies:
+    "@bufbuild/protobuf": ^2.2.0
+    "@connectrpc/connect": 2.0.2
+  checksum: eefc554b816a3b4d92731630e542ffa5e92b93174ebaff8a0c9d339cd5dc70ca7fc250af41c7e1b33211b6db6f3b7ea918a13e97806dd0b47b5b109afa86d434
+  languageName: node
+  linkType: hard
 
 "@connectrpc/connect@npm:^2.0.2":
   version: 2.0.2

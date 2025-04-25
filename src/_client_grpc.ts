@@ -12,18 +12,13 @@ import {
   CredentialsHolder,
 } from "./_http";
 import {
-  ChalkClientHTTPInterface,
-  ChalkGetRunStatusResponse,
+  ChalkClientInterface,
   ChalkOnlineBulkQueryRequest,
   ChalkOnlineBulkQueryResponse,
   ChalkOnlineMultiQueryRequest,
   ChalkOnlineMultiQueryResponse,
   ChalkOnlineQueryRequest,
   ChalkOnlineQueryResponse,
-  ChalkTriggerResolverRunRequest,
-  ChalkTriggerResolverRunResponse,
-  ChalkUploadSingleRequest,
-  ChalkWhoamiResponse,
   TimestampFormat,
 } from "./_interface";
 import {
@@ -33,6 +28,9 @@ import {
   CustomFetchClient,
 } from "./_types";
 import { parseOnlineQueryResponse } from "./_response";
+import { createConnectTransport } from "@connectrpc/connect-node";
+import { QueryService } from "./gen_src/proto/chalk/engine/v1/query_server_connect";
+import { createClient } from "@connectrpc/connect";
 
 export interface ChalkClientOpts {
   /**
@@ -149,11 +147,13 @@ export interface ChalkRequestOptions {
   additionalHeaders?: ChalkHttpHeaders;
 }
 
-export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
-  implements ChalkClientHTTPInterface<TFeatureMap>
+export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
+  implements ChalkClientInterface<TFeatureMap>
 {
   private readonly config: ChalkClientConfig;
   private readonly http: ChalkHTTPService;
+  private readonly transport: any; // TODO
+  private readonly queryServerService: any; // TODO
   private readonly credentials: CredentialsHolder;
   constructor(opts?: ChalkClientOpts) {
     const resolvedApiServer: string =
@@ -184,12 +184,19 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         opts?.useQueryServerFromCredentialExchange ?? false,
     };
 
+    this.transport = createConnectTransport({
+      baseUrl: "FIX_ME",
+      httpVersion: "2",
+    });
+
     this.http = new ChalkHTTPService(
       opts?.fetch,
       opts?.fetchHeaders,
       opts?.defaultTimeout,
       opts?.additionalHeaders
     );
+
+    this.queryServerService = createClient(QueryService, this.transport);
 
     this.credentials = new CredentialsHolder(this.config, this.http);
   }
@@ -207,38 +214,6 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const envId = this.config.activeEnvironment || primary_environment;
     const engineForEnvironment = envId ? engines?.[envId] : null;
     return engineForEnvironment || this.config.apiServer;
-  }
-
-  async whoami(): Promise<ChalkWhoamiResponse> {
-    return this.http.v1_who_am_i({
-      baseUrl: this.config.apiServer,
-      headers: this.getHeaders(),
-      credentials: this.credentials,
-    });
-  }
-
-  async getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse> {
-    return this.http.v1_get_run_status({
-      baseUrl: this.config.apiServer,
-      pathParams: {
-        run_id: runId,
-      },
-      headers: this.getHeaders(),
-      credentials: this.credentials,
-    });
-  }
-
-  async triggerResolverRun(
-    request: ChalkTriggerResolverRunRequest
-  ): Promise<ChalkTriggerResolverRunResponse> {
-    return this.http.v1_trigger_resolver_run({
-      baseUrl: this.config.apiServer,
-      body: {
-        resolver_fqn: request.resolverFqn,
-      },
-      headers: this.getHeaders(),
-      credentials: this.credentials,
-    });
   }
 
   async query<TOutput extends keyof TFeatureMap>(
@@ -366,32 +341,6 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const firstAndOnlyChunk = parsedResult[0];
 
     return firstAndOnlyChunk;
-  }
-
-  async uploadSingle(
-    request: ChalkUploadSingleRequest<TFeatureMap>
-  ): Promise<void> {
-    const rawResult = await this.http.v1_upload_single({
-      baseUrl: await this.getQueryServer(),
-      body: {
-        inputs: request.features,
-        outputs: Object.keys(request.features),
-        context: {
-          tags: request.scopeTags,
-        },
-        correlation_id: request.correlationId,
-        deployment_id: request.previewDeploymentId,
-      },
-      headers: this.getHeaders(),
-      credentials: this.credentials,
-    });
-
-    if (rawResult.errors != null && rawResult.errors.length > 0) {
-      const errorText = rawResult.errors.map((e) => e.message).join("; ");
-      throw new ChalkError(errorText, {
-        info: rawResult.errors,
-      });
-    }
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {

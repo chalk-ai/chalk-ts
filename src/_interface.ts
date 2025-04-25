@@ -346,13 +346,6 @@ export interface ChalkClientInterface<
   TFeatureMap = Record<string, ChalkScalar>
 > {
   /**
-   * Retrieves the status of a resolver run.
-   * See https://docs.chalk.ai/docs/runs for more information.
-   * @param runId - The run ID of the resolver run.
-   */
-  getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse>;
-
-  /**
    * Compute features values using online resolvers.
    * See https://docs.chalk.ai/docs/query-basics for more information.
    * @param request - The request to compute feature values, containing the features to compute.
@@ -387,6 +380,17 @@ export interface ChalkClientInterface<
   multiQuery<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>
   ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>>;
+}
+
+export interface ChalkClientHTTPInterface<
+  TFeatureMap = Record<string, ChalkScalar>
+> extends ChalkClientInterface<TFeatureMap> {
+  /**
+   * Retrieves the status of a resolver run.
+   * See https://docs.chalk.ai/docs/runs for more information.
+   * @param runId - The run ID of the resolver run.
+   */
+  getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse>;
 
   /**
    * Upload data to Chalk for use in offline resolvers or to prime a cache.
