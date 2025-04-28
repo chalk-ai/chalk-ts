@@ -264,6 +264,7 @@ export interface ChalkOnlineMultiQueryRequest<
   previewDeploymentId?: string;
   correlationId?: string;
   queryName?: string;
+  queryNameVersion?: string;
   queryMeta?: {
     [key: string]: string;
   };
@@ -297,6 +298,7 @@ export interface ChalkOnlineBulkQueryRequest<
   previewDeploymentId?: string;
   correlationId?: string;
   queryName?: string;
+  queryNameVersion?: string;
   queryMeta?: {
     [key: string]: string;
   };
