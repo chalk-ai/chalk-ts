@@ -343,7 +343,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       deployment_id: request.previewDeploymentId,
       meta: request.queryMeta,
       query_name: request.queryName,
-      query_nameVersion: request.queryNameVersion,
+      query_name_version: request.queryNameVersion,
       staleness: request.staleness,
       planner_options: {
         pack_groups_into_structs: true,
