@@ -62,6 +62,9 @@ export interface ChalkOnlineQueryRequest<
   // Chalk will present metrics and dashboard functionality grouped by 'query_name'.
   queryName?: string;
 
+  // The version for the named query that you're running.
+  queryNameVersion?: string;
+
   queryMeta?: {
     [key: string]: string;
   };
@@ -261,6 +264,7 @@ export interface ChalkOnlineMultiQueryRequest<
   previewDeploymentId?: string;
   correlationId?: string;
   queryName?: string;
+  queryNameVersion?: string;
   queryMeta?: {
     [key: string]: string;
   };
@@ -294,6 +298,7 @@ export interface ChalkOnlineBulkQueryRequest<
   previewDeploymentId?: string;
   correlationId?: string;
   queryName?: string;
+  queryNameVersion?: string;
   queryMeta?: {
     [key: string]: string;
   };
