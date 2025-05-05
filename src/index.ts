@@ -1,4 +1,5 @@
 export { ChalkClient, ChalkClientOpts } from "./_client";
+export { ChalkGRPCClient } from "./_client_grpc";
 export { ChalkError, isChalkError } from "./_errors";
 export { CredentialsHolder, ChalkHttpHeaders } from "./_http";
 export {

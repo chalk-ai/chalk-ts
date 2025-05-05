@@ -1,9 +1,9 @@
 import { parseFeatherQueryResponse } from "./_bulk_response";
 import { DEFAULT_API_SERVER } from "./_const";
-import { ChalkError } from "./_errors";
 import {
   IntermediateRequestBodyJSON,
   serializeMultipleQueryInputFeather,
+  serializeSingleQueryInputFeather,
 } from "./_feather";
 import {
   ChalkHttpHeaders,
@@ -27,10 +27,12 @@ import {
   ChalkScalar,
   CustomFetchClient,
 } from "./_types";
-import { parseOnlineQueryResponse } from "./_response";
-import { createConnectTransport } from "@connectrpc/connect-node";
-import { QueryService } from "./gen_src/proto/chalk/engine/v1/query_server_connect";
-import { createClient } from "@connectrpc/connect";
+import { QueryServiceClient } from "./gen/proto/chalk/engine/v1/query_server";
+import { ChannelCredentials } from "@grpc/grpc-js";
+import { FeatherBodyType } from "./gen/proto/chalk/common/v1/online_query";
+import { ChalkError } from "./_errors";
+import { headersToMetadata, mapGRPCChalkError } from "./_grpc";
+import { tableFromIPC } from "apache-arrow";
 
 export interface ChalkClientOpts {
   /**
@@ -152,8 +154,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 {
   private readonly config: ChalkClientConfig;
   private readonly http: ChalkHTTPService;
-  private readonly transport: any; // TODO
-  private readonly queryServerService: any; // TODO
+  private readonly queryClient: QueryServiceClient;
   private readonly credentials: CredentialsHolder;
   constructor(opts?: ChalkClientOpts) {
     const resolvedApiServer: string =
@@ -184,11 +185,6 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
         opts?.useQueryServerFromCredentialExchange ?? false,
     };
 
-    this.transport = createConnectTransport({
-      baseUrl: "FIX_ME",
-      httpVersion: "2",
-    });
-
     this.http = new ChalkHTTPService(
       opts?.fetch,
       opts?.fetchHeaders,
@@ -196,7 +192,10 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       opts?.additionalHeaders
     );
 
-    this.queryServerService = createClient(QueryService, this.transport);
+    this.queryClient = new QueryServiceClient(
+      this.config.queryServer || this.config.apiServer,
+      ChannelCredentials.createInsecure()
+    );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
   }
@@ -220,39 +219,66 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
-    const rawResult = await this.http.v1_query_online({
-      baseUrl: await this.getQueryServer(),
-      body: {
-        inputs: request.inputs,
-        outputs: request.outputs as string[],
-        context: {
-          tags: request.scopeTags,
+    return new Promise((resolve, reject) => {
+      const response = this.queryClient.onlineQueryBulk(
+        {
+          inputsFeather: serializeSingleQueryInputFeather(request.inputs),
+          outputs: request.outputs.map((output) => ({
+            featureFqn: output as string,
+          })),
+          context: {
+            // Passed via headers
+            environment: "",
+            // Passed via headers
+            deploymentId: "",
+            correlationId: request.correlationId,
+            options: request.plannerOptions ?? {},
+            queryContext: request.queryContext ?? {},
+            queryName: request.queryName,
+            requiredResolverTags: [],
+            tags: request.scopeTags ?? [],
+            valueMetricsTagByFeatures: [],
+          },
+          responseOptions: {
+            encodingOptions:
+              typeof request.encodingOptions?.encodeStructsAsObjects ===
+              "boolean"
+                ? {
+                    encodeStructsAsObjects:
+                      request.encodingOptions.encodeStructsAsObjects,
+                  }
+                : undefined,
+            includeMeta: !!request.include_meta,
+            metadata: request.queryMeta ?? {},
+            // TODO Add option before merge
+            explain: false,
+          },
+          now: [new Date(request.now || "")],
+          staleness: (request.staleness as Record<string, string>) ?? {},
+          bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
         },
-        query_context: request.queryContext,
-        correlation_id: request.correlationId,
-        deployment_id: request.previewDeploymentId,
-        meta: request.queryMeta,
-        query_name: request.queryName,
-        staleness: request.staleness,
-        now: request.now,
-        encoding_options: request.encodingOptions
-          ? {
-              encode_structs_as_objects:
-                request.encodingOptions.encodeStructsAsObjects,
-            }
-          : undefined,
-        include_meta: !!request.include_meta,
-        planner_options: request.plannerOptions,
-      },
-      headers: this.getHeaders(requestOptions),
-      credentials: this.credentials,
-      timeout: requestOptions?.timeout,
-    });
+        headersToMetadata(this.getHeaders(requestOptions)),
+        (error, response) => {
+          if (error != null) {
+            console.error(`[Chalk] ${error}`);
+            reject(
+              new ChalkError(error.name, {
+                httpStatus: error.code,
+                httpStatusText: error.message,
+              })
+            );
+          }
 
-    return parseOnlineQueryResponse<TFeatureMap, TOutput>(
-      rawResult,
-      this.config
-    );
+          const responseObject: ChalkOnlineQueryResponse<TFeatureMap, TOutput> =
+            {
+              data: tableFromIPC(response.scalarsData).toArray()[0] as any,
+              errors: response.errors.map(mapGRPCChalkError),
+            };
+
+          resolve(responseObject);
+        }
+      );
+    });
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
