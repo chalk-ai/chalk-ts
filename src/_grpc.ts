@@ -3,7 +3,7 @@ import {
   ErrorCode as GRPCErrorCode,
   ErrorCodeCategory as GRPCErrorCodeCategory,
   ErrorCodeCategory,
-} from "./gen/proto/chalk/common/v1/chalk_error";
+} from "./gen/proto/chalk/common/v1/chalk_error.pb";
 import {
   ChalkErrorCategory,
   ChalkErrorCode,

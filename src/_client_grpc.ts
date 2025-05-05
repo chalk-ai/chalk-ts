@@ -27,9 +27,9 @@ import {
   ChalkScalar,
   CustomFetchClient,
 } from "./_types";
-import { QueryServiceClient } from "./gen/proto/chalk/engine/v1/query_server";
+import { QueryServiceClient } from "./gen/proto/chalk/engine/v1/query_server.pb";
 import { ChannelCredentials } from "@grpc/grpc-js";
-import { FeatherBodyType } from "./gen/proto/chalk/common/v1/online_query";
+import { FeatherBodyType } from "./gen/proto/chalk/common/v1/online_query.pb";
 import { ChalkError } from "./_errors";
 import { headersToMetadata, mapGRPCChalkError } from "./_grpc";
 import { tableFromIPC } from "apache-arrow";
