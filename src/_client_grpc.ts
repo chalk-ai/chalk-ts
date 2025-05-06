@@ -154,8 +154,9 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 {
   private readonly config: ChalkClientConfig;
   private readonly http: ChalkHTTPService;
-  private readonly queryClient: QueryServiceClient;
   private readonly credentials: CredentialsHolder;
+  // initialized lazily
+  private queryClient: QueryServiceClient | null = null;
   constructor(opts?: ChalkClientOpts) {
     const resolvedApiServer: string =
       opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
@@ -192,12 +193,19 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       opts?.additionalHeaders
     );
 
-    this.queryClient = new QueryServiceClient(
-      this.config.queryServer || this.config.apiServer,
-      ChannelCredentials.createInsecure()
-    );
-
     this.credentials = new CredentialsHolder(this.config, this.http);
+  }
+
+  async getQueryClient(): Promise<QueryServiceClient> {
+    if (this.queryClient == null) {
+      const queryServer = await this.getQueryServer();
+      this.queryClient = new QueryServiceClient(
+        queryServer,
+        ChannelCredentials.createInsecure()
+      );
+    }
+
+    return this.queryClient;
   }
 
   async getQueryServer(): Promise<string> {
@@ -209,59 +217,63 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       return this.config.queryServer || this.config.apiServer;
     }
 
-    const { engines, primary_environment } = await this.credentials.get();
-    const envId = this.config.activeEnvironment || primary_environment;
-    const engineForEnvironment = envId ? engines?.[envId] : null;
-    return engineForEnvironment || this.config.apiServer;
+    const engineFromCredentials =
+      await this.credentials.getEngineUrlFromCredentials(
+        this.config.activeEnvironment
+      );
+
+    return engineFromCredentials || this.config.apiServer;
   }
 
   async query<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
+    const queryClient = await this.getQueryClient();
+    const requestBody = {
+      inputsFeather: serializeSingleQueryInputFeather(request.inputs),
+      outputs: request.outputs.map((output) => ({
+        featureFqn: output as string,
+      })),
+      context: {
+        // Passed via headers
+        environment: "",
+        // Passed via headers
+        deploymentId: "",
+        correlationId: request.correlationId,
+        options: request.plannerOptions ?? {},
+        queryContext: request.queryContext ?? {},
+        queryName: request.queryName,
+        requiredResolverTags: [],
+        tags: request.scopeTags ?? [],
+        valueMetricsTagByFeatures: [],
+      },
+      responseOptions: {
+        encodingOptions:
+          typeof request.encodingOptions?.encodeStructsAsObjects === "boolean"
+            ? {
+                encodeStructsAsObjects:
+                  request.encodingOptions.encodeStructsAsObjects,
+              }
+            : undefined,
+        includeMeta: !!request.include_meta,
+        metadata: request.queryMeta ?? {},
+        // TODO Add option before merge
+        explain: false,
+      },
+      now: [request.now ? new Date(request.now) : new Date()],
+      staleness: (request.staleness as Record<string, string>) ?? {},
+      bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
+    };
+
     return new Promise((resolve, reject) => {
-      const response = this.queryClient.onlineQueryBulk(
-        {
-          inputsFeather: serializeSingleQueryInputFeather(request.inputs),
-          outputs: request.outputs.map((output) => ({
-            featureFqn: output as string,
-          })),
-          context: {
-            // Passed via headers
-            environment: "",
-            // Passed via headers
-            deploymentId: "",
-            correlationId: request.correlationId,
-            options: request.plannerOptions ?? {},
-            queryContext: request.queryContext ?? {},
-            queryName: request.queryName,
-            requiredResolverTags: [],
-            tags: request.scopeTags ?? [],
-            valueMetricsTagByFeatures: [],
-          },
-          responseOptions: {
-            encodingOptions:
-              typeof request.encodingOptions?.encodeStructsAsObjects ===
-              "boolean"
-                ? {
-                    encodeStructsAsObjects:
-                      request.encodingOptions.encodeStructsAsObjects,
-                  }
-                : undefined,
-            includeMeta: !!request.include_meta,
-            metadata: request.queryMeta ?? {},
-            // TODO Add option before merge
-            explain: false,
-          },
-          now: [new Date(request.now || "")],
-          staleness: (request.staleness as Record<string, string>) ?? {},
-          bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
-        },
+      const response = queryClient.onlineQueryBulk(
+        requestBody,
         headersToMetadata(this.getHeaders(requestOptions)),
         (error, response) => {
           if (error != null) {
             console.error(`[Chalk] ${error}`);
-            reject(
+            return reject(
               new ChalkError(error.name, {
                 httpStatus: error.code,
                 httpStatusText: error.message,
@@ -285,93 +297,19 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
-    const requests = request.queries.map(
-      (singleQuery): IntermediateRequestBodyJSON<TFeatureMap, TOutput> => {
-        return {
-          inputs: singleQuery.inputs,
-          outputs: singleQuery.outputs,
-          context: {
-            tags: singleQuery.scopeTags,
-          },
-          query_context: request.queryContext,
-          correlation_id: request.correlationId,
-          deployment_id: request.previewDeploymentId,
-          meta: request.queryMeta,
-          query_name: request.queryName,
-          staleness: singleQuery.staleness,
-          planner_options: {
-            pack_groups_into_structs: true,
-            // arrow JS implementation cannot handle large lists, must send option to allow parsing
-            pack_groups_avoid_large_list: true,
-            ...request.plannerOptions,
-          },
-        };
-      }
-    );
-
-    const requestBuffer = serializeMultipleQueryInputFeather(requests);
-
-    const rawResult = await this.http.v1_query_feather({
-      baseUrl: await this.getQueryServer(),
-      body: requestBuffer.buffer,
-      headers: this.getHeaders(requestOptions),
-      credentials: this.credentials,
-      timeout: requestOptions?.timeout,
-    });
-
-    const resultBuffer = Buffer.from(rawResult);
-    const parsedResult = parseFeatherQueryResponse(resultBuffer, this.config);
-
-    return {
-      responses: parsedResult,
-    };
+    throw new Error("TODO unimplemented");
   }
 
   async queryBulk<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
-    const requestBody: IntermediateRequestBodyJSON<TFeatureMap, TOutput> = {
-      inputs: request.inputs,
-      outputs: request.outputs,
-      context: {
-        tags: request.scopeTags,
-      },
-      query_context: request.queryContext,
-      correlation_id: request.correlationId,
-      deployment_id: request.previewDeploymentId,
-      meta: request.queryMeta,
-      query_name: request.queryName,
-      staleness: request.staleness,
-      planner_options: {
-        pack_groups_into_structs: true,
-        // arrow JS implementation cannot handle large lists, must send option to allow parsing
-        pack_groups_avoid_large_list: true,
-        ...request.plannerOptions,
-      },
-      now: request.now,
-    };
-
-    const requestBuffer = serializeMultipleQueryInputFeather([requestBody]);
-
-    const rawResult = await this.http.v1_query_feather({
-      baseUrl: await this.getQueryServer(),
-      body: requestBuffer.buffer,
-      headers: this.getHeaders(requestOptions),
-      credentials: this.credentials,
-      timeout: requestOptions?.timeout,
-    });
-
-    const resultBuffer = Buffer.from(rawResult);
-    const parsedResult = parseFeatherQueryResponse(resultBuffer, this.config);
-    const firstAndOnlyChunk = parsedResult[0];
-
-    return firstAndOnlyChunk;
+    throw new Error("TODO unimplemented");
   }
 
   private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
     const headers: ChalkHttpHeadersStrict = {
-      "X-Chalk-Deployment-Type": "engine",
+      "X-Chalk-Deployment-Type": "engine-grpc",
     };
 
     if (this.config.activeEnvironment) {

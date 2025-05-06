@@ -171,6 +171,17 @@ export class CredentialsHolder {
   clear() {
     this.credentials = null;
   }
+
+  async getEngineUrlFromCredentials(
+    environmentId: string | null | undefined
+  ): Promise<string | null> {
+    const { engines, primary_environment: environmentIdFromCredentials } =
+      await this.get();
+    const envIdToUse = environmentId || environmentIdFromCredentials;
+    const engineForEnvironment = envIdToUse ? engines?.[envIdToUse] : null;
+
+    return engineForEnvironment || null;
+  }
 }
 
 async function awaitTimeout(timeout: number): Promise<void> {

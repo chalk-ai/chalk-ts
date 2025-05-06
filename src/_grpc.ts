@@ -79,6 +79,11 @@ export const mapGRPCChalkError = (error: GRPCChalkError): ChalkErrorData => {
   return chalkError;
 };
 
+export const stripProtocol = (url: string): string => {
+  const urlObj = new URL(url);
+  return urlObj.host;
+};
+
 export const headersToMetadata = (headers: ChalkHttpHeaders): Metadata => {
   const metadata = new Metadata();
   for (const header in headers) {

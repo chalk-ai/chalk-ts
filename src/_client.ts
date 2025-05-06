@@ -203,10 +203,12 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       return this.config.queryServer || this.config.apiServer;
     }
 
-    const { engines, primary_environment } = await this.credentials.get();
-    const envId = this.config.activeEnvironment || primary_environment;
-    const engineForEnvironment = envId ? engines?.[envId] : null;
-    return engineForEnvironment || this.config.apiServer;
+    const engineFromCredentials =
+      await this.credentials.getEngineUrlFromCredentials(
+        this.config.activeEnvironment
+      );
+
+    return engineFromCredentials || this.config.apiServer;
   }
 
   async whoami(): Promise<ChalkWhoamiResponse> {

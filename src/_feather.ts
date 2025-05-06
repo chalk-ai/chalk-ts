@@ -1,6 +1,5 @@
 import { tableFromArrays, tableToIPC } from "apache-arrow";
 import { MULTI_QUERY_MAGIC_STR } from "./_bulk_response";
-import { OnlineQueryRequest } from "./gen/proto/chalk/common/v1/online_query";
 import { ChalkOnlineQueryRequest } from "./_interface";
 
 export interface IntermediateRequestBodyJSON<
