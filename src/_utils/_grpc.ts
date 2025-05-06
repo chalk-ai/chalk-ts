@@ -9,13 +9,16 @@ import {
   ChalkErrorCode,
   ChalkErrorData,
   ChalkOnlineBulkQueryRequest,
+  ChalkOnlineMultiQueryRequest,
 } from "../_interface";
 import { ChalkHttpHeaders } from "../_services/_http";
 import { Metadata } from "@grpc/grpc-js";
 import { serializeBulkQueryInputFeather } from "../_feather";
 import {
   FeatherBodyType,
+  GenericSingleQuery,
   OnlineQueryBulkRequest,
+  OnlineQueryMultiRequest,
 } from "../gen/proto/chalk/common/v1/online_query.pb";
 
 export const mapErrorCodeGRPCToSDK = (error: GRPCErrorCode): ChalkErrorCode => {
@@ -85,7 +88,7 @@ export const mapGRPCChalkError = (error: GRPCChalkError): ChalkErrorData => {
   return chalkError;
 };
 
-export const mapOnlineQueryRequestChalkToGRPC = <
+export const mapOnlineBulkQueryRequestChalkToGRPC = <
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 >(
@@ -125,6 +128,32 @@ export const mapOnlineQueryRequestChalkToGRPC = <
     now: [request.now ? new Date(request.now) : new Date()],
     staleness: (request.staleness as Record<string, string>) ?? {},
     bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
+  };
+};
+
+export const mapOnlineMultiQueryRequestChalkToGRPC = <
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
+  request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>
+): OnlineQueryMultiRequest => {
+  const { queries, ...rest } = request;
+  const grpcQueries = queries.map((singleQuery): GenericSingleQuery => {
+    const bulkRequest = mapOnlineBulkQueryRequestChalkToGRPC<
+      TFeatureMap,
+      TOutput
+    >({
+      ...rest,
+      ...singleQuery,
+    });
+
+    return {
+      bulkRequest,
+    };
+  });
+
+  return {
+    queries: grpcQueries,
   };
 };
 
