@@ -31,8 +31,9 @@ import { QueryServiceClient } from "./gen/proto/chalk/engine/v1/query_server.pb"
 import { ChannelCredentials } from "@grpc/grpc-js";
 import { FeatherBodyType } from "./gen/proto/chalk/common/v1/online_query.pb";
 import { ChalkError } from "./_errors";
-import { headersToMetadata, mapGRPCChalkError } from "./_grpc";
+import { headersToMetadata, mapGRPCChalkError, stripProtocol } from "./_grpc";
 import { tableFromIPC } from "apache-arrow";
+import { USER_AGENT } from "./_user_agent";
 
 export interface ChalkClientOpts {
   /**
@@ -183,7 +184,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       queryServer,
       timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
       useQueryServerFromCredentialExchange:
-        opts?.useQueryServerFromCredentialExchange ?? false,
+        opts?.useQueryServerFromCredentialExchange ?? true,
     };
 
     this.http = new ChalkHTTPService(
@@ -200,7 +201,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     if (this.queryClient == null) {
       const queryServer = await this.getQueryServer();
       this.queryClient = new QueryServiceClient(
-        queryServer,
+        stripProtocol(queryServer),
         ChannelCredentials.createInsecure()
       );
     }
@@ -265,11 +266,12 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       staleness: (request.staleness as Record<string, string>) ?? {},
       bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
     };
+    const headers = await this.getHeaders(requestOptions);
 
     return new Promise((resolve, reject) => {
       const response = queryClient.onlineQueryBulk(
         requestBody,
-        headersToMetadata(this.getHeaders(requestOptions)),
+        headersToMetadata(headers),
         (error, response) => {
           if (error != null) {
             console.error(`[Chalk] ${error}`);
@@ -307,13 +309,22 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     throw new Error("TODO unimplemented");
   }
 
-  private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
-    const headers: ChalkHttpHeadersStrict = {
+  private async getHeaders(
+    requestOptions?: ChalkRequestOptions
+  ): Promise<ChalkHttpHeaders> {
+    const credentials = await this.credentials?.get();
+    const headers: ChalkHttpHeaders = {
       "X-Chalk-Deployment-Type": "engine-grpc",
+      "Content-Type": "application/json;charset=utf-8",
+      "User-Agent": USER_AGENT,
+      Accept: "application/octet-stream",
+      Authorization: `Bearer ${credentials.access_token}`,
     };
 
     if (this.config.activeEnvironment) {
       headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
+    } else if (credentials.primary_environment != null) {
+      headers["X-Chalk-Env-Id"] = credentials.primary_environment;
     }
 
     const branch = requestOptions?.branch ?? this.config.branch;

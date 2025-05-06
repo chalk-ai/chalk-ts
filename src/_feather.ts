@@ -67,7 +67,7 @@ export function serializeSingleQueryInputFeather<
     Object.entries(inputs).map(([key, value]) => [key, [value]])
   );
 
-  return tableToIPC(tableFromArrays(inputAsArrays));
+  return tableToIPC(tableFromArrays(inputAsArrays), "file");
 }
 
 export function serializeMultipleQueryInputFeather<
