@@ -1,6 +1,9 @@
 import { tableFromArrays, tableToIPC } from "apache-arrow";
 import { MULTI_QUERY_MAGIC_STR } from "./_bulk_response";
-import { ChalkOnlineQueryRequest } from "./_interface";
+import {
+  ChalkOnlineBulkQueryRequest,
+  ChalkOnlineQueryRequest,
+} from "./_interface";
 
 export interface IntermediateRequestBodyJSON<
   TFeatureMap,
@@ -68,6 +71,18 @@ export function serializeSingleQueryInputFeather<
   );
 
   return tableToIPC(tableFromArrays(inputAsArrays), "file");
+}
+
+export function serializeBulkQueryInputFeather<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
+  inputs: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>["inputs"]
+): Uint8Array {
+  return tableToIPC(
+    tableFromArrays(inputs as Record<string, Array<unknown>>),
+    "file"
+  );
 }
 
 export function serializeMultipleQueryInputFeather<

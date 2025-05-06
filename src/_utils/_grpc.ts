@@ -3,13 +3,13 @@ import {
   ErrorCode as GRPCErrorCode,
   ErrorCodeCategory as GRPCErrorCodeCategory,
   ErrorCodeCategory,
-} from "./gen/proto/chalk/common/v1/chalk_error.pb";
+} from "../gen/proto/chalk/common/v1/chalk_error.pb";
 import {
   ChalkErrorCategory,
   ChalkErrorCode,
   ChalkErrorData,
-} from "./_interface";
-import { ChalkHttpHeaders } from "./_http";
+} from "../_interface";
+import { ChalkHttpHeaders } from "../_http";
 import { Metadata } from "@grpc/grpc-js";
 
 export const mapErrorCodeGRPCToSDK = (error: GRPCErrorCode): ChalkErrorCode => {
