@@ -1,5 +1,10 @@
 import { ChalkError, isChalkError } from "../_errors";
-import { CustomFetchClient } from "../_interface/_types";
+import {
+  ChalkPrimitiveType,
+  CustomFetchClient,
+  IsNever,
+  PathParams,
+} from "../_interface/_types";
 import { urlJoin } from "../_utils";
 
 import { USER_AGENT } from "../_user_agent";
@@ -45,14 +50,6 @@ const isoFetch: typeof fetch =
 
 const isoHeaders: typeof Headers =
   typeof Headers !== "undefined" ? Headers : require("node-fetch").Headers;
-
-// https://github.com/microsoft/TypeScript/issues/23182
-type IsNever<T> = [T] extends [never] ? true : false;
-
-type PathParams<S extends string> =
-  S extends `${infer _TPrefix}{${infer TParam}}${infer TRest}`
-    ? TParam | PathParams<TRest>
-    : never;
 
 type EndpointCallArgs_Body<TRequestBody> = IsNever<TRequestBody> extends true
   ? {
@@ -105,18 +102,6 @@ export interface RawQueryResponseMeta {
   query_hash?: string;
   explain_output?: string;
 }
-
-type InternalPrimitiveType =
-  | "str"
-  | "int"
-  | "float"
-  | "bool"
-  | "datetime.date"
-  | "datetime.datetime"
-  | "datetime.time"
-  | "datetime.timedelta";
-
-export type ChalkPrimitiveType = `<class '${InternalPrimitiveType}'>`;
 
 const APPLICATION_JSON = "application/json;charset=utf-8";
 const APPLICATION_OCTET = "application/octet-stream";

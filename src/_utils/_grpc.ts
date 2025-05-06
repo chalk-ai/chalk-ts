@@ -8,9 +8,15 @@ import {
   ChalkErrorCategory,
   ChalkErrorCode,
   ChalkErrorData,
+  ChalkOnlineBulkQueryRequest,
 } from "../_interface";
 import { ChalkHttpHeaders } from "../_services/_http";
 import { Metadata } from "@grpc/grpc-js";
+import { serializeBulkQueryInputFeather } from "../_feather";
+import {
+  FeatherBodyType,
+  OnlineQueryBulkRequest,
+} from "../gen/proto/chalk/common/v1/online_query.pb";
 
 export const mapErrorCodeGRPCToSDK = (error: GRPCErrorCode): ChalkErrorCode => {
   switch (error) {
@@ -77,6 +83,49 @@ export const mapGRPCChalkError = (error: GRPCChalkError): ChalkErrorData => {
   }
 
   return chalkError;
+};
+
+export const mapOnlineQueryRequestChalkToGRPC = <
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
+  request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
+): OnlineQueryBulkRequest => {
+  return {
+    inputsFeather: serializeBulkQueryInputFeather(request.inputs),
+    outputs: request.outputs.map((output) => ({
+      featureFqn: output as string,
+    })),
+    context: {
+      // Passed via headers
+      environment: "",
+      // Passed via headers
+      deploymentId: "",
+      correlationId: request.correlationId,
+      options: request.plannerOptions ?? {},
+      queryContext: request.queryContext ?? {},
+      queryName: request.queryName,
+      requiredResolverTags: [],
+      tags: request.scopeTags ?? [],
+      valueMetricsTagByFeatures: [],
+    },
+    responseOptions: {
+      encodingOptions:
+        typeof request.encodingOptions?.encodeStructsAsObjects === "boolean"
+          ? {
+              encodeStructsAsObjects:
+                request.encodingOptions.encodeStructsAsObjects,
+            }
+          : undefined,
+      includeMeta: !!request,
+      metadata: request.queryMeta ?? {},
+      // TODO Add option before merge
+      explain: true,
+    },
+    now: [request.now ? new Date(request.now) : new Date()],
+    staleness: (request.staleness as Record<string, string>) ?? {},
+    bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
+  };
 };
 
 export const stripProtocol = (url: string): string => {

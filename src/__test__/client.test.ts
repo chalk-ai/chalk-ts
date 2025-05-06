@@ -1,4 +1,4 @@
-import { ChalkClient } from "../_client";
+import { ChalkClient } from "../_client_http";
 import { DEFAULT_API_SERVER } from "../_const";
 import { TimestampFormat } from "../_interface";
 import { ChalkClientConfig } from "../_interface";

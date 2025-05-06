@@ -1,8 +1,4 @@
 import { DEFAULT_API_SERVER } from "./_const";
-import {
-  serializeBulkQueryInputFeather,
-  serializeSingleQueryInputFeather,
-} from "./_feather";
 import { ChalkHttpHeaders, ChalkHTTPService } from "./_services/_http";
 import { CredentialsHolder } from "./_services/_credentials";
 import {
@@ -19,16 +15,17 @@ import {
 import { ChalkEnvironmentVariables, ChalkScalar } from "./_interface/_types";
 import { QueryServiceClient } from "./gen/proto/chalk/engine/v1/query_server.pb";
 import { ChannelCredentials } from "@grpc/grpc-js";
-import { FeatherBodyType } from "./gen/proto/chalk/common/v1/online_query.pb";
 import { ChalkError } from "./_errors";
 import {
   headersToMetadata,
   mapGRPCChalkError,
+  mapOnlineQueryRequestChalkToGRPC,
   stripProtocol,
 } from "./_utils/_grpc";
 import { tableFromIPC } from "apache-arrow";
 import { USER_AGENT } from "./_user_agent";
 import { ChalkGRPCClientOpts } from "./_interface/_options";
+import { onlineSingleRequestToBulkRequest } from "./_request";
 
 function valueWithEnvFallback(
   parameterNameForDebugging: string,
@@ -147,41 +144,9 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
     const queryClient = await this.getQueryClient();
-    const requestBody = {
-      inputsFeather: serializeSingleQueryInputFeather(request.inputs),
-      outputs: request.outputs.map((output) => ({
-        featureFqn: output as string,
-      })),
-      context: {
-        // Passed via headers
-        environment: "",
-        // Passed via headers
-        deploymentId: "",
-        correlationId: request.correlationId,
-        options: request.plannerOptions ?? {},
-        queryContext: request.queryContext ?? {},
-        queryName: request.queryName,
-        requiredResolverTags: [],
-        tags: request.scopeTags ?? [],
-        valueMetricsTagByFeatures: [],
-      },
-      responseOptions: {
-        encodingOptions:
-          typeof request.encodingOptions?.encodeStructsAsObjects === "boolean"
-            ? {
-                encodeStructsAsObjects:
-                  request.encodingOptions.encodeStructsAsObjects,
-              }
-            : undefined,
-        includeMeta: !!request.include_meta,
-        metadata: request.queryMeta ?? {},
-        // TODO Add option before merge
-        explain: true,
-      },
-      now: [request.now ? new Date(request.now) : new Date()],
-      staleness: (request.staleness as Record<string, string>) ?? {},
-      bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
-    };
+    const requestBody = mapOnlineQueryRequestChalkToGRPC(
+      onlineSingleRequestToBulkRequest(request)
+    );
     const headers = await this.getHeaders(requestOptions);
 
     return new Promise((resolve, reject) => {
@@ -223,45 +188,11 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
     const queryClient = await this.getQueryClient();
-    const requestBody = {
-      inputsFeather: serializeBulkQueryInputFeather(request.inputs),
-      outputs: request.outputs.map((output) => ({
-        featureFqn: output as string,
-      })),
-      context: {
-        // Passed via headers
-        environment: "",
-        // Passed via headers
-        deploymentId: "",
-        correlationId: request.correlationId,
-        options: request.plannerOptions ?? {},
-        queryContext: request.queryContext ?? {},
-        queryName: request.queryName,
-        requiredResolverTags: [],
-        tags: request.scopeTags ?? [],
-        valueMetricsTagByFeatures: [],
-      },
-      responseOptions: {
-        encodingOptions:
-          typeof request.encodingOptions?.encodeStructsAsObjects === "boolean"
-            ? {
-                encodeStructsAsObjects:
-                  request.encodingOptions.encodeStructsAsObjects,
-              }
-            : undefined,
-        includeMeta: !!request,
-        metadata: request.queryMeta ?? {},
-        // TODO Add option before merge
-        explain: true,
-      },
-      now: [request.now ? new Date(request.now) : new Date()],
-      staleness: (request.staleness as Record<string, string>) ?? {},
-      bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
-    };
+    const requestBody = mapOnlineQueryRequestChalkToGRPC(request);
     const headers = await this.getHeaders(requestOptions);
 
     return new Promise((resolve, reject) => {
-      const response = queryClient.onlineQueryBulk(
+      queryClient.onlineQueryBulk(
         requestBody,
         headersToMetadata(headers),
         (error, response) => {

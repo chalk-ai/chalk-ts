@@ -1,4 +1,4 @@
-import { ChalkPrimitiveType } from "./_services/_http";
+import { ChalkPrimitiveType } from "./_interface/_types";
 
 export const DEFAULT_API_SERVER = "https://api.chalk.ai";
 

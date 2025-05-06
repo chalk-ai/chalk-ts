@@ -1,4 +1,4 @@
-import { ChalkClient } from "../_client";
+import { ChalkClient } from "../_client_http";
 
 interface FraudTemplateFeatures {
   "user.id": number;
