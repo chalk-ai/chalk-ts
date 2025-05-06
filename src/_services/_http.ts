@@ -1,9 +1,10 @@
-import { ChalkError, isChalkError } from "./_errors";
-import { ChalkClientConfig, CustomFetchClient } from "./_interface/_types";
-import { urlJoin } from "./_utils";
+import { ChalkError, isChalkError } from "../_errors";
+import { CustomFetchClient } from "../_interface/_types";
+import { urlJoin } from "../_utils";
 
-import { USER_AGENT } from "./_user_agent";
-import { ChalkErrorData } from "./_interface";
+import { USER_AGENT } from "../_user_agent";
+import { ChalkErrorData } from "../_interface";
+import { ClientCredentials, CredentialsHolder } from "./_credentials";
 
 /**
  * An interface recording available headers that can be sent to the chalk engine to change its behavior.
@@ -116,73 +117,9 @@ type InternalPrimitiveType =
   | "datetime.timedelta";
 
 export type ChalkPrimitiveType = `<class '${InternalPrimitiveType}'>`;
-export const CHALK_DATE_TYPES: Set<ChalkPrimitiveType | undefined | null> =
-  new Set([`<class 'datetime.date'>`, `<class 'datetime.datetime'>`]);
 
 const APPLICATION_JSON = "application/json;charset=utf-8";
 const APPLICATION_OCTET = "application/octet-stream";
-
-interface ClientCredentials {
-  access_token: string;
-  token_type: string;
-  primary_environment?: string | null;
-  expires_in: number;
-  engines?: {
-    [name: string]: string;
-  };
-}
-
-export class CredentialsHolder {
-  private credentials: ClientCredentials | null = null;
-
-  constructor(
-    private config: ChalkClientConfig,
-    private http: ChalkHTTPService
-  ) {}
-
-  async get() {
-    if (this.credentials == null) {
-      try {
-        this.credentials = await this.http.v1_oauth_token({
-          baseUrl: this.config.apiServer,
-          body: {
-            client_id: this.config.clientId,
-            client_secret: this.config.clientSecret,
-            grant_type: "client_credentials",
-          },
-        });
-      } catch (e) {
-        console.error(e);
-        if (isChalkError(e)) {
-          throw e;
-        } else if (e instanceof Error) {
-          throw new ChalkError(e.message);
-        } else {
-          throw new ChalkError(
-            "Unable to authenticate to Chalk servers. Please check your environment config"
-          );
-        }
-      }
-    }
-
-    return this.credentials;
-  }
-
-  clear() {
-    this.credentials = null;
-  }
-
-  async getEngineUrlFromCredentials(
-    environmentId: string | null | undefined
-  ): Promise<string | null> {
-    const { engines, primary_environment: environmentIdFromCredentials } =
-      await this.get();
-    const envIdToUse = environmentId || environmentIdFromCredentials;
-    const engineForEnvironment = envIdToUse ? engines?.[envIdToUse] : null;
-
-    return engineForEnvironment || null;
-  }
-}
 
 async function awaitTimeout(timeout: number): Promise<void> {
   return new Promise((resolve) => {

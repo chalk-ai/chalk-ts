@@ -7,10 +7,10 @@ import {
   TimeUnit,
   Utf8,
 } from "apache-arrow";
-import { RawQueryResponseMeta } from "./_http";
+import { RawQueryResponseMeta } from "./_services/_http";
 import { ChalkErrorData, ChalkQueryMeta, TimestampFormat } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
-import { ChalkClientConfig } from "./_interface/_types";
+import { ChalkClientConfig } from "./_interface";
 
 interface ByteModel {
   attrs: { [key: string]: number | string } & {

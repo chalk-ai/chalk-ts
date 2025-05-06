@@ -1,4 +1,4 @@
-import { ChalkHttpHeaders } from "../_http";
+import { ChalkHttpHeaders } from "../_services/_http";
 import { CustomFetchClient } from "./_types";
 import { ChalkClientConfig } from "./_client";
 

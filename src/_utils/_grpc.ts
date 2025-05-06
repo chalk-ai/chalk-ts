@@ -9,7 +9,7 @@ import {
   ChalkErrorCode,
   ChalkErrorData,
 } from "../_interface";
-import { ChalkHttpHeaders } from "../_http";
+import { ChalkHttpHeaders } from "../_services/_http";
 import { Metadata } from "@grpc/grpc-js";
 
 export const mapErrorCodeGRPCToSDK = (error: GRPCErrorCode): ChalkErrorCode => {

@@ -10,7 +10,7 @@ import {
   ChalkHttpHeadersStrict,
   ChalkHTTPService,
   CredentialsHolder,
-} from "./_http";
+} from "./_services/_http";
 import {
   ChalkClientHTTPInterface,
   ChalkClientConfig,

@@ -1,4 +1,4 @@
-import { RawQueryResponseMeta } from "./_http";
+import { RawQueryResponseMeta } from "./_services/_http";
 import { ChalkQueryMeta } from "./_interface";
 
 export function mapRawResponseMeta(raw: RawQueryResponseMeta): ChalkQueryMeta {
