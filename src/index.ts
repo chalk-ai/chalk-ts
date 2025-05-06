@@ -1,4 +1,4 @@
-export { ChalkClient, ChalkClientOpts } from "./_client";
+export { ChalkClient } from "./_client";
 export { ChalkGRPCClient } from "./_client_grpc";
 export { ChalkError, isChalkError } from "./_errors";
 export { CredentialsHolder, ChalkHttpHeaders } from "./_http";
@@ -20,4 +20,5 @@ export {
   ChalkWhoamiResponse,
   TimestampFormat,
 } from "./_interface";
-export { ChalkScalar } from "./_types";
+export { ChalkClientOpts, ChalkGRPCClientOpts } from "./_interface/_options";
+export { ChalkScalar } from "./_interface/_types";

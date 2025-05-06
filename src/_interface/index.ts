@@ -1,13 +1,20 @@
-import { ChalkScalar } from "./_types";
+export type {
+  ChalkClientHTTPInterface,
+  ChalkClientInterface,
+  ChalkClientConfig,
+} from "./_client";
+export { TimestampFormat } from "./_client";
+import type {
+  ChalkErrorData,
+  ChalkErrorCode,
+  ChalkErrorCategory,
+} from "./_error";
+
+export type { ChalkErrorData, ChalkErrorCode, ChalkErrorCategory };
 
 export interface ChalkGetRunStatusResponse {
   id: string;
   status: ChalkResolverRunStatus;
-}
-
-export enum TimestampFormat {
-  EPOCH_MILLIS = "EPOCH_MILLIS",
-  ISO_8601 = "ISO_8601",
 }
 
 export interface ChalkUploadSingleRequest<TFeatureMap> {
@@ -128,81 +135,6 @@ export type ChalkOnlineQueryResponseStatusKind =
   | "success"
   | "partial_success"
   | "error";
-
-export type ChalkErrorCode =
-  // The query contained features that do not exist.
-  | "PARSE_FAILED"
-  // A resolver was required as part of running the dependency graph that could not be found.
-  | "RESOLVER_NOT_FOUND"
-  // The query is invalid. All supplied features need to be rooted in the same top-level entity.
-  | "INVALID_QUERY"
-  // A feature value did not match the expected schema (e.g. `incompatible type "int"; expected "str"`)
-  | "VALIDATION_FAILED"
-  // The resolver for a feature errored.
-  | "RESOLVER_FAILED"
-  // The resolver for a feature timed out.
-  | "RESOLVER_TIMED_OUT"
-  // A crash in a resolver that was to produce an input for the resolver crashed,
-  // and so the resolver could not run crashed, and so the resolver could not run.
-  | "UPSTREAM_FAILED"
-  // The request was submitted with an invalid authentication header.
-  | "UNAUTHENTICATED"
-  // The supplied credentials do not provide the right authorization to execute the request.
-  | "UNAUTHORIZED"
-  // An unspecified error occurred.
-  | "INTERNAL_SERVER_ERROR"
-  // The operation was cancelled, typically by the caller.
-  | "CANCELLED"
-  // The deadline expired before the operation could complete.
-  | "DEADLINE_EXCEEDED";
-
-export type ChalkErrorCategory =
-  // Request errors are raised before execution of your
-  // resolver code. They may occur due to invalid feature
-  // names in the input or a request that cannot be satisfied
-  // by the resolvers you have defined.
-  | "REQUEST"
-  // Field errors are raised while running a feature resolver
-  // for a particular field. For this type of error, you'll
-  // find a feature and resolver attribute in the error type.
-  // When a feature resolver crashes, you will receive null
-  // value in the response. To differentiate from a resolver
-  // returning a null value and a failure in the resolver,
-  // you need to check the error schema.
-  | "FIELD"
-  // Network errors are thrown outside your resolvers.
-  // For example, your request was unauthenticated,
-  // connection failed, or an error occurred within Chalk.
-  | "NETWORK";
-
-export interface ChalkErrorData {
-  // The type of the error.
-  code: ChalkErrorCode;
-
-  // The category of the error, given in the type field for the error codes.
-  category: ChalkErrorCategory;
-
-  // A readable description of the error message.
-  message: string;
-
-  // The exception that caused the failure, if applicable.
-  exception?: {
-    // The type of the exception.
-    kind: string;
-
-    // A readable description of the exception.
-    message: string;
-
-    // The stacktrace of the exception.
-    stacktrace: string;
-  };
-
-  // The fully qualified name of the failing feature, e.g. `user.identity.has_voip_phone`.
-  feature?: string;
-
-  // The fully qualified name of the failing resolver, e.g. `my.project.get_fraud_score`.
-  resolver?: string;
-}
 
 export interface ChalkFeatureMeta {
   // The fully qualified name of the resolver that computed this feature.
@@ -340,78 +272,4 @@ export interface ChalkTriggerResolverRunResponse {
 export interface ChalkWhoamiResponse {
   // The id of the user.
   user: string;
-}
-
-export interface ChalkClientInterface<
-  TFeatureMap = Record<string, ChalkScalar>
-> {
-  /**
-   * Compute features values using online resolvers.
-   * See https://docs.chalk.ai/docs/query-basics for more information.
-   * @param request - The request to compute feature values, containing the features to compute.
-   */
-  query<TOutput extends keyof TFeatureMap>(
-    request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>
-  ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>>;
-
-  /**
-   * Compute features values for many rows of inputs using online resolvers.
-   * See https://docs.chalk.ai/docs/query-basics for more information on online query.
-   * This method is similar to `query`, except it takes in `list` of inputs, and produces one
-   * output per row of inputs.
-   * This method is appropriate if you want to fetch the same set of features for many different
-   * input primary keys.
-   * This method contrasts with `multi_query`, which executes multiple fully independent queries.
-   * This endpoint is not available in all environments.
-   * @param request - The request to compute feature values, containing the features to compute.
-   */
-  queryBulk<TOutput extends keyof TFeatureMap>(
-    request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
-  ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>>;
-
-  /**
-   * Execute multiple queries (represented by `queries` argument) in a single request. This is useful if the
-   * queries are "rooted" in different `@features` classes -- i.e. if you want to load features for `User` and
-   * `Merchant` and there is no natural relationship object which is related to both of these classes, `multi_query`
-   * allows you to submit two independent queries.
-   *
-   * In contrast, `query_bulk` executes a single query with multiple inputs/outputs.
-   */
-  multiQuery<TOutput extends keyof TFeatureMap>(
-    request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>
-  ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>>;
-}
-
-export interface ChalkClientHTTPInterface<
-  TFeatureMap = Record<string, ChalkScalar>
-> extends ChalkClientInterface<TFeatureMap> {
-  /**
-   * Retrieves the status of a resolver run.
-   * See https://docs.chalk.ai/docs/runs for more information.
-   * @param runId - The run ID of the resolver run.
-   */
-  getRunStatus(runId: string): Promise<ChalkGetRunStatusResponse>;
-
-  /**
-   * Upload data to Chalk for use in offline resolvers or to prime a cache.
-   * @param request - The request to upload data, containing the features to upload.
-   */
-  uploadSingle(request: ChalkUploadSingleRequest<TFeatureMap>): Promise<void>;
-
-  /**
-   * Triggers a resolver to run.
-   * See https://docs.chalk.ai/docs/runs for more information.
-   * @param request - The request to trigger a resolver run, containing the resolver FQN and optional deployment ID.
-   * @returns - The run ID of the triggered resolver run.
-   */
-  triggerResolverRun(
-    request: ChalkTriggerResolverRunRequest
-  ): Promise<ChalkTriggerResolverRunResponse>;
-
-  /**
-   * Checks the identity of your client.
-   *
-   * Useful as a sanity test of your configuration.
-   */
-  whoami(): Promise<ChalkWhoamiResponse>;
 }

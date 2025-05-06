@@ -10,7 +10,7 @@ import {
 import { RawQueryResponseMeta } from "./_http";
 import { ChalkErrorData, ChalkQueryMeta, TimestampFormat } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
-import { ChalkClientConfig } from "./_types";
+import { ChalkClientConfig } from "./_interface/_types";
 
 interface ByteModel {
   attrs: { [key: string]: number | string } & {

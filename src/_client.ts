@@ -13,6 +13,7 @@ import {
 } from "./_http";
 import {
   ChalkClientHTTPInterface,
+  ChalkClientConfig,
   ChalkGetRunStatusResponse,
   ChalkOnlineBulkQueryRequest,
   ChalkOnlineBulkQueryResponse,
@@ -26,92 +27,9 @@ import {
   ChalkWhoamiResponse,
   TimestampFormat,
 } from "./_interface";
-import {
-  ChalkClientConfig,
-  ChalkEnvironmentVariables,
-  ChalkScalar,
-  CustomFetchClient,
-} from "./_types";
+import { ChalkEnvironmentVariables, ChalkScalar } from "./_interface/_types";
 import { parseOnlineQueryResponse } from "./_response";
-
-export interface ChalkClientOpts {
-  /**
-   * Your Chalk Client ID. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
-   *
-   * If not specified and unset by your environment, an error will be thrown on client creation
-   */
-  clientId?: string;
-
-  /**
-   * Your Chalk Client Secret. This value will be read from the _CHALK_CLIENT_SECRET environment variable if not set explicitly.
-   *
-   * If not specified and unset by your environment, an error will be thrown on client creation
-   */
-  clientSecret?: string;
-
-  /**
-   * The URL of your chalk API server. Defaults to https://api.chalk.ai
-   */
-  apiServer?: string;
-
-  /**
-   * For customers with isolated query infrastructure, the URL of the server to direct query-related traffic to.
-   * Authentication and metadata plane traffic will continue to route to apiServer.
-   */
-  queryServer?: string;
-
-  /**
-   * The environment that your client will run against.
-   * This value will be read from the _CHALK_ACTIVE_ENVIRONMENT environment variable if not set explicitly.
-   *
-   * If not specified and unset by your environment, an error will be thrown on client creation
-   */
-  activeEnvironment?: string;
-
-  /**
-   * If specified, Chalk will route all requests from this client instance to the relevant branch.
-   * This value will be read from the _CHALK_BRANCH environment variable if not set explicitly.
-   *
-   * Some methods allow you to override this instance-level branch configuration by passing in a `branch` argument.
-   */
-  branch?: string;
-
-  /**
-   * Additional headers to include in all requests made by this client instance.
-   */
-  additionalHeaders?: ChalkHttpHeaders;
-
-  defaultTimeout?: number;
-
-  /**
-   * A custom fetch client that will replace the fetch polyfill used by default.
-   *
-   * If not provided, the client will use the default fetch polyfill (native fetch with node-fetch as a fallback).
-   */
-  fetch?: CustomFetchClient;
-
-  /**
-   * A custom fetch headers object that will replace the fetch Headers polyfill used by default. This is primarily for use
-   * with a custom fetch client, and is not the preferred way to add additional headers to requests.
-   *
-   * If not provided, the client will use the default fetch Headers polyfill (native fetch with node-fetch as a fallback).
-   */
-  fetchHeaders?: typeof Headers;
-
-  /**
-   * The format to use for date-type data.
-   *
-   * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS" as number of milliseconds since epoch
-   */
-  timestampFormat?: ChalkClientConfig["timestampFormat"];
-
-  /**
-   * If true, uses
-   *
-   * Defaults to false, the legacy behavior of this client. This will change at the next major release.
-   */
-  useQueryServerFromCredentialExchange?: boolean;
-}
+import { ChalkClientOpts } from "./_interface/_options";
 
 function valueWithEnvFallback(
   parameterNameForDebugging: string,

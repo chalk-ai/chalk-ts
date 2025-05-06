@@ -1,16 +1,3 @@
-import { TimestampFormat } from "./_interface";
-
-export interface ChalkClientConfig {
-  activeEnvironment: string | undefined;
-  apiServer: string;
-  branch: string | undefined;
-  clientId: string;
-  clientSecret: string;
-  queryServer: string | undefined;
-  timestampFormat: TimestampFormat;
-  useQueryServerFromCredentialExchange: boolean;
-}
-
 export interface CustomFetchClient<
   Req = RequestInfo | URL,
   ReqInit = RequestInit,

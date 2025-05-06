@@ -3,8 +3,8 @@ import {
   ChalkOnlineQueryRawData,
   ChalkOnlineQueryRawResponse,
 } from "./_http";
-import { ChalkOnlineQueryResponse } from "./_interface";
-import { ChalkClientConfig, ChalkScalar } from "./_types";
+import { ChalkClientConfig, ChalkOnlineQueryResponse } from "./_interface";
+import { ChalkScalar } from "./_interface/_types";
 import { fromEntries } from "./_utils";
 import { mapRawResponseMeta } from "./_meta";
 

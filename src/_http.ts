@@ -1,5 +1,5 @@
 import { ChalkError, isChalkError } from "./_errors";
-import { ChalkClientConfig, CustomFetchClient } from "./_types";
+import { ChalkClientConfig, CustomFetchClient } from "./_interface/_types";
 import { urlJoin } from "./_utils";
 
 import { USER_AGENT } from "./_user_agent";
