@@ -1,7 +1,7 @@
 import { ChalkClient } from "../_client";
 import { DEFAULT_API_SERVER } from "../_const";
 import { TimestampFormat } from "../_interface";
-import { ChalkClientConfig } from "../_interface/_types";
+import { ChalkClientConfig } from "../_interface";
 
 function getConfig(client: ChalkClient): ChalkClientConfig {
   return (client as any).config;

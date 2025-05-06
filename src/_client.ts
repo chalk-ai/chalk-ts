@@ -9,8 +9,8 @@ import {
   ChalkHttpHeaders,
   ChalkHttpHeadersStrict,
   ChalkHTTPService,
-  CredentialsHolder,
 } from "./_services/_http";
+import { CredentialsHolder } from "./_services/_credentials";
 import {
   ChalkClientHTTPInterface,
   ChalkClientConfig,

@@ -3,11 +3,8 @@ import {
   serializeBulkQueryInputFeather,
   serializeSingleQueryInputFeather,
 } from "./_feather";
-import {
-  ChalkHttpHeaders,
-  ChalkHTTPService,
-  CredentialsHolder,
-} from "./_services/_http";
+import { ChalkHttpHeaders, ChalkHTTPService } from "./_services/_http";
+import { CredentialsHolder } from "./_services/_credentials";
 import {
   ChalkClientInterface,
   ChalkClientConfig,
