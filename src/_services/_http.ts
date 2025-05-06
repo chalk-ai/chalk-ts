@@ -359,6 +359,7 @@ export class ChalkHTTPService {
       deployment_id?: string;
       correlation_id?: string;
       query_name?: string;
+      query_name_version?: string;
       meta?: {
         [key: string]: string;
       };
