@@ -22,31 +22,12 @@ import {
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
   ChalkWhoamiResponse,
-  TimestampFormat,
 } from "./_interface";
-import { ChalkEnvironmentVariables, ChalkScalar } from "./_interface/_types";
+import { ChalkScalar } from "./_interface/_types";
 import { parseOnlineQueryResponse } from "./_response";
 import { ChalkClientOpts } from "./_interface/_options";
 import { ChalkRequestOptions } from "./_interface/_request";
-
-function valueWithEnvFallback(
-  parameterNameForDebugging: string,
-  constructorValue: string | undefined,
-  name: keyof ChalkEnvironmentVariables
-) {
-  if (constructorValue != null) {
-    return constructorValue;
-  }
-
-  const envValue = process?.env?.[name];
-  if (envValue != null && envValue !== "") {
-    return envValue;
-  }
-
-  throw new Error(
-    `Chalk client parameter '${parameterNameForDebugging}' was not specified when creating your ChalkClient, and was not present as '${name}' in process.env. This field is required to use Chalk`
-  );
-}
+import { configFromOptionsAndEnvironment } from "./_utils/_config";
 
 export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   implements ChalkClientHTTPInterface<TFeatureMap>
@@ -55,30 +36,8 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   private readonly http: ChalkHTTPService;
   private readonly credentials: CredentialsHolder;
   constructor(opts?: ChalkClientOpts) {
-    const resolvedApiServer: string =
-      opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
-    const queryServer: string | undefined =
-      opts?.queryServer ?? process.env._CHALK_QUERY_SERVER;
-
     this.config = {
-      activeEnvironment:
-        opts?.activeEnvironment ??
-        process.env._CHALK_ACTIVE_ENVIRONMENT ??
-        undefined,
-      apiServer: resolvedApiServer,
-      branch: opts?.branch ?? process.env._CHALK_BRANCH ?? undefined,
-      clientId: valueWithEnvFallback(
-        "clientId",
-        opts?.clientId,
-        "_CHALK_CLIENT_ID"
-      ),
-      clientSecret: valueWithEnvFallback(
-        "clientSecret",
-        opts?.clientSecret,
-        "_CHALK_CLIENT_SECRET"
-      ),
-      queryServer,
-      timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
+      ...configFromOptionsAndEnvironment(opts),
       useQueryServerFromCredentialExchange:
         opts?.useQueryServerFromCredentialExchange ?? false,
     };

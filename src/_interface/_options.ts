@@ -2,7 +2,7 @@ import { ChalkHttpHeaders } from "./_header";
 import { CustomFetchClient } from "./_types";
 import { ChalkClientConfig } from "./_client";
 
-interface BaseChalkClientOpts {
+export interface BaseChalkClientOpts {
   /**
    * Your Chalk Client ID. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
    *
