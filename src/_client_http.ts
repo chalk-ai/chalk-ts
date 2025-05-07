@@ -5,11 +5,8 @@ import {
   IntermediateRequestBodyJSON,
   serializeMultipleQueryInputFeather,
 } from "./_feather";
-import {
-  ChalkHttpHeaders,
-  ChalkHttpHeadersStrict,
-  ChalkHTTPService,
-} from "./_services/_http";
+import { ChalkHTTPService } from "./_services/_http";
+import { ChalkHttpHeaders, ChalkHttpHeadersStrict } from "./_interface/_header";
 import { CredentialsHolder } from "./_services/_credentials";
 import {
   ChalkClientHTTPInterface,

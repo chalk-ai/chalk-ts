@@ -1,5 +1,6 @@
 import { DEFAULT_API_SERVER } from "./_const";
-import { ChalkHttpHeaders, ChalkHTTPService } from "./_services/_http";
+import { ChalkHTTPService } from "./_services/_http";
+import { ChalkHttpHeaders } from "./_interface/_header";
 import { CredentialsHolder } from "./_services/_credentials";
 import {
   ChalkClientInterface,
@@ -13,20 +14,17 @@ import {
   TimestampFormat,
 } from "./_interface";
 import { ChalkEnvironmentVariables, ChalkScalar } from "./_interface/_types";
-import { QueryServiceClient } from "./gen/proto/chalk/engine/v1/query_server.pb";
-import { ChannelCredentials } from "@grpc/grpc-js";
-import { ChalkError } from "./_errors";
 import {
   headersToMetadata,
   mapGRPCChalkError,
   mapOnlineBulkQueryRequestChalkToGRPC,
   mapOnlineMultiQueryRequestChalkToGRPC,
-  stripProtocol,
 } from "./_utils/_grpc";
 import { tableFromIPC } from "apache-arrow";
 import { USER_AGENT } from "./_user_agent";
 import { ChalkGRPCClientOpts } from "./_interface/_options";
 import { onlineSingleRequestToBulkRequest } from "./_request";
+import { ChalkGRPCService } from "./_services/_grpc";
 
 function valueWithEnvFallback(
   parameterNameForDebugging: string,
@@ -71,7 +69,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
   private readonly http: ChalkHTTPService;
   private readonly credentials: CredentialsHolder;
   // initialized lazily
-  private queryClient: QueryServiceClient | null = null;
+  private queryService: Promise<ChalkGRPCService>;
   constructor(opts?: ChalkGRPCClientOpts) {
     const resolvedApiServer: string =
       opts?.apiServer ?? process.env._CHALK_API_SERVER ?? DEFAULT_API_SERVER;
@@ -109,18 +107,17 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
+
+    this.queryService = this.getQueryService(opts);
   }
 
-  async getQueryClient(): Promise<QueryServiceClient> {
-    if (this.queryClient == null) {
-      const queryServer = await this.getQueryServer();
-      this.queryClient = new QueryServiceClient(
-        stripProtocol(queryServer),
-        ChannelCredentials.createInsecure()
-      );
-    }
-
-    return this.queryClient;
+  async getQueryService(opts?: ChalkGRPCClientOpts): Promise<ChalkGRPCService> {
+    const queryEndpoint = await this.getQueryServer();
+    return new ChalkGRPCService({
+      additionalHeaders: opts?.additionalHeaders,
+      endpoint: queryEndpoint,
+      credentialsHolder: this.credentials,
+    });
   }
 
   async getQueryServer(): Promise<string> {
@@ -144,116 +141,69 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     request: ChalkOnlineQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineQueryResponse<TFeatureMap, TOutput>> {
-    const queryClient = await this.getQueryClient();
+    const queryService = await this.queryService;
     const requestBody = mapOnlineBulkQueryRequestChalkToGRPC(
       onlineSingleRequestToBulkRequest(request)
     );
     const headers = await this.getHeaders(requestOptions);
 
-    return new Promise((resolve, reject) => {
-      queryClient.onlineQueryBulk(
-        requestBody,
-        headersToMetadata(headers),
-        (error, response) => {
-          if (error != null) {
-            console.error(`[Chalk] ${error}`);
-            return reject(
-              new ChalkError(error.name, {
-                httpStatus: error.code,
-                httpStatusText: error.message,
-              })
-            );
-          }
+    const response = await queryService.queryBulk(
+      requestBody,
+      headersToMetadata(headers)
+    );
 
-          const responseObject: ChalkOnlineQueryResponse<TFeatureMap, TOutput> =
-            {
-              data: tableFromIPC(response.scalarsData).toArray()[0] as any,
-              errors: response.errors.map(mapGRPCChalkError),
-            };
+    const responseObject: ChalkOnlineQueryResponse<TFeatureMap, TOutput> = {
+      data: tableFromIPC(response.scalarsData).toArray()[0] as any,
+      errors: response.errors.map(mapGRPCChalkError),
+    };
 
-          resolve(responseObject);
-        }
-      );
-    });
+    return responseObject;
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineMultiQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput>> {
-    const queryClient = await this.getQueryClient();
+    const queryService = await this.queryService;
     const requestBody = mapOnlineMultiQueryRequestChalkToGRPC(request);
     const headers = await this.getHeaders(requestOptions);
 
-    return new Promise((resolve, reject) => {
-      queryClient.onlineQueryMulti(
-        requestBody,
-        headersToMetadata(headers),
-        (error, response) => {
-          if (error != null) {
-            console.error(`[Chalk] ${error}`);
-            return reject(
-              new ChalkError(error.name, {
-                httpStatus: error.code,
-                httpStatusText: error.message,
-              })
-            );
-          }
+    const response = await queryService.queryMulti(
+      requestBody,
+      headersToMetadata(headers)
+    );
 
-          const responseObject: ChalkOnlineMultiQueryResponse<
-            TFeatureMap,
-            TOutput
-          > = {
-            responses: response.responses.map((singleResponse) => ({
-              data: tableFromIPC(
-                singleResponse.bulkResponse!.scalarsData
-              ).toArray()[0] as any,
-              errors:
-                singleResponse.bulkResponse!.errors.map(mapGRPCChalkError),
-            })),
-          };
+    const responseObject: ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput> =
+      {
+        responses: response.responses.map((singleResponse) => ({
+          data: tableFromIPC(
+            singleResponse.bulkResponse!.scalarsData
+          ).toArray()[0] as any,
+          errors: singleResponse.bulkResponse!.errors.map(mapGRPCChalkError),
+        })),
+      };
 
-          resolve(responseObject);
-        }
-      );
-    });
+    return responseObject;
   }
 
   async queryBulk<TOutput extends keyof TFeatureMap>(
     request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>,
     requestOptions?: ChalkRequestOptions
   ): Promise<ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput>> {
-    const queryClient = await this.getQueryClient();
+    const queryService = await this.queryService;
     const requestBody = mapOnlineBulkQueryRequestChalkToGRPC(request);
     const headers = await this.getHeaders(requestOptions);
+    const response = await queryService.queryBulk(
+      requestBody,
+      headersToMetadata(headers)
+    );
 
-    return new Promise((resolve, reject) => {
-      queryClient.onlineQueryBulk(
-        requestBody,
-        headersToMetadata(headers),
-        (error, response) => {
-          if (error != null) {
-            console.error(`[Chalk] ${error}`);
-            return reject(
-              new ChalkError(error.name, {
-                httpStatus: error.code,
-                httpStatusText: error.message,
-              })
-            );
-          }
+    const responseObject: ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> = {
+      data: tableFromIPC(response.scalarsData).toArray()[0] as any,
+      errors: response.errors.map(mapGRPCChalkError),
+    };
 
-          const responseObject: ChalkOnlineBulkQueryResponse<
-            TFeatureMap,
-            TOutput
-          > = {
-            data: tableFromIPC(response.scalarsData).toArray()[0] as any,
-            errors: response.errors.map(mapGRPCChalkError),
-          };
-
-          resolve(responseObject);
-        }
-      );
-    });
+    return responseObject;
   }
 
   private async getHeaders(
