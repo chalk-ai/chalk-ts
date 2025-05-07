@@ -11,7 +11,7 @@ import {
   ChalkOnlineBulkQueryRequest,
   ChalkOnlineMultiQueryRequest,
 } from "../_interface";
-import { ChalkHttpHeaders } from "../_services/_http";
+import { ChalkHttpHeaders } from "../_interface/_header";
 import { Metadata } from "@grpc/grpc-js";
 import { serializeBulkQueryInputFeather } from "../_feather";
 import {
