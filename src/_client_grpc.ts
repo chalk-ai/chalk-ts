@@ -21,7 +21,6 @@ import {
   mapOnlineMultiQueryRequestChalkToGRPC,
 } from "./_utils/_grpc";
 import { tableFromIPC } from "apache-arrow";
-import { USER_AGENT } from "./_user_agent";
 import { ChalkGRPCClientOpts } from "./_interface/_options";
 import { onlineSingleRequestToBulkRequest } from "./_request";
 import { ChalkGRPCService } from "./_services/_grpc";
@@ -195,7 +194,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 
   private async getHeaders(
     requestOptions?: ChalkRequestOptions
-  ): Promise<ChalkHttpHeadersStrict> {
+  ): Promise<ChalkHttpHeaders> {
     const headers: ChalkHttpHeadersStrict = {};
 
     if (this.config.activeEnvironment) {
