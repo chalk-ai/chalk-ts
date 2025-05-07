@@ -27,7 +27,7 @@ export type GRPCCall<Req, Resp> = (
 export type GRPCCallArgs<Req> = [
   req: Req,
   metadata: Metadata,
-  ChalkRequestOptions | null | undefined
+  options: ChalkRequestOptions | null | undefined
 ];
 
 export type PromisifiedGRPCCall<Req, Resp> = (
