@@ -18,7 +18,7 @@ function valueWithEnvFallback(
   }
 
   throw new Error(
-    `[Chalk] client parameter '${parameterNameForDebugging}' was not specified when creating your ChalkClient, and was not present as '${name}' in process.env. This field is required to use Chalk`
+    `Chalk client parameter '${parameterNameForDebugging}' was not specified when creating your ChalkClient, and was not present as '${name}' in process.env. This field is required to use Chalk`
   );
 }
 
