@@ -1,6 +1,7 @@
 import { ChalkHttpHeaders } from "./_header";
 import { CustomFetchClient } from "./_types";
 import { ChalkClientConfig } from "./_client";
+import { ClientOptions } from "@grpc/grpc-js";
 
 export interface BaseChalkClientOpts {
   /**
@@ -97,4 +98,12 @@ export interface ChalkGRPCClientOpts extends BaseChalkClientOpts {
    * Defaults to false.
    */
   skipQueryServerFromCredentialExchange?: boolean;
+
+  /**
+   * Passed to the grpc client upon initialization. Under the hood, Chalk uses the @grpc/grpc-js library
+   * and this allows users finer control of their gRPC usage.
+   *
+   * Note that
+   */
+  grpcClientOptions: Partial<ClientOptions>;
 }

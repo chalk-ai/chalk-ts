@@ -58,6 +58,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       additionalHeaders: opts?.additionalHeaders,
       endpoint: queryEndpoint,
       credentialsHolder: this.credentials,
+      clientOptions: opts?.grpcClientOptions,
     });
   }
 

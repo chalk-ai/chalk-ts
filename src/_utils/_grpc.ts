@@ -105,7 +105,12 @@ export const mapOnlineBulkQueryRequestChalkToGRPC = <
       // Passed via headers
       deploymentId: "",
       correlationId: request.correlationId,
-      options: request.plannerOptions ?? {},
+      options: {
+        pack_groups_into_structs: true,
+        // arrow JS implementation cannot handle large lists, must send option to allow parsing
+        pack_groups_avoid_large_list: true,
+        ...request.plannerOptions,
+      },
       queryContext: request.queryContext ?? {},
       queryName: request.queryName,
       requiredResolverTags: [],
@@ -157,9 +162,13 @@ export const mapOnlineMultiQueryRequestChalkToGRPC = <
   };
 };
 
-export const stripProtocol = (url: string): string => {
-  const urlObj = new URL(url);
-  return urlObj.host;
+export const formUrlforGRPC = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.host}:${urlObj.port || 443}`;
+  } catch {
+    return url;
+  }
 };
 
 export const headersToMetadata = (headers: ChalkHttpHeaders): Metadata => {

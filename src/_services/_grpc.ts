@@ -1,6 +1,7 @@
 import { ChalkHttpHeaders } from "../_interface/_header";
 import {
   ChannelCredentials,
+  ClientOptions as GRPCClientOptions,
   ClientUnaryCall,
   Metadata,
   ServiceError,
@@ -8,7 +9,7 @@ import {
 import { ChalkError } from "../_errors";
 import { CredentialsHolder } from "./_credentials";
 import { QueryServiceClient } from "../gen/proto/chalk/engine/v1/query_server.pb";
-import { headersToMetadata, stripProtocol } from "../_utils/_grpc";
+import { formUrlforGRPC, headersToMetadata } from "../_utils/_grpc";
 import {
   OnlineQueryBulkRequest,
   OnlineQueryBulkResponse,
@@ -38,7 +39,7 @@ export interface ChalkGRRPCServiceArgs {
   defaultTimeout?: number;
   additionalHeaders?: ChalkHttpHeaders;
   endpoint: string;
-  maxNetworkRetries?: number;
+  clientOptions?: Partial<GRPCClientOptions>;
   credentialsHolder: CredentialsHolder;
 }
 
@@ -51,7 +52,7 @@ export class ChalkGRPCService {
   constructor({
     defaultTimeout,
     additionalHeaders,
-    maxNetworkRetries,
+    clientOptions,
     credentialsHolder,
     endpoint,
   }: ChalkGRRPCServiceArgs) {
@@ -59,9 +60,12 @@ export class ChalkGRPCService {
     this.additionalHeaders = additionalHeaders;
     this.credentialsHolder = credentialsHolder;
     this.queryClient = this.queryClient = new QueryServiceClient(
-      stripProtocol(endpoint),
+      formUrlforGRPC(endpoint),
       ChannelCredentials.createInsecure(),
-      { "grpc.enable_retries": maxNetworkRetries }
+      {
+        ...clientOptions,
+        "grpc.enable_retries": clientOptions?.["grpc.enable_retries"] ?? 3,
+      }
     );
   }
 
@@ -77,9 +81,7 @@ export class ChalkGRPCService {
 
       const fullMetadata = headersToMetadata({
         "X-Chalk-Deployment-Type": "engine-grpc",
-        "Content-Type": "application/json;charset=utf-8",
         "User-Agent": USER_AGENT,
-        Accept: "application/octet-stream",
         Authorization: `Bearer ${credentials.access_token}`,
         ...this.additionalHeaders,
       });
@@ -93,7 +95,7 @@ export class ChalkGRPCService {
       fullMetadata.merge(metadata);
 
       return new Promise<Resp>((resolve, reject) => {
-        call(req, metadata, (error: ServiceError | null, resp: Resp) => {
+        call(req, fullMetadata, (error: ServiceError | null, resp: Resp) => {
           if (error != null) {
             console.error(`[Chalk] ${error}`);
             return reject(
@@ -116,7 +118,7 @@ export class ChalkGRPCService {
     return this.promisfyGRPCCall<
       OnlineQueryBulkRequest,
       OnlineQueryBulkResponse
-    >(this.queryClient.onlineQueryBulk)(...args);
+    >((...callArgs) => this.queryClient.onlineQueryBulk(...callArgs))(...args);
   };
 
   public queryMulti = (
@@ -125,6 +127,6 @@ export class ChalkGRPCService {
     return this.promisfyGRPCCall<
       OnlineQueryMultiRequest,
       OnlineQueryMultiResponse
-    >(this.queryClient.onlineQueryMulti)(...args);
+    >((...callArgs) => this.queryClient.onlineQueryMulti(...callArgs))(...args);
   };
 }
