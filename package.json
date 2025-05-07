@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "prebuild": "rm -rf src/_version.ts && node -p \"'export const VERSION: string = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/_version.ts",
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 tsc",
+    "build": "tsc",
     "prepack": "rm -rf build/ && yarn build && rm -rf build/__test__",
     "test": "jest src/__test__",
     "test:watch": "jest --watch",
