@@ -1,6 +1,6 @@
 import { DEFAULT_API_SERVER } from "./_const";
 import { ChalkHTTPService } from "./_services/_http";
-import { ChalkHttpHeaders } from "./_interface/_header";
+import { ChalkHttpHeaders, ChalkHttpHeadersStrict } from "./_interface/_header";
 import { CredentialsHolder } from "./_services/_credentials";
 import {
   ChalkClientInterface,
@@ -208,20 +208,11 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 
   private async getHeaders(
     requestOptions?: ChalkRequestOptions
-  ): Promise<ChalkHttpHeaders> {
-    const credentials = await this.credentials?.get();
-    const headers: ChalkHttpHeaders = {
-      "X-Chalk-Deployment-Type": "engine-grpc",
-      "Content-Type": "application/json;charset=utf-8",
-      "User-Agent": USER_AGENT,
-      Accept: "application/octet-stream",
-      Authorization: `Bearer ${credentials.access_token}`,
-    };
+  ): Promise<ChalkHttpHeadersStrict> {
+    const headers: ChalkHttpHeadersStrict = {};
 
     if (this.config.activeEnvironment) {
       headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
-    } else if (credentials.primary_environment != null) {
-      headers["X-Chalk-Env-Id"] = credentials.primary_environment;
     }
 
     const branch = requestOptions?.branch ?? this.config.branch;

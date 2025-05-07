@@ -1,4 +1,3 @@
-import { CustomFetchClient } from "../_interface/_types";
 import { ChalkHttpHeaders } from "../_interface/_header";
 import {
   ChannelCredentials,
@@ -9,13 +8,14 @@ import {
 import { ChalkError } from "../_errors";
 import { CredentialsHolder } from "./_credentials";
 import { QueryServiceClient } from "../gen/proto/chalk/engine/v1/query_server.pb";
-import { stripProtocol } from "../_utils/_grpc";
+import { headersToMetadata, stripProtocol } from "../_utils/_grpc";
 import {
   OnlineQueryBulkRequest,
   OnlineQueryBulkResponse,
   OnlineQueryMultiRequest,
   OnlineQueryMultiResponse,
 } from "../gen/proto/chalk/common/v1/online_query.pb";
+import { USER_AGENT } from "../_user_agent";
 
 export type GRPCCall<Req, Resp> = (
   req: Req,
@@ -43,7 +43,6 @@ export interface ChalkGRRPCServiceArgs {
 export class ChalkGRPCService {
   private defaultTimeout: number | undefined;
   private additionalHeaders: ChalkHttpHeaders | undefined;
-  private maxNetworkRetries: number;
   private credentialsHolder: CredentialsHolder;
   private queryClient: QueryServiceClient;
 
@@ -56,28 +55,34 @@ export class ChalkGRPCService {
   }: ChalkGRRPCServiceArgs) {
     this.defaultTimeout = defaultTimeout;
     this.additionalHeaders = additionalHeaders;
-    this.maxNetworkRetries = maxNetworkRetries;
     this.credentialsHolder = credentialsHolder;
     this.queryClient = this.queryClient = new QueryServiceClient(
       stripProtocol(endpoint),
-      ChannelCredentials.createInsecure()
+      ChannelCredentials.createInsecure(),
+      { "grpc.enable_retries": maxNetworkRetries }
     );
   }
 
   private promisfyGRPCCall = <Req, Resp>(
     call: GRPCCall<Req, Resp>
   ): PromisifiedGRPCCall<Req, Resp> => {
-    return (req, metadata): Promise<Resp> => {
-      const fullMetadata = metadata.clone();
-      if (this.additionalHeaders != null) {
-        for (const [key, value] of Object.entries(this.additionalHeaders)) {
-          fullMetadata.set(key, `${value}`);
-        }
-      }
+    return async (req, metadata): Promise<Resp> => {
+      const credentials = await this.credentialsHolder.get();
+
+      const fullMetadata = headersToMetadata({
+        "X-Chalk-Deployment-Type": "engine-grpc",
+        "Content-Type": "application/json;charset=utf-8",
+        "User-Agent": USER_AGENT,
+        Accept: "application/octet-stream",
+        Authorization: `Bearer ${credentials.access_token}`,
+        ...this.additionalHeaders,
+      });
 
       if (this.defaultTimeout != null) {
         fullMetadata.set("X-Chalk-Timeout", this.defaultTimeout.toString());
       }
+
+      fullMetadata.merge(metadata);
 
       return new Promise<Resp>((resolve, reject) => {
         call(req, metadata, (error: ServiceError | null, resp: Resp) => {
