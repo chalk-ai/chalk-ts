@@ -1,7 +1,7 @@
 export { ChalkClient } from "./_client_http";
 export { ChalkGRPCClient } from "./_client_grpc";
 export { ChalkError, isChalkError } from "./_errors";
-import { ChalkHttpHeaders } from "./_interface/_header";
+export { ChalkHttpHeaders } from "./_interface/_header";
 export {
   ChalkClientInterface,
   ChalkErrorData,

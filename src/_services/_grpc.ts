@@ -16,6 +16,7 @@ import {
   OnlineQueryMultiResponse,
 } from "../gen/proto/chalk/common/v1/online_query.pb";
 import { USER_AGENT } from "../_user_agent";
+import { ChalkRequestOptions } from "../_interface/_request";
 
 export type GRPCCall<Req, Resp> = (
   req: Req,
@@ -23,14 +24,15 @@ export type GRPCCall<Req, Resp> = (
   callback: (error: ServiceError | null, resp: Resp) => void
 ) => ClientUnaryCall;
 
-export type PromisifiedGRPCCall<Req, Resp> = (
+export type GRPCCallArgs<Req> = [
   req: Req,
-  metadata: Metadata
-) => Promise<Resp>;
+  metadata: Metadata,
+  ChalkRequestOptions | null | undefined
+];
 
-export type GRPCCallArgs<Req, Resp> = Parameters<
-  PromisifiedGRPCCall<Req, Resp>
->;
+export type PromisifiedGRPCCall<Req, Resp> = (
+  ...args: GRPCCallArgs<Req>
+) => Promise<Resp>;
 
 export interface ChalkGRRPCServiceArgs {
   defaultTimeout?: number;
@@ -66,7 +68,11 @@ export class ChalkGRPCService {
   private promisfyGRPCCall = <Req, Resp>(
     call: GRPCCall<Req, Resp>
   ): PromisifiedGRPCCall<Req, Resp> => {
-    return async (req, metadata): Promise<Resp> => {
+    return async (
+      req: Req,
+      metadata: Metadata,
+      opts: ChalkRequestOptions | null | undefined
+    ): Promise<Resp> => {
       const credentials = await this.credentialsHolder.get();
 
       const fullMetadata = headersToMetadata({
@@ -78,8 +84,10 @@ export class ChalkGRPCService {
         ...this.additionalHeaders,
       });
 
-      if (this.defaultTimeout != null) {
-        fullMetadata.set("X-Chalk-Timeout", this.defaultTimeout.toString());
+      const timeoutToUse = opts?.timeout ?? this.defaultTimeout;
+
+      if (timeoutToUse != null) {
+        fullMetadata.set("X-Chalk-Timeout", timeoutToUse.toString());
       }
 
       fullMetadata.merge(metadata);
@@ -103,7 +111,7 @@ export class ChalkGRPCService {
   };
 
   public queryBulk = (
-    ...args: GRPCCallArgs<OnlineQueryBulkRequest, OnlineQueryBulkResponse>
+    ...args: GRPCCallArgs<OnlineQueryBulkRequest>
   ): Promise<OnlineQueryBulkResponse> => {
     return this.promisfyGRPCCall<
       OnlineQueryBulkRequest,
@@ -112,7 +120,7 @@ export class ChalkGRPCService {
   };
 
   public queryMulti = (
-    ...args: GRPCCallArgs<OnlineQueryMultiRequest, OnlineQueryMultiResponse>
+    ...args: GRPCCallArgs<OnlineQueryMultiRequest>
   ): Promise<OnlineQueryMultiResponse> => {
     return this.promisfyGRPCCall<
       OnlineQueryMultiRequest,

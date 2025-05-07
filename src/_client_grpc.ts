@@ -25,6 +25,7 @@ import { USER_AGENT } from "./_user_agent";
 import { ChalkGRPCClientOpts } from "./_interface/_options";
 import { onlineSingleRequestToBulkRequest } from "./_request";
 import { ChalkGRPCService } from "./_services/_grpc";
+import { ChalkRequestOptions } from "./_interface/_request";
 
 function valueWithEnvFallback(
   parameterNameForDebugging: string,
@@ -43,23 +44,6 @@ function valueWithEnvFallback(
   throw new Error(
     `Chalk client parameter '${parameterNameForDebugging}' was not specified when creating your ChalkClient, and was not present as '${name}' in process.env. This field is required to use Chalk`
   );
-}
-
-export interface ChalkRequestOptions {
-  /**
-   * If specified, Chalk will route this request to the relevant branch. Overrides the branch passed in to the
-   * client initialization.
-   */
-  branch?: string;
-  /**
-   * The timeout for the request in milliseconds. If not provided, the client will use the default timeout
-   * specified at the client level.
-   */
-  timeout?: number;
-  /**
-   * Additional headers to include in this request. These headers will be merged with the headers provided at the client level.
-   */
-  additionalHeaders?: ChalkHttpHeaders;
 }
 
 export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
@@ -149,7 +133,8 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 
     const response = await queryService.queryBulk(
       requestBody,
-      headersToMetadata(headers)
+      headersToMetadata(headers),
+      requestOptions
     );
 
     const responseObject: ChalkOnlineQueryResponse<TFeatureMap, TOutput> = {
@@ -170,7 +155,8 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 
     const response = await queryService.queryMulti(
       requestBody,
-      headersToMetadata(headers)
+      headersToMetadata(headers),
+      requestOptions
     );
 
     const responseObject: ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput> =
@@ -195,7 +181,8 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     const headers = await this.getHeaders(requestOptions);
     const response = await queryService.queryBulk(
       requestBody,
-      headersToMetadata(headers)
+      headersToMetadata(headers),
+      requestOptions
     );
 
     const responseObject: ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> = {
