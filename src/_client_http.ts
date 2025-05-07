@@ -1,5 +1,4 @@
 import { parseFeatherQueryResponse } from "./_bulk_response";
-import { DEFAULT_API_SERVER } from "./_const";
 import { ChalkError } from "./_errors";
 import {
   IntermediateRequestBodyJSON,

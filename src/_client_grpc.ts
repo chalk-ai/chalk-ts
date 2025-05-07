@@ -1,4 +1,3 @@
-import { DEFAULT_API_SERVER } from "./_const";
 import { ChalkHTTPService } from "./_services/_http";
 import { ChalkHttpHeaders, ChalkHttpHeadersStrict } from "./_interface/_header";
 import { CredentialsHolder } from "./_services/_credentials";
@@ -11,9 +10,8 @@ import {
   ChalkOnlineMultiQueryResponse,
   ChalkOnlineQueryRequest,
   ChalkOnlineQueryResponse,
-  TimestampFormat,
 } from "./_interface";
-import { ChalkEnvironmentVariables, ChalkScalar } from "./_interface/_types";
+import { ChalkScalar } from "./_interface/_types";
 import {
   headersToMetadata,
   mapGRPCChalkError,
