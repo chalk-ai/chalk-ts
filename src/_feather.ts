@@ -67,7 +67,7 @@ export function serializeBulkQueryInputFeather<
   inputs: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>["inputs"]
 ): Uint8Array {
   return tableToIPC(
-    tableFromArrays(inputs as Record<string, Array<unknown>>),
+    tableFromArrays(inputs as Record<TOutput, Array<TFeatureMap[TOutput]>>),
     "file"
   );
 }
@@ -79,7 +79,11 @@ export function serializeMultipleQueryInputFeather<
   const utf8Encode: TextEncoder = new TextEncoder();
 
   const encodedRequests = requests.map((request) => {
-    const bodyBytes = tableToIPC(tableFromArrays(request.inputs as any));
+    const bodyBytes = tableToIPC(
+      tableFromArrays(
+        request.inputs as Record<TOutput, Array<TFeatureMap[TOutput]>>
+      )
+    );
     const header = featherRequestHeaderFromBody(request);
     const headerBytes = utf8Encode.encode(JSON.stringify(header));
 

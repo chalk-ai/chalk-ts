@@ -252,9 +252,9 @@ export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
 >(
   response: OnlineQueryBulkResponse
 ): ChalkOnlineQueryResponse<TFeatureMap, TOutput> => {
-  const rawData = tableFromIPC(response.scalarsData).toArray()[0];
-  const features = Object.keys(response.scalarsData).filter(
-    (key) => !key.startsWith(metadataPrefix)
+  const rawData = tableFromIPC(response.scalarsData).toArray()[0] ?? {};
+  const features = Object.keys(rawData).filter(
+    (key) => !key.startsWith(metadataPrefix) || key == "__id__"
   );
   const errors = response.errors.map(mapGRPCChalkError);
   const metadataByFeature = new Map<string, FeatureMeta>(
@@ -282,7 +282,7 @@ export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
           return [
             feature,
             {
-              value: rawData[feature]?.[0],
+              value: rawData[feature],
               valid: true,
               error: relatedError,
               meta: relatedMeta ? mapGRPCFeatureMeta(relatedMeta) : undefined,

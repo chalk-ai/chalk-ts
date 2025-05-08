@@ -114,11 +114,11 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 
     return {
       responses: response.responses
-        .map((singleResponse) =>
-          singleResponse.bulkResponse
+        .map((singleResponse, idx) => {
+          return singleResponse.bulkResponse
             ? mapBulkQueryResponseGrpcToChalk(singleResponse.bulkResponse)
-            : null
-        )
+            : null;
+        })
         .filter(
           (
             response
