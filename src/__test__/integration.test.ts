@@ -5,6 +5,7 @@ interface FraudTemplateFeatures {
   "user.full_name": string;
   "user.gender": "m" | "f" | "x";
   "user.socure_score": number;
+  "user.franchise_set": any;
 
   "transaction.id": number;
   "transaction.amount": number;
