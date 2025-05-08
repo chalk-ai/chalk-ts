@@ -171,6 +171,15 @@ export const formUrlforGRPC = (url: string): string => {
   }
 };
 
+export const shouldUseInsecureChannel = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol.startsWith("http:");
+  } catch {
+    return false;
+  }
+};
+
 export const headersToMetadata = (headers: ChalkHttpHeaders): Metadata => {
   const metadata = new Metadata();
   for (const header in headers) {

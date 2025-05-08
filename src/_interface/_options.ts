@@ -105,5 +105,5 @@ export interface ChalkGRPCClientOpts extends BaseChalkClientOpts {
    *
    * Note that
    */
-  grpcClientOptions: Partial<ClientOptions>;
+  grpcClientOptions?: Partial<ClientOptions>;
 }

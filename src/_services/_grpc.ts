@@ -9,7 +9,11 @@ import {
 import { ChalkError } from "../_errors";
 import { CredentialsHolder } from "./_credentials";
 import { QueryServiceClient } from "../gen/proto/chalk/engine/v1/query_server.pb";
-import { formUrlforGRPC, headersToMetadata } from "../_utils/_grpc";
+import {
+  formUrlforGRPC,
+  headersToMetadata,
+  shouldUseInsecureChannel,
+} from "../_utils/_grpc";
 import {
   OnlineQueryBulkRequest,
   OnlineQueryBulkResponse,
@@ -61,7 +65,9 @@ export class ChalkGRPCService {
     this.credentialsHolder = credentialsHolder;
     this.queryClient = this.queryClient = new QueryServiceClient(
       formUrlforGRPC(endpoint),
-      ChannelCredentials.createInsecure(),
+      shouldUseInsecureChannel(endpoint)
+        ? ChannelCredentials.createInsecure()
+        : ChannelCredentials.createSsl(),
       {
         ...clientOptions,
         "grpc.enable_retries": clientOptions?.["grpc.enable_retries"] ?? 3,
