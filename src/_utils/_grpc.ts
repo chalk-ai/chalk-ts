@@ -37,6 +37,9 @@ export const mapOnlineBulkQueryRequestChalkToGRPC = <
 >(
   request: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>
 ): OnlineQueryBulkRequest => {
+  const firstInput = Object.values(request.inputs)[0];
+  const inputLength = Array.isArray(firstInput) ? firstInput.length : 0;
+  const safeNow = request.now ? new Date(request.now) : new Date();
   return {
     inputsFeather: serializeBulkQueryInputFeather(request.inputs),
     outputs: request.outputs.map((output) => ({
@@ -73,7 +76,7 @@ export const mapOnlineBulkQueryRequestChalkToGRPC = <
       // TODO Add option before merge
       explain: true,
     },
-    now: [request.now ? new Date(request.now) : new Date()],
+    now: new Array(inputLength).fill(safeNow),
     staleness: (request.staleness as Record<string, string>) ?? {},
     bodyType: FeatherBodyType.FEATHER_BODY_TYPE_TABLE,
   };
@@ -254,7 +257,7 @@ export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
 ): ChalkOnlineQueryResponse<TFeatureMap, TOutput> => {
   const rawData = tableFromIPC(response.scalarsData).toArray()[0] ?? {};
   const features = Object.keys(rawData).filter(
-    (key) => !key.startsWith(metadataPrefix) || key == "__id__"
+    (key) => !key.startsWith(metadataPrefix) && key !== "__id__"
   );
   const errors = response.errors.map(mapGRPCChalkError);
   const metadataByFeature = new Map<string, FeatureMeta>(
@@ -304,8 +307,20 @@ export const mapBulkQueryResponseGrpcToChalk = <
 >(
   response: OnlineQueryBulkResponse
 ): ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> => {
+  const rawData = tableFromIPC(response.scalarsData).toArray();
+  const features = new Set(
+    Object.keys(rawData[0] ?? {}).filter(
+      (key) => !key.startsWith(metadataPrefix) && key !== "__id__"
+    )
+  ) as Set<string>;
+  const data = rawData.map((datum) =>
+    Object.fromEntries(
+      Object.entries(datum).filter(([key]) => features.has(key))
+    )
+  );
+
   const chalkResponse: ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> = {
-    data: tableFromIPC(response.scalarsData).toArray()[0],
+    data: data as { [K in TOutput]: TFeatureMap[K] }[],
     meta: mapGRPCChalkMeta(response.responseMeta),
     errors: response.errors.map(mapGRPCChalkError),
   };

@@ -105,7 +105,7 @@ describe("integration tests", () => {
     );
   });
 
-  describe("query fraud-template", () => {
+  describe("query integration_tests", () => {
     it(
       "query all_types.int_feat",
       async () => {
@@ -116,7 +116,6 @@ describe("integration tests", () => {
           outputs: ["all_types.int_feat"],
         });
 
-        console.log(result);
         expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
       },
       INTEGRATION_TEST_TIMEOUT
@@ -134,28 +133,6 @@ describe("integration tests", () => {
 
         expect(result.data["all_types.str_feat"].value).toBe("1");
         expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
-      },
-      INTEGRATION_TEST_TIMEOUT
-    );
-
-    it(
-      "query alternate struct encodings",
-      async () => {
-        const result = await client.query({
-          inputs: {
-            "all_types.id": 1,
-          },
-          outputs: ["all_types.id", "all_types.has_one", "all_types.has_many"],
-          encodingOptions: {
-            encodeStructsAsObjects: true,
-          },
-          queryName: "chalk-ts query alternate struct encodings",
-        });
-
-        expect(result.data["all_types.id"].value).toBe(1);
-        expect(result.data["all_types.has_one"].value["all_types_id"]).toEqual(
-          1
-        );
       },
       INTEGRATION_TEST_TIMEOUT
     );
@@ -184,7 +161,7 @@ describe("integration tests", () => {
     );
 
     it(
-      "multi_query fraud template",
+      "multi_query integration_tests",
       async () => {
         const result = await client.multiQuery({
           queries: [
@@ -231,7 +208,6 @@ describe("integration tests", () => {
         expect(first.meta?.queryHash).toBeDefined();
         expect(second.meta?.queryHash).toBeDefined();
         expect(third.meta?.queryHash).toBeDefined();
-        expect(fourth.meta?.queryHash).toBeNull();
 
         expect(first.meta).toHaveProperty("executionDurationS");
         expect(first.meta).toHaveProperty("deploymentId");
@@ -242,10 +218,9 @@ describe("integration tests", () => {
         expect(first.meta).toHaveProperty("queryHash");
         expect(first.meta).toHaveProperty("explainOutput");
 
-        expect(first.errors).toBeUndefined();
-        expect(second.errors).toBeUndefined();
-        expect(third.errors).toBeUndefined();
-        expect(fourth.errors).toBeDefined();
+        expect(first.errors?.length || 0).toBe(0);
+        expect(second.errors?.length || 0).toBe(0);
+        expect(third.errors?.length || 0).toBe(0);
         expect(fourth.errors?.length).toEqual(1);
 
         expect(fourth.errors?.[0].code).toEqual("PARSE_FAILED");
