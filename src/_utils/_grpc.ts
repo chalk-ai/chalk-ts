@@ -8,85 +8,28 @@ import {
   ChalkErrorCategory,
   ChalkErrorCode,
   ChalkErrorData,
+  ChalkFeatureMeta,
   ChalkOnlineBulkQueryRequest,
+  ChalkOnlineBulkQueryResponse,
   ChalkOnlineMultiQueryRequest,
+  ChalkOnlineQueryFeatureResult,
+  ChalkOnlineQueryResponse,
+  ChalkQueryMeta,
 } from "../_interface";
 import { ChalkHttpHeaders } from "../_interface/_header";
-import { Metadata } from "@grpc/grpc-js";
 import { serializeBulkQueryInputFeather } from "../_feather";
 import {
   FeatherBodyType,
   GenericSingleQuery,
   OnlineQueryBulkRequest,
+  OnlineQueryBulkResponse,
+  OnlineQueryMetadata,
   OnlineQueryMultiRequest,
 } from "../gen/proto/chalk/common/v1/online_query.pb";
+import { tableFromIPC } from "apache-arrow";
+import { Metadata } from "@grpc/grpc-js";
 
-export const mapErrorCodeGRPCToSDK = (error: GRPCErrorCode): ChalkErrorCode => {
-  switch (error) {
-    case GRPCErrorCode.ERROR_CODE_CANCELLED:
-      return "CANCELLED";
-    case GRPCErrorCode.ERROR_CODE_DEADLINE_EXCEEDED:
-      return "DEADLINE_EXCEEDED";
-    case GRPCErrorCode.ERROR_CODE_INVALID_QUERY:
-      return "INVALID_QUERY";
-    case GRPCErrorCode.ERROR_CODE_PARSE_FAILED:
-      return "PARSE_FAILED";
-    case GRPCErrorCode.ERROR_CODE_RESOLVER_FAILED:
-      return "RESOLVER_FAILED";
-    case GRPCErrorCode.ERROR_CODE_RESOLVER_NOT_FOUND:
-      return "RESOLVER_NOT_FOUND";
-    case GRPCErrorCode.ERROR_CODE_RESOLVER_TIMED_OUT:
-      return "RESOLVER_TIMED_OUT";
-    case GRPCErrorCode.ERROR_CODE_UNAUTHENTICATED:
-      return "UNAUTHENTICATED";
-    case GRPCErrorCode.ERROR_CODE_UNAUTHORIZED:
-      return "UNAUTHORIZED";
-    case GRPCErrorCode.ERROR_CODE_UPSTREAM_FAILED:
-      return "UPSTREAM_FAILED";
-    case GRPCErrorCode.ERROR_CODE_VALIDATION_FAILED:
-      return "VALIDATION_FAILED";
-    case GRPCErrorCode.ERROR_CODE_INTERNAL_SERVER_ERROR_UNSPECIFIED:
-    default:
-      return "INTERNAL_SERVER_ERROR";
-  }
-};
-
-export const mapErrorCategoryGRPCToSDK = (
-  category: GRPCErrorCodeCategory
-): ChalkErrorCategory => {
-  switch (category) {
-    case ErrorCodeCategory.ERROR_CODE_CATEGORY_FIELD:
-      return "FIELD";
-    case ErrorCodeCategory.ERROR_CODE_CATEGORY_REQUEST:
-      return "REQUEST";
-    case ErrorCodeCategory.ERROR_CODE_CATEGORY_NETWORK_UNSPECIFIED:
-    default:
-      return "NETWORK";
-  }
-};
-
-export const mapGRPCChalkError = (error: GRPCChalkError): ChalkErrorData => {
-  const chalkError: ChalkErrorData = {
-    code: mapErrorCodeGRPCToSDK(error.code),
-    category: mapErrorCategoryGRPCToSDK(error.category),
-    message: error.message,
-
-    feature: error.feature,
-    resolver: error.resolver,
-  };
-
-  const maybeException = error.exception;
-  if (maybeException != null) {
-    // The exception that caused the failure, if applicable.
-    chalkError.exception = {
-      kind: maybeException.kind,
-      message: maybeException.message,
-      stacktrace: maybeException.stacktrace,
-    };
-  }
-
-  return chalkError;
-};
+/**  Request-Related **/
 
 export const mapOnlineBulkQueryRequestChalkToGRPC = <
   TFeatureMap,
@@ -188,4 +131,184 @@ export const headersToMetadata = (headers: ChalkHttpHeaders): Metadata => {
   }
 
   return metadata;
+};
+
+/**  Response-Related **/
+
+export const mapErrorCodeGRPCToSDK = (error: GRPCErrorCode): ChalkErrorCode => {
+  switch (error) {
+    case GRPCErrorCode.ERROR_CODE_CANCELLED:
+      return "CANCELLED";
+    case GRPCErrorCode.ERROR_CODE_DEADLINE_EXCEEDED:
+      return "DEADLINE_EXCEEDED";
+    case GRPCErrorCode.ERROR_CODE_INVALID_QUERY:
+      return "INVALID_QUERY";
+    case GRPCErrorCode.ERROR_CODE_PARSE_FAILED:
+      return "PARSE_FAILED";
+    case GRPCErrorCode.ERROR_CODE_RESOLVER_FAILED:
+      return "RESOLVER_FAILED";
+    case GRPCErrorCode.ERROR_CODE_RESOLVER_NOT_FOUND:
+      return "RESOLVER_NOT_FOUND";
+    case GRPCErrorCode.ERROR_CODE_RESOLVER_TIMED_OUT:
+      return "RESOLVER_TIMED_OUT";
+    case GRPCErrorCode.ERROR_CODE_UNAUTHENTICATED:
+      return "UNAUTHENTICATED";
+    case GRPCErrorCode.ERROR_CODE_UNAUTHORIZED:
+      return "UNAUTHORIZED";
+    case GRPCErrorCode.ERROR_CODE_UPSTREAM_FAILED:
+      return "UPSTREAM_FAILED";
+    case GRPCErrorCode.ERROR_CODE_VALIDATION_FAILED:
+      return "VALIDATION_FAILED";
+    case GRPCErrorCode.ERROR_CODE_INTERNAL_SERVER_ERROR_UNSPECIFIED:
+    default:
+      return "INTERNAL_SERVER_ERROR";
+  }
+};
+
+export const mapErrorCategoryGRPCToSDK = (
+  category: GRPCErrorCodeCategory
+): ChalkErrorCategory => {
+  switch (category) {
+    case ErrorCodeCategory.ERROR_CODE_CATEGORY_FIELD:
+      return "FIELD";
+    case ErrorCodeCategory.ERROR_CODE_CATEGORY_REQUEST:
+      return "REQUEST";
+    case ErrorCodeCategory.ERROR_CODE_CATEGORY_NETWORK_UNSPECIFIED:
+    default:
+      return "NETWORK";
+  }
+};
+
+export const mapGRPCChalkError = (error: GRPCChalkError): ChalkErrorData => {
+  const chalkError: ChalkErrorData = {
+    code: mapErrorCodeGRPCToSDK(error.code),
+    category: mapErrorCategoryGRPCToSDK(error.category),
+    message: error.message,
+
+    feature: error.feature,
+    resolver: error.resolver,
+  };
+
+  const maybeException = error.exception;
+  if (maybeException != null) {
+    // The exception that caused the failure, if applicable.
+    chalkError.exception = {
+      kind: maybeException.kind,
+      message: maybeException.message,
+      stacktrace: maybeException.stacktrace,
+    };
+  }
+
+  return chalkError;
+};
+
+export const mapGRPCChalkMeta = (
+  meta: OnlineQueryMetadata | null | undefined
+): ChalkQueryMeta | undefined => {
+  if (meta == null) {
+    return undefined;
+  }
+
+  const chalkMeta = {
+    executionDurationS: 0,
+    deploymentId: meta.deploymentId,
+    environmentId: meta.environmentId,
+    environmentName: meta.environmentName,
+    queryId: meta.queryId,
+    queryTimestamp: meta.queryTimestamp?.toISOString(),
+    queryHash: meta.queryHash,
+    explainOutput: meta.explainOutput?.planString,
+    additionalMetadata: meta.additionalMetadata,
+  };
+
+  if (meta.executionDuration != null) {
+    chalkMeta.executionDurationS =
+      meta.executionDuration.seconds + meta.executionDuration.nanos / 1e9;
+  }
+
+  return chalkMeta;
+};
+
+export interface FeatureMeta {
+  source_type: string;
+  source_id: string;
+  resolver_fqn: string;
+}
+
+export const mapGRPCFeatureMeta = (
+  featureMeta: FeatureMeta
+): ChalkFeatureMeta => ({
+  chosenResolverFqn: featureMeta.resolver_fqn,
+  cacheHit: featureMeta.source_type !== "live_resolver",
+});
+
+const metadataPrefix = "__chalk__.__result_metadata__.";
+type MetadataKey<T extends string | number> =
+  `__chalk__.__result_metadata__${T}`;
+
+export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
+  response: OnlineQueryBulkResponse
+): ChalkOnlineQueryResponse<TFeatureMap, TOutput> => {
+  const rawData = tableFromIPC(response.scalarsData).toArray()[0];
+  const features = Object.keys(response.scalarsData).filter(
+    (key) => !key.startsWith(metadataPrefix)
+  );
+  const errors = response.errors.map(mapGRPCChalkError);
+  const metadataByFeature = new Map<string, FeatureMeta>(
+    Object.entries(rawData)
+      .filter(([key]) => key.startsWith(metadataPrefix))
+      .map(([key, metadata]): [string, FeatureMeta] => [
+        key.slice(metadataPrefix.length),
+        metadata as FeatureMeta,
+      ])
+  );
+  const errorsByFeature = new Map(
+    errors
+      .filter((err) => err.feature != null)
+      .map((err) => [err.feature!, err])
+  );
+
+  const chalkResponse: ChalkOnlineQueryResponse<TFeatureMap, TOutput> = {
+    data: Object.fromEntries(
+      (features as TOutput[]).map(
+        (
+          feature
+        ): [TOutput, ChalkOnlineQueryFeatureResult<TFeatureMap, TOutput>] => {
+          const relatedError = errorsByFeature.get(feature as string);
+          const relatedMeta = metadataByFeature.get(feature as string);
+          return [
+            feature,
+            {
+              value: rawData[feature]?.[0],
+              valid: true,
+              error: relatedError,
+              meta: relatedMeta ? mapGRPCFeatureMeta(relatedMeta) : undefined,
+            },
+          ];
+        }
+      )
+    ) as { [K in TOutput]: ChalkOnlineQueryFeatureResult<TFeatureMap, K> },
+    meta: mapGRPCChalkMeta(response.responseMeta),
+    errors: response.errors.map(mapGRPCChalkError),
+  };
+
+  return chalkResponse;
+};
+
+export const mapBulkQueryResponseGrpcToChalk = <
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
+  response: OnlineQueryBulkResponse
+): ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> => {
+  const chalkResponse: ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> = {
+    data: tableFromIPC(response.scalarsData).toArray()[0],
+    meta: mapGRPCChalkMeta(response.responseMeta),
+    errors: response.errors.map(mapGRPCChalkError),
+  };
+
+  return chalkResponse;
 };

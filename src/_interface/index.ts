@@ -132,6 +132,9 @@ export interface ChalkQueryMeta {
 
   // An unstructured string containing diagnostic information about the query execution. Only included if `explain` is True.
   explainOutput?: string;
+
+  // Additional, experimental metadata for debugging query performance.
+  additionalMetadata?: Record<string, string>;
 }
 
 export type ChalkOnlineQueryResponseStatusKind =
@@ -152,32 +155,37 @@ export interface ChalkFeatureMeta {
   version?: number;
 }
 
+export interface ChalkOnlineQueryFeatureResult<
+  TFeatureMap,
+  Key extends keyof TFeatureMap
+> {
+  // The value of the requested feature.
+  // If an error was encountered in resolving this feature,
+  // this field will be empty.
+  value: TFeatureMap[Key];
+
+  // The time at which this feature was computed.
+  // This value could be significantly in the past if you're using caching.
+  computedAt?: Date;
+
+  // The error code encountered in resolving this feature.
+  // If no error occurred, this field is empty.
+  error?: ChalkErrorData;
+
+  // If an error occurred resolving this feature, this field will be 'false'.
+  valid?: boolean;
+
+  // Only included if `include_meta` is true.
+  meta?: ChalkFeatureMeta;
+}
+
 export interface ChalkOnlineQueryResponse<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
   // The output features and any query metadata.
   data: {
-    [K in TOutput]: {
-      // The value of the requested feature.
-      // If an error was encountered in resolving this feature,
-      // this field will be empty.
-      value: TFeatureMap[K];
-
-      // The time at which this feature was computed.
-      // This value could be significantly in the past if you're using caching.
-      computedAt?: Date;
-
-      // The error code encountered in resolving this feature.
-      // If no error occurred, this field is empty.
-      error?: ChalkErrorData;
-
-      // If an error occurred resolving this feature, this field will be 'false'.
-      valid?: boolean;
-
-      // Only included if `include_meta` is true.
-      meta?: ChalkFeatureMeta;
-    };
+    [K in TOutput]: ChalkOnlineQueryFeatureResult<TFeatureMap, K>;
   };
 
   // Errors encountered while running the resolvers.

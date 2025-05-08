@@ -14,11 +14,11 @@ import {
 import { ChalkScalar } from "./_interface/_types";
 import {
   headersToMetadata,
-  mapGRPCChalkError,
+  mapBulkQueryResponseGrpcToChalk,
+  mapBulkQueryResponseGrpcToChalkOnlineResponse,
   mapOnlineBulkQueryRequestChalkToGRPC,
   mapOnlineMultiQueryRequestChalkToGRPC,
 } from "./_utils/_grpc";
-import { tableFromIPC } from "apache-arrow";
 import { ChalkGRPCClientOpts } from "./_interface/_options";
 import { onlineSingleRequestToBulkRequest } from "./_request";
 import { ChalkGRPCService } from "./_services/_grpc";
@@ -95,12 +95,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       requestOptions
     );
 
-    const responseObject: ChalkOnlineQueryResponse<TFeatureMap, TOutput> = {
-      data: tableFromIPC(response.scalarsData).toArray()[0] as any,
-      errors: response.errors.map(mapGRPCChalkError),
-    };
-
-    return responseObject;
+    return mapBulkQueryResponseGrpcToChalkOnlineResponse(response);
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
@@ -117,17 +112,20 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       requestOptions
     );
 
-    const responseObject: ChalkOnlineMultiQueryResponse<TFeatureMap, TOutput> =
-      {
-        responses: response.responses.map((singleResponse) => ({
-          data: tableFromIPC(
-            singleResponse.bulkResponse!.scalarsData
-          ).toArray()[0] as any,
-          errors: singleResponse.bulkResponse!.errors.map(mapGRPCChalkError),
-        })),
-      };
-
-    return responseObject;
+    return {
+      responses: response.responses
+        .map((singleResponse) =>
+          singleResponse.bulkResponse
+            ? mapBulkQueryResponseGrpcToChalk(singleResponse.bulkResponse)
+            : null
+        )
+        .filter(
+          (
+            response
+          ): response is ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> =>
+            response != null
+        ),
+    };
   }
 
   async queryBulk<TOutput extends keyof TFeatureMap>(
@@ -143,12 +141,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       requestOptions
     );
 
-    const responseObject: ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> = {
-      data: tableFromIPC(response.scalarsData).toArray()[0] as any,
-      errors: response.errors.map(mapGRPCChalkError),
-    };
-
-    return responseObject;
+    return mapBulkQueryResponseGrpcToChalk(response);
   }
 
   private async getHeaders(
