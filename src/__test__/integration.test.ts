@@ -270,7 +270,7 @@ maybe("integration tests", () => {
             pack_groups_into_structs: true,
           },
           encodingOptions: {
-            encodeStructsAsObjects: false,
+            encodeStructsAsObjects: true,
           },
         });
 
