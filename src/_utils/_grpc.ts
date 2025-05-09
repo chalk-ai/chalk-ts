@@ -108,10 +108,10 @@ export const mapOnlineMultiQueryRequestChalkToGRPC = <
   };
 };
 
-export const formUrlforGRPC = (url: string): string => {
+export const formUrlForGRPC = (url: string): string => {
   try {
     const urlObj = new URL(url);
-    return `${urlObj.host}:${urlObj.port || 443}`;
+    return `${urlObj.hostname}:${urlObj.port || 443}`;
   } catch {
     return url;
   }

@@ -1,31 +1,28 @@
+import { Vector, DataType } from "apache-arrow";
 import { ChalkClient } from "../_client_http";
 
-interface FraudTemplateFeatures {
-  "user.id": number;
-  "user.full_name": string;
-  "user.gender": "m" | "f" | "x";
-  "user.socure_score": number;
-  "user.franchise_set": any;
+interface IntegrationTestFeatures {
+  "all_types.id": number;
+  "all_types.int_feat": bigint;
+  "all_types.str_feat": string;
+  "all_types.has_one": { all_types_id: number; id: string };
+  "all_types.has_many": { all_types_id: number; id: string }[];
+  "all_types.has_many.all_types_id": Vector<DataType>;
 
-  "transaction.id": number;
-  "transaction.amount": number;
-  "transaction.user.full_name": string;
-
-  "bag_of_stuff.id": number;
-  "bag_of_stuff.f1": string;
-  "bag_of_stuff.f2": string;
+  "all_types.not_a_real_feat": string;
 }
 
 const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
 const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
 maybe("integration tests", () => {
-  let client: ChalkClient<FraudTemplateFeatures>;
+  let client: ChalkClient<IntegrationTestFeatures>;
   beforeAll(() => {
-    client = new ChalkClient<FraudTemplateFeatures>({
-      clientId: process.env.CI_CHALK_CLIENT_ID,
-      clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
-      apiServer: "https://api.chalk.ai",
+    client = new ChalkClient<IntegrationTestFeatures>({
+      clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+      clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+      apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+      activeEnvironment: process.env._INTEGRATION_TEST_ACTIVE_ENVIRONMENT,
     });
   });
 
@@ -45,9 +42,11 @@ maybe("integration tests", () => {
           return await fetch(req, init);
         };
 
-        const queryServerClient = new ChalkClient<FraudTemplateFeatures>({
-          clientId: process.env.CI_CHALK_CLIENT_ID,
-          clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+        const queryServerClient = new ChalkClient<IntegrationTestFeatures>({
+          clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+          clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+          apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+          activeEnvironment: process.env._INTEGRATION_TEST_ACTIVE_ENVIRONMENT,
           queryServer: "https://my-test-url",
           fetch: injectedFetch,
         });
@@ -61,9 +60,9 @@ maybe("integration tests", () => {
         try {
           await queryServerClient.query({
             inputs: {
-              "user.id": 1,
+              "all_types.id": 1,
             },
-            outputs: ["user.full_name"],
+            outputs: ["all_types.str_feat"],
           });
         } catch (e) {}
 
@@ -80,15 +79,15 @@ maybe("integration tests", () => {
         // can't seem to do expect().toThrow with async functions
         let error = null;
         try {
-          const badClient = new ChalkClient<FraudTemplateFeatures>({
+          const badClient = new ChalkClient<IntegrationTestFeatures>({
             clientId: "bogus",
             clientSecret: "bogus",
           });
           const results = await badClient.query({
             inputs: {
-              "user.id": 1,
+              "all_types.id": 1,
             },
-            outputs: ["user.full_name"],
+            outputs: ["all_types.str_feat"],
           });
         } catch (e) {
           error = e;
@@ -105,15 +104,15 @@ maybe("integration tests", () => {
       async () => {
         let error = null;
         try {
-          const badClient = new ChalkClient<FraudTemplateFeatures>({
+          const badClient = new ChalkClient<IntegrationTestFeatures>({
             clientId: "bogus",
             clientSecret: "bogus",
           });
           await badClient.queryBulk({
             inputs: {
-              "user.id": [1, 2],
+              "all_types.id": [1, 2],
             },
-            outputs: ["user.full_name"],
+            outputs: ["all_types.str_feat"],
           });
         } catch (e) {
           error = e;
@@ -130,12 +129,12 @@ maybe("integration tests", () => {
       async () => {
         let error = null;
         try {
-          const badClient = new ChalkClient<FraudTemplateFeatures>();
+          const badClient = new ChalkClient<IntegrationTestFeatures>();
           await badClient.queryBulk({
             inputs: {
-              "user.id": [1, 2],
+              "all_types.id": [1, 2],
             },
-            outputs: ["user.full_name"],
+            outputs: ["all_types.str_feat"],
           });
         } catch (e) {
           error = e;
@@ -159,7 +158,7 @@ maybe("integration tests", () => {
             json: () => ({
               data: [
                 {
-                  field: "user.id",
+                  field: "all_types.id",
                   value: "injected!",
                   ts: "2023-01-01",
                 },
@@ -167,67 +166,69 @@ maybe("integration tests", () => {
             }),
           });
 
-        const injectedClient = new ChalkClient<FraudTemplateFeatures>({
-          clientId: process.env.CI_CHALK_CLIENT_ID,
-          clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+        const injectedClient = new ChalkClient<IntegrationTestFeatures>({
+          clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+          clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+          apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+          activeEnvironment: process.env._INTEGRATION_TEST_ACTIVE_ENVIRONMENT,
           fetch: injectedFetch,
         });
 
         const result = await injectedClient.query({
-          inputs: { "user.id": 1 },
-          outputs: ["user.id"],
+          inputs: { "all_types.id": 1 },
+          outputs: ["all_types.id"],
         });
-        expect(result.data["user.id"].value).toBe("injected!");
+        expect(result.data["all_types.id"].value).toBe("injected!");
       },
       INTEGRATION_TEST_TIMEOUT
     );
   });
 
-  describe("query fraud-template", () => {
+  describe("query integration_tests", () => {
     it(
-      "query user.id",
+      "query all_types.id",
       async () => {
         const result = await client.query({
           inputs: {
-            "user.id": 1,
+            "all_types.id": 1,
           },
-          outputs: ["user.id"],
+          outputs: ["all_types.id"],
         });
 
-        expect(result.data["user.id"].value).toBe(1);
-        expect(result.data["user.id"].valid).toBe(true);
+        expect(result.data["all_types.id"].value).toBe(1);
+        expect(result.data["all_types.id"].valid).toBe(true);
       },
       INTEGRATION_TEST_TIMEOUT
     );
 
     it(
-      "query user.gender",
+      "query all_types.int_feat",
       async () => {
         const result = await client.query({
           inputs: {
-            "user.id": 1,
+            "all_types.id": 1,
           },
-          outputs: ["user.gender"],
+          outputs: ["all_types.int_feat"],
         });
 
-        expect(result.data["user.gender"].value).toBe("f");
+        expect(result.data["all_types.int_feat"].value).toBe(1);
       },
       INTEGRATION_TEST_TIMEOUT
     );
 
     it(
-      "query user.id and user.gender",
+      "query all_types.id and all_types.int_feat",
       async () => {
         const result = await client.query({
           inputs: {
-            "user.id": 2,
+            "all_types.id": 2,
           },
-          outputs: ["user.id", "user.gender"],
+          outputs: ["all_types.id", "all_types.int_feat"],
         });
 
         expect(Object.keys(result.data).length).toBe(2);
-        expect(result.data["user.id"].value).toBe(2);
-        expect(result.data["user.gender"].value).toBe("f");
+        expect(result.data["all_types.id"].value).toBe(2);
+        expect(result.data["all_types.int_feat"].value).toBe(2);
       },
       INTEGRATION_TEST_TIMEOUT
     );
@@ -235,23 +236,24 @@ maybe("integration tests", () => {
     it(
       "query simple user directly to query server",
       async () => {
-        const directQueryClient = new ChalkClient<FraudTemplateFeatures>({
-          clientId: process.env.CI_CHALK_CLIENT_ID,
-          clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
-          apiServer: "https://api.chalk.ai",
+        const directQueryClient = new ChalkClient<IntegrationTestFeatures>({
+          clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+          clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+          apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+          activeEnvironment: process.env._INTEGRATION_TEST_ACTIVE_ENVIRONMENT,
           useQueryServerFromCredentialExchange: true,
         });
 
         const result = await directQueryClient.query({
           inputs: {
-            "user.id": 2,
+            "all_types.id": 2,
           },
-          outputs: ["user.id", "user.gender"],
+          outputs: ["all_types.id", "all_types.int_feat"],
         });
 
         expect(Object.keys(result.data).length).toBe(2);
-        expect(result.data["user.id"].value).toBe(2);
-        expect(result.data["user.gender"].value).toBe("f");
+        expect(result.data["all_types.id"].value).toBe(2);
+        expect(result.data["all_types.int_feat"].value).toBe(2);
       },
       INTEGRATION_TEST_TIMEOUT
     );
@@ -261,57 +263,53 @@ maybe("integration tests", () => {
       async () => {
         const result = await client.query({
           inputs: {
-            "user.id": 1,
+            "all_types.id": 1,
           },
-          outputs: ["user.id", "user.franchise_set"],
+          outputs: ["all_types.id", "all_types.has_many"],
+          plannerOptions: {
+            pack_groups_into_structs: true,
+          },
           encodingOptions: {
-            encodeStructsAsObjects: true,
+            encodeStructsAsObjects: false,
           },
         });
 
         expect(Object.keys(result.data).length).toBe(2);
-        expect(result.data["user.id"].value).toBe(1);
-        expect(
-          (result.data["user.franchise_set"].value as any)["locations"][0]
-        ).toEqual({
-          coordinates: [
-            {
-              lat: 41.9,
-              lng: 71.9,
-            },
-            {
-              lat: 42.8,
-              lng: 72.8,
-            },
+        expect(result.data["all_types.id"].value).toBe(1);
+        expect(result.data["all_types.has_many"].value).toEqual({
+          columns: [
+            "has_many_feature.id",
+            "has_many_feature.name",
+            "has_many_feature.all_types_id",
           ],
-          latlng: {
-            lat: 42,
-            lng: 71,
-          },
-          owners: ["Alice", "Bob"],
+          values: [
+            ["1a", "1b"],
+            ["1a", "1b"],
+            [1, 1],
+          ],
         });
       },
       INTEGRATION_TEST_TIMEOUT
     );
 
     it(
-      "query_bulk fraud template",
+      "query_bulk integration_tests",
       async () => {
         const result = await client.queryBulk({
           inputs: {
-            "user.id": [1, 2],
+            "all_types.id": [1, 2],
           },
-          outputs: ["user.id", "user.full_name"],
+          outputs: ["all_types.id", "all_types.str_feat"],
           encodingOptions: {
             encodeStructsAsObjects: true,
           },
         });
 
         expect(Object.keys(result.data).length).toBe(2);
-        expect(result.data[0]["user.id"]).toEqual(BigInt(1));
-        expect(result.data[0]["user.full_name"]).toEqual("Donna Davis");
-        expect(result.data[1]["user.id"]).toEqual(BigInt(2));
-        expect(result.data[1]["user.full_name"]).toEqual("William Johnson");
+        expect(result.data[0]["all_types.id"]).toEqual(BigInt(1));
+        expect(result.data[0]["all_types.str_feat"]).toEqual("1");
+        expect(result.data[1]["all_types.id"]).toEqual(BigInt(2));
+        expect(result.data[1]["all_types.str_feat"]).toEqual("2");
 
         expect(result.meta).toBeDefined();
       },
@@ -319,25 +317,32 @@ maybe("integration tests", () => {
     );
 
     it(
-      "multi_query fraud template",
+      "multi_query integration_tests",
       async () => {
         const result = await client.multiQuery({
           queries: [
             {
-              inputs: { "user.id": [1, 2] },
-              outputs: ["user.id", "user.full_name", "user.gender"],
+              inputs: { "all_types.id": [1, 2] },
+              outputs: [
+                "all_types.id",
+                "all_types.str_feat",
+                "all_types.int_feat",
+              ],
             },
             {
-              inputs: { "transaction.id": [1, 2, 3, 4] },
-              outputs: ["transaction.amount", "transaction.user.full_name"],
+              inputs: { "all_types.id": [1, 2, 3, 4] },
+              outputs: ["all_types.id", "all_types.str_feat"],
             },
             {
-              inputs: { "bag_of_stuff.id": [1, 2, 3, 4, 5, 6, 7, 8] },
-              outputs: ["bag_of_stuff.f1", "bag_of_stuff.f2"],
+              inputs: { "all_types.id": [1, 2, 3, 4, 5, 6, 7, 8] },
+              outputs: [
+                "all_types.has_many.all_types_id",
+                "all_types.has_many",
+              ],
             },
             {
-              inputs: { "user.id": [1] },
-              outputs: ["user.absolutely_bogus_feature_doesnt_exist" as any],
+              inputs: { "all_types.id": [1] },
+              outputs: ["all_types.not_a_real_feat"],
             },
           ],
           queryName: "chalk-ts-multi-query-test",
@@ -383,23 +388,24 @@ maybe("integration tests", () => {
         expect(fourth.errors).toBeDefined();
         expect(fourth.errors?.length).toEqual(1);
 
-        expect(first.data[0]["user.full_name"]).toEqual("Donna Davis");
-        expect(first.data[1]["user.full_name"]).toEqual("William Johnson");
+        expect(first.data[0]["all_types.str_feat"]).toEqual("1");
+        expect(first.data[1]["all_types.str_feat"]).toEqual("2");
 
-        expect(second.data[0]["transaction.user.full_name"]).toEqual(
-          "Norma Fisher"
-        );
-        expect(second.data[0]["transaction.amount"]).toEqual(623);
+        expect(second.data[0]["all_types.str_feat"]).toEqual("1");
+        expect(second.data[3]["all_types.str_feat"]).toEqual("4");
 
-        expect(third.data[7]["bag_of_stuff.f1"]).toEqual("f1");
+        expect(
+          Number(third.data[7]["all_types.has_many.all_types_id"].get(0))
+        ).toEqual(8);
+        expect(
+          Number(third.data[7]["all_types.has_many.all_types_id"].get(1))
+        ).toEqual(8);
 
         expect(fourth.errors?.[0].code).toEqual("PARSE_FAILED");
         expect(fourth.errors?.[0].message).toEqual(
-          "Query output referenced undefined feature 'user.absolutely_bogus_feature_doesnt_exist'"
+          "Query output referenced undefined feature 'all_types.not_a_real_feat'"
         );
-        expect(fourth.errors?.[0].feature).toEqual(
-          "user.absolutely_bogus_feature_doesnt_exist"
-        );
+        expect(fourth.errors?.[0].feature).toEqual("all_types.not_a_real_feat");
         expect(fourth.errors?.[0].category).toEqual("REQUEST");
       },
       INTEGRATION_TEST_TIMEOUT
