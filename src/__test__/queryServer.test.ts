@@ -1,4 +1,4 @@
-import { ChalkClient } from "../_client";
+import { ChalkClient } from "../_client_http";
 
 describe("ChalkClient getQueryServer", () => {
   const injectedFetch = (req: any, init: RequestInit | undefined): any => {

@@ -1,16 +1,3 @@
-import { TimestampFormat } from "./_interface";
-
-export interface ChalkClientConfig {
-  activeEnvironment: string | undefined;
-  apiServer: string;
-  branch: string | undefined;
-  clientId: string;
-  clientSecret: string;
-  queryServer: string | undefined;
-  timestampFormat: TimestampFormat;
-  useQueryServerFromCredentialExchange: boolean;
-}
-
 export interface CustomFetchClient<
   Req = RequestInfo | URL,
   ReqInit = RequestInit,
@@ -54,3 +41,23 @@ export type ChalkScalar =
   | boolean
   | ChalkScalarArray
   | ChalkScalarObject;
+
+// https://github.com/microsoft/TypeScript/issues/23182
+export type IsNever<T> = [T] extends [never] ? true : false;
+
+export type PathParams<S extends string> =
+  S extends `${infer _TPrefix}{${infer TParam}}${infer TRest}`
+    ? TParam | PathParams<TRest>
+    : never;
+
+type InternalPrimitiveType =
+  | "str"
+  | "int"
+  | "float"
+  | "bool"
+  | "datetime.date"
+  | "datetime.datetime"
+  | "datetime.time"
+  | "datetime.timedelta";
+
+export type ChalkPrimitiveType = `<class '${InternalPrimitiveType}'>`;

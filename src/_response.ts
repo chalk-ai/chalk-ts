@@ -1,12 +1,12 @@
 import {
-  CHALK_DATE_TYPES,
   ChalkOnlineQueryRawData,
   ChalkOnlineQueryRawResponse,
-} from "./_http";
-import { ChalkOnlineQueryResponse } from "./_interface";
-import { ChalkClientConfig, ChalkScalar } from "./_types";
+} from "./_services/_http";
+import { ChalkClientConfig, ChalkOnlineQueryResponse } from "./_interface";
+import { ChalkScalar } from "./_interface/_types";
 import { fromEntries } from "./_utils";
 import { mapRawResponseMeta } from "./_meta";
+import { CHALK_DATE_TYPES } from "./_const";
 
 type FeatureEntry<
   TFeatureMap = Record<string, ChalkScalar>,

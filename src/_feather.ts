@@ -1,5 +1,6 @@
 import { tableFromArrays, tableToIPC } from "apache-arrow";
 import { MULTI_QUERY_MAGIC_STR } from "./_bulk_response";
+import { ChalkOnlineBulkQueryRequest } from "./_interface";
 
 export interface IntermediateRequestBodyJSON<
   TFeatureMap,
@@ -59,6 +60,18 @@ export function featherRequestHeaderFromBody<
   };
 }
 
+export function serializeBulkQueryInputFeather<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(
+  inputs: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>["inputs"]
+): Uint8Array {
+  return tableToIPC(
+    tableFromArrays(inputs as Record<TOutput, Array<TFeatureMap[TOutput]>>),
+    "file"
+  );
+}
+
 export function serializeMultipleQueryInputFeather<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
@@ -66,7 +79,11 @@ export function serializeMultipleQueryInputFeather<
   const utf8Encode: TextEncoder = new TextEncoder();
 
   const encodedRequests = requests.map((request) => {
-    const bodyBytes = tableToIPC(tableFromArrays(request.inputs as any));
+    const bodyBytes = tableToIPC(
+      tableFromArrays(
+        request.inputs as Record<TOutput, Array<TFeatureMap[TOutput]>>
+      )
+    );
     const header = featherRequestHeaderFromBody(request);
     const headerBytes = utf8Encode.encode(JSON.stringify(header));
 

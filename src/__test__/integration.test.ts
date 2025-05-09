@@ -1,10 +1,11 @@
-import { ChalkClient } from "../_client";
+import { ChalkClient } from "../_client_http";
 
 interface FraudTemplateFeatures {
   "user.id": number;
   "user.full_name": string;
   "user.gender": "m" | "f" | "x";
   "user.socure_score": number;
+  "user.franchise_set": any;
 
   "transaction.id": number;
   "transaction.amount": number;
@@ -19,7 +20,7 @@ const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
 const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
 maybe("integration tests", () => {
-  let client: ChalkClient;
+  let client: ChalkClient<FraudTemplateFeatures>;
   beforeAll(() => {
     client = new ChalkClient<FraudTemplateFeatures>({
       clientId: process.env.CI_CHALK_CLIENT_ID,
@@ -234,13 +235,12 @@ maybe("integration tests", () => {
     it(
       "query simple user directly to query server",
       async () => {
-        const directQueryClient = (client =
-          new ChalkClient<FraudTemplateFeatures>({
-            clientId: process.env.CI_CHALK_CLIENT_ID,
-            clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
-            apiServer: "https://api.chalk.ai",
-            useQueryServerFromCredentialExchange: true,
-          }));
+        const directQueryClient = new ChalkClient<FraudTemplateFeatures>({
+          clientId: process.env.CI_CHALK_CLIENT_ID,
+          clientSecret: process.env.CI_CHALK_CLIENT_SECRET,
+          apiServer: "https://api.chalk.ai",
+          useQueryServerFromCredentialExchange: true,
+        });
 
         const result = await directQueryClient.query({
           inputs: {
