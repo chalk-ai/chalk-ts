@@ -10,7 +10,7 @@ import { ChalkError } from "../_errors";
 import { CredentialsHolder } from "./_credentials";
 import { QueryServiceClient } from "../gen/proto/chalk/engine/v1/query_server.pb";
 import {
-  formUrlforGRPC,
+  formUrlForGRPC,
   headersToMetadata,
   shouldUseInsecureChannel,
 } from "../_utils/_grpc";
@@ -23,18 +23,22 @@ import {
 import { USER_AGENT } from "../_user_agent";
 import { ChalkRequestOptions } from "../_interface/_request";
 
+// Type for what the underlying grpc generated call expects
 export type GRPCCall<Req, Resp> = (
   req: Req,
   metadata: Metadata,
+  // Callback hell to be fixed by this service
   callback: (error: ServiceError | null, resp: Resp) => void
 ) => ClientUnaryCall;
 
+// Function argument signature for what people calling this service should adhere to
 export type GRPCCallArgs<Req> = [
   req: Req,
   metadata: Metadata,
   options: ChalkRequestOptions | null | undefined
 ];
 
+// The API that this service provides
 export type PromisifiedGRPCCall<Req, Resp> = (
   ...args: GRPCCallArgs<Req>
 ) => Promise<Resp>;
@@ -64,7 +68,7 @@ export class ChalkGRPCService {
     this.additionalHeaders = additionalHeaders;
     this.credentialsHolder = credentialsHolder;
     this.queryClient = this.queryClient = new QueryServiceClient(
-      formUrlforGRPC(endpoint),
+      formUrlForGRPC(endpoint),
       shouldUseInsecureChannel(endpoint)
         ? ChannelCredentials.createInsecure()
         : ChannelCredentials.createSsl(),
