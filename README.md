@@ -164,7 +164,7 @@ Query Server in your Chalk Environment, changing to the gRPC Client can be done 
 - Use the import `ChalkGRPCClient` instead of `ChalkClient`
 - Check to see if any of the following initialization options need to be changed:
   - The option `useQueryServerFromCredentialExchange` has been changed to `skipQueryServerFromCredentialExchange` 
-    to better reflect the default behavior.
+    and *negated* to better reflect the default behavior for the gRPC Query Server.
   - It is most likely not necessary to change a provided `QueryServer` as most routing is done via SDK-set headers, but 
     depending on your setup this may need to be directly specified if using a non-standard port - the gRPC query server listens
     on port `443` by default.
