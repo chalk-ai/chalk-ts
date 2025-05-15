@@ -95,7 +95,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       requestOptions
     );
 
-    return mapBulkQueryResponseGrpcToChalkOnlineResponse(response);
+    return mapBulkQueryResponseGrpcToChalkOnlineResponse(response, this.config);
   }
 
   async multiQuery<TOutput extends keyof TFeatureMap>(
@@ -116,7 +116,10 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       responses: response.responses
         .map((singleResponse, idx) => {
           return singleResponse.bulkResponse
-            ? mapBulkQueryResponseGrpcToChalk(singleResponse.bulkResponse)
+            ? mapBulkQueryResponseGrpcToChalk(
+                singleResponse.bulkResponse,
+                this.config
+              )
             : null;
         })
         .filter(
@@ -141,7 +144,7 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       requestOptions
     );
 
-    return mapBulkQueryResponseGrpcToChalk(response);
+    return mapBulkQueryResponseGrpcToChalk(response, this.config);
   }
 
   private async getHeaders(
