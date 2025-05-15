@@ -84,7 +84,12 @@ See [the HTTP Options](#constructor-options-legacy) if you are using the HTTP Cl
 reading the [migration guide](#migrating-to-the-grpc-client).
 
 ```ts
-new ChalkClient({
+import { ChalkGRPCCLient } from "@chalk-ai/client"
+
+const options: ChalkGRPCClientOpts = {/* ... */ }
+const chalkClient = new ChalkGRPCClient(options)
+
+export interface ChalkGRPCClientOpts {
   /**
    * Your Chalk Client ID. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
    *
@@ -144,7 +149,7 @@ new ChalkClient({
    * Defaults to false.
    */
   skipQueryServerFromCredentialExchange?: boolean;
-  
+
   /**
    * Passed to the internal grpc client upon initialization. Under the hood, Chalk uses the @grpc/grpc-js library
    * and this allows users finer control of their gRPC usage.
@@ -152,7 +157,7 @@ new ChalkClient({
    * See https://grpc.github.io/grpc/node/grpc.Client.html for more information on what is supported here.
    */
   grpcClientOptions?: Partial<ClientOptions>;
-})
+}
 ```
 
 ## Migrating to the gRPC Client
@@ -207,7 +212,12 @@ Valid Until:   2023-11-10T06:11:17.516000
 ## Constructor options (Legacy)
 
 ```ts
-new ChalkClient({
+import { ChalkCLient } from "@chalk-ai/client"
+
+const options: ChalkClientOpts = {/* ... */}
+const chalkClient = new ChalkClient(opts )
+
+export interface ChalkClientOpts {
   /**
    * Your Chalk Client ID. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
    *
@@ -264,7 +274,7 @@ new ChalkClient({
    * Defaults to false, the legacy behavior of this client. This will change at the next major release.
    */
   useQueryServerFromCredentialExchange?: boolean;
-})
+}
 ```
 
 
