@@ -13,7 +13,7 @@ interface IntegrationTestFeatures {
 const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
 const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
-maybe("integration tests", () => {
+maybe("integration tests (gRPC)", () => {
   let client: ChalkGRPCClient<IntegrationTestFeatures>;
   beforeAll(() => {
     client = new ChalkGRPCClient<IntegrationTestFeatures>({

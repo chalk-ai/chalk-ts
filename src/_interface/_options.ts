@@ -53,7 +53,8 @@ export interface BaseChalkClientOpts {
   defaultTimeout?: number;
 
   /**
-   * A custom fetch client that will replace the fetch polyfill used by default.
+   * A custom fetch client that will replace the fetch polyfill used by default. Used by both the HTTP and gRPC
+   * clients - the HTTP client for all calls, and the gRPC client for fetching credentials from the API server.
    *
    * If not provided, the client will use the default fetch polyfill (native fetch with node-fetch as a fallback).
    */
@@ -100,10 +101,10 @@ export interface ChalkGRPCClientOpts extends BaseChalkClientOpts {
   skipQueryServerFromCredentialExchange?: boolean;
 
   /**
-   * Passed to the grpc client upon initialization. Under the hood, Chalk uses the @grpc/grpc-js library
+   * Passed to the internal grpc client upon initialization. Under the hood, Chalk uses the @grpc/grpc-js library
    * and this allows users finer control of their gRPC usage.
    *
-   * Note that
+   * See https://grpc.github.io/grpc/node/grpc.Client.html for more information on what is supported here.
    */
   grpcClientOptions?: Partial<ClientOptions>;
 }

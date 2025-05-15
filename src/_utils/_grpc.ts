@@ -5,6 +5,7 @@ import {
   ErrorCodeCategory,
 } from "../gen/proto/chalk/common/v1/chalk_error.pb";
 import {
+  ChalkClientConfig,
   ChalkErrorCategory,
   ChalkErrorCode,
   ChalkErrorData,
@@ -28,6 +29,7 @@ import {
 } from "../gen/proto/chalk/common/v1/online_query.pb";
 import { tableFromIPC } from "apache-arrow";
 import { Metadata } from "@grpc/grpc-js";
+import { processArrowTable } from "../_bulk_response";
 
 /**  Request-Related **/
 
@@ -253,9 +255,14 @@ export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 >(
-  response: OnlineQueryBulkResponse
+  response: OnlineQueryBulkResponse,
+  parseOptions: Pick<ChalkClientConfig, "timestampFormat">
 ): ChalkOnlineQueryResponse<TFeatureMap, TOutput> => {
-  const rawData = tableFromIPC(response.scalarsData).toArray()[0] ?? {};
+  const table = processArrowTable(
+    tableFromIPC(response.scalarsData),
+    parseOptions
+  );
+  const rawData = table.toArray()[0] ?? {};
   const features = Object.keys(rawData).filter(
     (key) => !key.startsWith(metadataPrefix) && key !== "__id__"
   );
@@ -305,15 +312,20 @@ export const mapBulkQueryResponseGrpcToChalk = <
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 >(
-  response: OnlineQueryBulkResponse
+  response: OnlineQueryBulkResponse,
+  parseOptions: Pick<ChalkClientConfig, "timestampFormat">
 ): ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> => {
-  const rawData = tableFromIPC(response.scalarsData).toArray();
+  const table = processArrowTable(
+    tableFromIPC(response.scalarsData),
+    parseOptions
+  );
+  const rawData = table.toArray();
   const features = new Set(
     Object.keys(rawData[0] ?? {}).filter(
       (key) => !key.startsWith(metadataPrefix) && key !== "__id__"
     )
   ) as Set<string>;
-  const data = rawData.map((datum) =>
+  const data = rawData.map((datum: Record<string, unknown>) =>
     Object.fromEntries(
       Object.entries(datum).filter(([key]) => features.has(key))
     )

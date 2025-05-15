@@ -15,7 +15,7 @@ interface IntegrationTestFeatures {
 const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
 const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
-maybe("integration tests", () => {
+maybe("integration tests (http)", () => {
   let client: ChalkClient<IntegrationTestFeatures>;
   beforeAll(() => {
     client = new ChalkClient<IntegrationTestFeatures>({
