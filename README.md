@@ -86,8 +86,8 @@ reading the [migration guide](#migrating-to-the-grpc-client).
 ```ts
 import { ChalkGRPCCLient } from "@chalk-ai/client"
 
-const options: ChalkGRPCClientOpts = {/* ... */ }
-const chalkClient = new ChalkGRPCClient(options)
+const options: ChalkGRPCClientOpts = {/* ... */ };
+const chalkClient = new ChalkGRPCClient(options);
 
 export interface ChalkGRPCClientOpts {
   /**
@@ -214,8 +214,8 @@ Valid Until:   2023-11-10T06:11:17.516000
 ```ts
 import { ChalkCLient } from "@chalk-ai/client"
 
-const options: ChalkClientOpts = {/* ... */}
-const chalkClient = new ChalkClient(opts )
+const options: ChalkClientOpts = {/* ... */};
+const chalkClient = new ChalkClient(opts);
 
 export interface ChalkClientOpts {
   /**
