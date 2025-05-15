@@ -319,7 +319,7 @@ export const mapBulkQueryResponseGrpcToChalk = <
     tableFromIPC(response.scalarsData),
     parseOptions
   );
-  const rawData = table.toArray()[0] ?? {};
+  const rawData = table.toArray();
   const features = new Set(
     Object.keys(rawData[0] ?? {}).filter(
       (key) => !key.startsWith(metadataPrefix) && key !== "__id__"
