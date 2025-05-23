@@ -34,7 +34,7 @@ import { FeaturesType } from "local/generated_types";
 // as an interface with the feature type and feature name.
 interface FeaturesType {
   "user.id": string;
-  "user.socure_score": number;
+  "user.fraud_score": number;
 }
 
 const client = new ChalkGRPCCLient<FeaturesType>();
@@ -43,14 +43,14 @@ const result = await client.query({
   inputs: {
     "user.id": "1",
   },
-  outputs: ["user.socure_score"],
+  outputs: ["user.fraud_score"],
 });
 
 // The property `.data` has auto-complete based on the
 // list provided in `output` above. So if you try to pull
 // a feature that wasn't requested, you will see an error
 // in type checking.
-console.log(result.data["user.socure_score"].value);
+console.log(result.data["user.fraud_score"].value);
 ```
 
 ### CommonJS
@@ -61,7 +61,7 @@ var ChalkGRPCClient = require("@chalk-ai/client").ChalkGRPCClient;
 
 interface FeaturesType {
   "user.id": string;
-  "user.socure_score": number;
+  "user.fraud_score": number;
 }
 
 var client = new ChalkGRPCCLient<FeaturesType>();
@@ -71,10 +71,10 @@ client
     inputs: {
       "user.id": "1",
     },
-    outputs: ["user.socure_score"],
+    outputs: ["user.fraud_score"],
   })
   .then((result) => {
-    console.log(result.data["user.socure_score"].value);
+    console.log(result.data["user.fraud_score"].value);
   });
 ```
 
