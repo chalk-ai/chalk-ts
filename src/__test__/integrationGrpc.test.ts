@@ -105,6 +105,53 @@ maybe("integration tests (gRPC)", () => {
     );
   });
 
+  describe("automatic query server detection", () => {
+    it(
+      "query all_types.int_feat with no set active environment (uses credential exchange)",
+      async () => {
+        client = new ChalkGRPCClient<IntegrationTestFeatures>({
+          clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+          clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+          apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+        });
+
+        const result = await client.query({
+          inputs: {
+            "all_types.id": 1,
+          },
+          outputs: ["all_types.int_feat"],
+        });
+
+        expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+      },
+      INTEGRATION_TEST_TIMEOUT
+    );
+
+    it(
+      "query all_types.int_feat with no set active environment (uses environment variables)",
+      async () => {
+        process.env._CHALK_ACTIVE_ENVIRONMENT =
+          process.env._INTEGRATION_TEST_ACTIVE_ENVIRONMENT;
+        client = new ChalkGRPCClient<IntegrationTestFeatures>({
+          clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+          clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+          apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+        });
+
+        const result = await client.query({
+          inputs: {
+            "all_types.id": 1,
+          },
+          outputs: ["all_types.int_feat"],
+        });
+
+        expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+        process.env._CHALK_ACTIVE_ENVIRONMENT = undefined;
+      },
+      INTEGRATION_TEST_TIMEOUT
+    );
+  });
+
   describe("query integration_tests", () => {
     it(
       "query all_types.int_feat",

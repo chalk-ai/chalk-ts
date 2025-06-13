@@ -62,6 +62,17 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     });
   }
 
+  async getActiveEnvironment(): Promise<string | null | undefined> {
+    if (this.config.activeEnvironment) {
+      return this.config.activeEnvironment;
+    }
+
+    const envFromCredentials =
+      await this.credentials.getPrimaryEnvironmentFromCredentials();
+
+    return envFromCredentials;
+  }
+
   async getQueryServer(): Promise<string> {
     if (this.config.queryServer) {
       return this.config.queryServer;
@@ -71,10 +82,10 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
       return this.config.queryServer || this.config.apiServer;
     }
 
+    const environmentId = await this.getActiveEnvironment();
+
     const engineFromCredentials =
-      await this.credentials.getEngineUrlFromCredentials(
-        this.config.activeEnvironment
-      );
+      await this.credentials.getEngineUrlFromCredentials(environmentId);
 
     return engineFromCredentials || this.config.apiServer;
   }
@@ -152,8 +163,9 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
   ): Promise<ChalkHttpHeaders> {
     const headers: ChalkHttpHeadersStrict = {};
 
-    if (this.config.activeEnvironment) {
-      headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
+    const activeEnvironment = await this.getActiveEnvironment();
+    if (activeEnvironment != null) {
+      headers["X-Chalk-Env-Id"] = activeEnvironment;
     }
 
     const branch = requestOptions?.branch ?? this.config.branch;
