@@ -20,7 +20,7 @@ export class CredentialsHolder {
     private http: ChalkHTTPService
   ) {}
 
-  async get() {
+  async get(): Promise<ClientCredentials> {
     if (this.credentials == null) {
       try {
         this.credentials = await this.http.v1_oauth_token({
@@ -52,13 +52,22 @@ export class CredentialsHolder {
     this.credentials = null;
   }
 
+  async getPrimaryEnvironmentFromCredentials(): Promise<
+    string | null | undefined
+  > {
+    const { primary_environment: environmentIdFromCredentials } =
+      await this.get();
+
+    return environmentIdFromCredentials;
+  }
+
   async getEngineUrlFromCredentials(
     environmentId: string | null | undefined
   ): Promise<string | null> {
-    const { engines, primary_environment: environmentIdFromCredentials } =
-      await this.get();
-    const envIdToUse = environmentId || environmentIdFromCredentials;
-    const engineForEnvironment = envIdToUse ? engines?.[envIdToUse] : null;
+    const { engines } = await this.get();
+    const engineForEnvironment = environmentId
+      ? engines?.[environmentId]
+      : null;
 
     return engineForEnvironment || null;
   }
