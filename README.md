@@ -24,7 +24,7 @@ $ chalk codegen typescript --out=generated_types.ts
 ### Modern JavaScript ES6
 
 ```ts
-import { ChalkGRPCCLient } from "@chalk-ai/client"
+import { ChalkGRPCClient } from "@chalk-ai/client"
 // import { ChalkClient } from "@chalk-ai/client";
 
 // Import your generated types (recommended)
@@ -37,7 +37,7 @@ interface FeaturesType {
   "user.fraud_score": number;
 }
 
-const client = new ChalkGRPCCLient<FeaturesType>();
+const client = new ChalkGRPCClient<FeaturesType>();
 
 const result = await client.query({
   inputs: {
@@ -64,7 +64,7 @@ interface FeaturesType {
   "user.fraud_score": number;
 }
 
-var client = new ChalkGRPCCLient<FeaturesType>();
+var client = new ChalkGRPCClient<FeaturesType>();
 
 client
   .query({
@@ -84,7 +84,7 @@ See [the HTTP Options](#constructor-options-legacy) if you are using the HTTP Cl
 reading the [migration guide](#migrating-to-the-grpc-client).
 
 ```ts
-import { ChalkGRPCCLient } from "@chalk-ai/client"
+import { ChalkGRPCClient } from "@chalk-ai/client"
 
 const options: ChalkGRPCClientOpts = {/* ... */ };
 const chalkClient = new ChalkGRPCClient(options);
