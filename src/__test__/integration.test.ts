@@ -1,6 +1,5 @@
 import { Vector, DataType } from "apache-arrow";
 import { ChalkClient } from "../_client_http";
-import { ChalkGRPCClient } from "../_client_grpc";
 
 interface IntegrationTestFeatures {
   "all_types.id": number;
