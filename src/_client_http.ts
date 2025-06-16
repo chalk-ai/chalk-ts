@@ -51,6 +51,17 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     this.credentials = new CredentialsHolder(this.config, this.http);
   }
 
+  async getActiveEnvironment(): Promise<string | null | undefined> {
+    if (this.config.activeEnvironment) {
+      return this.config.activeEnvironment;
+    }
+
+    const envFromCredentials =
+      await this.credentials.getPrimaryEnvironmentFromCredentials();
+
+    return envFromCredentials;
+  }
+
   async getQueryServer(): Promise<string> {
     if (this.config.queryServer) {
       return this.config.queryServer;
@@ -60,10 +71,10 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       return this.config.queryServer || this.config.apiServer;
     }
 
+    const primaryEnvironment = await this.getActiveEnvironment();
+
     const engineFromCredentials =
-      await this.credentials.getEngineUrlFromCredentials(
-        this.config.activeEnvironment
-      );
+      await this.credentials.getEngineUrlFromCredentials(primaryEnvironment);
 
     return engineFromCredentials || this.config.apiServer;
   }
@@ -71,7 +82,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
   async whoami(): Promise<ChalkWhoamiResponse> {
     return this.http.v1_who_am_i({
       baseUrl: this.config.apiServer,
-      headers: this.getHeaders(),
+      headers: await this.getHeaders(),
       credentials: this.credentials,
     });
   }
@@ -82,7 +93,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       pathParams: {
         run_id: runId,
       },
-      headers: this.getHeaders(),
+      headers: await this.getHeaders(),
       credentials: this.credentials,
     });
   }
@@ -95,7 +106,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       body: {
         resolver_fqn: request.resolverFqn,
       },
-      headers: this.getHeaders(),
+      headers: await this.getHeaders(),
       credentials: this.credentials,
     });
   }
@@ -129,7 +140,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         include_meta: !!request.include_meta,
         planner_options: request.plannerOptions,
       },
-      headers: this.getHeaders(requestOptions),
+      headers: await this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
     });
@@ -174,7 +185,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const rawResult = await this.http.v1_query_feather({
       baseUrl: await this.getQueryServer(),
       body: requestBuffer.buffer,
-      headers: this.getHeaders(requestOptions),
+      headers: await this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
     });
@@ -218,7 +229,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     const rawResult = await this.http.v1_query_feather({
       baseUrl: await this.getQueryServer(),
       body: requestBuffer.buffer,
-      headers: this.getHeaders(requestOptions),
+      headers: await this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
     });
@@ -244,7 +255,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
         correlation_id: request.correlationId,
         deployment_id: request.previewDeploymentId,
       },
-      headers: this.getHeaders(),
+      headers: await this.getHeaders(),
       credentials: this.credentials,
     });
 
@@ -256,13 +267,16 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
     }
   }
 
-  private getHeaders(requestOptions?: ChalkRequestOptions): ChalkHttpHeaders {
+  private async getHeaders(
+    requestOptions?: ChalkRequestOptions
+  ): Promise<ChalkHttpHeaders> {
     const headers: ChalkHttpHeadersStrict = {
       "X-Chalk-Deployment-Type": "engine",
     };
 
-    if (this.config.activeEnvironment) {
-      headers["X-Chalk-Env-Id"] = this.config.activeEnvironment;
+    const activeEnvironment = await this.getActiveEnvironment();
+    if (activeEnvironment != null) {
+      headers["X-Chalk-Env-Id"] = activeEnvironment;
     }
 
     const branch = requestOptions?.branch ?? this.config.branch;
