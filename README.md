@@ -170,9 +170,12 @@ Query Server in your Chalk Environment, changing to the gRPC Client can be done 
 - Check to see if any of the following initialization options need to be changed:
   - The option `useQueryServerFromCredentialExchange` has been changed to `skipQueryServerFromCredentialExchange` 
     and *negated* to better reflect the default behavior for the gRPC Query Server.
-  - It is most likely not necessary to change a provided `QueryServer` as most routing is done via SDK-set headers, but 
-    depending on your setup this may need to be directly specified if using a non-standard port - the gRPC query server listens
-    on port `443` by default.
+  - Check your Chalk Environment for any custom routing rules. If you are not sure, reach out to Chalk support for help here.
+    - If your previous SDK client explicitly sets the `engine-type: engine` header on requests, this will need to be changed 
+      to `engine-grpc` (or omitted, the gRPC client will automatically set this header but respects all overrides).
+    - It is most likely not necessary to change a provided `QueryServer` as most routing is done via SDK-set headers, but 
+      depending on your setup this may need to be directly specified if using a non-standard port - the gRPC query server listens
+      on port `443` by default.
   - It is **not** necessary to remove the `fetch` or `fetchHeaders` as these are still used during some HTTP routines
     such as fetching credentials.
 
