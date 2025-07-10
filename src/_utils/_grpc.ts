@@ -75,7 +75,8 @@ export const mapOnlineBulkQueryRequestChalkToGRPC = <
           : undefined,
       includeMeta: !!request.include_meta,
       metadata: request.queryMeta ?? {},
-      explain: request.explain,
+      // note: serializing is a little messed up, false will encode poorly.
+      explain: request.explain || undefined,
     },
     now: new Array(inputLength).fill(safeNow),
     staleness: (request.staleness as Record<string, string>) ?? {},
