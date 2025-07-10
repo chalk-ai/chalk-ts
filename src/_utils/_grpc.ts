@@ -73,10 +73,9 @@ export const mapOnlineBulkQueryRequestChalkToGRPC = <
                 request.encodingOptions.encodeStructsAsObjects,
             }
           : undefined,
-      includeMeta: !!request,
+      includeMeta: !!request.include_meta,
       metadata: request.queryMeta ?? {},
-      // TODO Add option before merge
-      explain: true,
+      explain: request.explain,
     },
     now: new Array(inputLength).fill(safeNow),
     staleness: (request.staleness as Record<string, string>) ?? {},
