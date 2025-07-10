@@ -54,7 +54,6 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
 
   async getQueryService(opts?: ChalkGRPCClientOpts): Promise<ChalkGRPCService> {
     const queryEndpoint = await this.getQueryServer();
-    console.log(`query endpoint: ${queryEndpoint}`);
     return new ChalkGRPCService({
       additionalHeaders: opts?.additionalHeaders,
       endpoint: queryEndpoint,
