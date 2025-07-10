@@ -54,6 +54,9 @@ export interface ChalkOnlineQueryRequest<
     [K in keyof TFeatureMap]?: string;
   };
 
+  // If true, will populate an explain output that includes performance and operations metadata.
+  explain?: boolean;
+
   scopeTags?: string[];
 
   // If specified, Chalk will route your request to the relevant preview deployment.
@@ -231,6 +234,7 @@ export interface ChalkOnlineBulkQueryRequest<
 > {
   inputs: Partial<{ [K in keyof TFeatureMap]: TFeatureMap[K][] }>;
   outputs: TOutput[];
+  explain?: boolean;
   staleness?: {
     [K in keyof TFeatureMap]?: string;
   };

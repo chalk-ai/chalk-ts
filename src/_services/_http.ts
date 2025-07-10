@@ -320,6 +320,7 @@ export class ChalkHTTPService {
       };
       deployment_id?: string;
       correlation_id?: string;
+      explain?: boolean;
       query_name?: string;
       query_name_version?: string;
       meta?: {

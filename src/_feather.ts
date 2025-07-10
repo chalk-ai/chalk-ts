@@ -11,6 +11,7 @@ export interface IntermediateRequestBodyJSON<
   context?: {
     tags?: string[];
   };
+  explain?: boolean;
   include_meta?: boolean;
   query_context?: {
     [key: string]: string | number | boolean;
