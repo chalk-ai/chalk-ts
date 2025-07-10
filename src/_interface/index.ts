@@ -237,6 +237,7 @@ export interface ChalkOnlineBulkQueryRequest<
   scopeTags?: string[];
   previewDeploymentId?: string;
   correlationId?: string;
+  include_meta?: boolean;
   queryName?: string;
   queryNameVersion?: string;
   queryMeta?: {

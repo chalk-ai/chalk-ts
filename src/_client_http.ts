@@ -208,6 +208,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       context: {
         tags: request.scopeTags,
       },
+      include_meta: request.include_meta,
       query_context: request.queryContext,
       correlation_id: request.correlationId,
       deployment_id: request.previewDeploymentId,
