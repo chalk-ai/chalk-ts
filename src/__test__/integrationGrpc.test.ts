@@ -201,7 +201,9 @@ describe("integration tests (gRPC)", () => {
           outputs: ["all_types.int_feat"],
         });
 
-        expect(result.data["all_types.int_feat"].value).toBe(1);
+        const value = result.data["all_types.int_feat"].value;
+        expect(typeof value).toBe("bigint");
+        expect(Number(value)).toBe(1);
       },
       INTEGRATION_TEST_TIMEOUT
     );

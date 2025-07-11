@@ -52,6 +52,7 @@ describe("ChalkClient", () => {
       queryServer: undefined,
       timestampFormat: TimestampFormat.EPOCH_MILLIS,
       useQueryServerFromCredentialExchange: false,
+      useBigInt: false,
     });
   });
 
@@ -74,6 +75,7 @@ describe("ChalkClient", () => {
       queryServer: "http://localhost:1337",
       timestampFormat: TimestampFormat.ISO_8601,
       useQueryServerFromCredentialExchange: false,
+      useBigInt: false,
     });
   });
 
@@ -99,6 +101,7 @@ describe("ChalkClient", () => {
       queryServer: undefined,
       timestampFormat: TimestampFormat.ISO_8601,
       useQueryServerFromCredentialExchange: false,
+      useBigInt: false,
     });
   });
 
@@ -116,6 +119,7 @@ describe("ChalkClient", () => {
       queryServer: "query server",
       timestampFormat: TimestampFormat.ISO_8601,
       useQueryServerFromCredentialExchange: false,
+      useBigInt: false,
     });
   });
 
