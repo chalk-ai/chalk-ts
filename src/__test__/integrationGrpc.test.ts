@@ -13,7 +13,7 @@ interface IntegrationTestFeatures {
 const maybe = Boolean(process.env.CHALK_INTEGRATION) ? describe : describe.skip;
 const INTEGRATION_TEST_TIMEOUT = 30_000; // 30s
 
-maybe("integration tests (gRPC)", () => {
+describe("integration tests (gRPC)", () => {
   let client: ChalkGRPCClient<IntegrationTestFeatures>;
   beforeAll(() => {
     client = new ChalkGRPCClient<IntegrationTestFeatures>({
@@ -122,7 +122,7 @@ maybe("integration tests (gRPC)", () => {
           outputs: ["all_types.int_feat"],
         });
 
-        expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+        expect(result.data["all_types.int_feat"].value).toBe(1);
       },
       INTEGRATION_TEST_TIMEOUT
     );
@@ -145,7 +145,7 @@ maybe("integration tests (gRPC)", () => {
           outputs: ["all_types.int_feat"],
         });
 
-        expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+        expect(result.data["all_types.int_feat"].value).toBe(1);
         process.env._CHALK_ACTIVE_ENVIRONMENT = undefined;
       },
       INTEGRATION_TEST_TIMEOUT
@@ -163,7 +163,7 @@ maybe("integration tests (gRPC)", () => {
           outputs: ["all_types.int_feat"],
         });
 
-        expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+        expect(result.data["all_types.int_feat"].value).toBe(1);
       },
       INTEGRATION_TEST_TIMEOUT
     );
@@ -179,7 +179,29 @@ maybe("integration tests (gRPC)", () => {
         });
 
         expect(result.data["all_types.str_feat"].value).toBe("1");
-        expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+        expect(result.data["all_types.int_feat"].value).toBe(1);
+      },
+      INTEGRATION_TEST_TIMEOUT
+    );
+
+    it(
+      "query all_types.int_feat as BigInt",
+      async () => {
+        client = new ChalkGRPCClient<IntegrationTestFeatures>({
+          clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+          clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+          apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+          activeEnvironment: process.env._INTEGRATION_TEST_ACTIVE_ENVIRONMENT,
+          useBigInt: true,
+        });
+        const result = await client.query({
+          inputs: {
+            "all_types.id": 1,
+          },
+          outputs: ["all_types.int_feat"],
+        });
+
+        expect(result.data["all_types.int_feat"].value).toBe(1);
       },
       INTEGRATION_TEST_TIMEOUT
     );

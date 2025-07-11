@@ -32,12 +32,13 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
   private readonly http: ChalkHTTPService;
   private readonly credentials: CredentialsHolder;
   // initialized lazily
-  private queryService: Promise<ChalkGRPCService>;
+  private readonly queryService: Promise<ChalkGRPCService>;
   constructor(opts?: ChalkGRPCClientOpts) {
     this.config = {
       ...configFromOptionsAndEnvironment(opts),
       useQueryServerFromCredentialExchange:
         !opts?.skipQueryServerFromCredentialExchange,
+      useBigInt: !!opts?.useBigInt,
     };
 
     this.http = new ChalkHTTPService(
@@ -48,7 +49,6 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
-
     this.queryService = this.getQueryService(opts);
   }
 

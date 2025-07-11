@@ -27,6 +27,7 @@ export interface ChalkClientConfig {
   queryServer: string | undefined;
   timestampFormat: TimestampFormat;
   useQueryServerFromCredentialExchange: boolean;
+  useBigInt: boolean;
 }
 
 export interface ChalkClientInterface<

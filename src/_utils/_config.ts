@@ -51,5 +51,6 @@ export const configFromOptionsAndEnvironment = (
     timestampFormat: opts?.timestampFormat ?? TimestampFormat.ISO_8601,
     // Note: this diverges between opts, override!
     useQueryServerFromCredentialExchange: true,
+    useBigInt: false,
   };
 };

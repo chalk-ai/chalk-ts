@@ -6,6 +6,7 @@ import {
   Timestamp,
   TimeUnit,
   Utf8,
+  Int32,
 } from "apache-arrow";
 import { RawQueryResponseMeta } from "./_services/_http";
 import { ChalkErrorData, ChalkQueryMeta, TimestampFormat } from "./_interface";
@@ -138,9 +139,14 @@ interface QueryChunkResultsWithOffset {
   chunkResults: QueryChunkResult[];
 }
 
+export type ParseOptions = Pick<
+  ChalkClientConfig,
+  "timestampFormat" | "useBigInt"
+>;
+
 export function processArrowTable(
   table: Table,
-  { timestampFormat }: Pick<ChalkClientConfig, "timestampFormat">
+  { timestampFormat, useBigInt }: ParseOptions
 ): Table {
   let newTable = table;
   for (let index = 0; index < table.numCols; index++) {
@@ -168,6 +174,13 @@ export function processArrowTable(
       );
 
       newTable = newTable.setChildAt(index, newVector);
+    } else if (!useBigInt && DataType.isInt(vector.type)) {
+      const newVector = vectorFromArray<Int32>(
+        Array.from(vector, (data) => Number(data)),
+        new Int32()
+      );
+
+      newTable = newTable.setChildAt(index, newVector);
     }
   }
 
@@ -176,7 +189,7 @@ export function processArrowTable(
 
 export function parseFeatherQueryResponse(
   result: Buffer,
-  config: Pick<ChalkClientConfig, "timestampFormat">
+  config: ParseOptions
 ): QueryChunkResult[] {
   const outer = parseByteModel(result);
 

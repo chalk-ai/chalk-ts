@@ -31,6 +31,7 @@ function _parseByteDataToJSON(
     JSON.stringify(
       parseFeatherQueryResponse(byte_data, {
         timestampFormat,
+        useBigInt: false,
       })
     )
   );
@@ -86,6 +87,7 @@ describe("parseFeatherQueryResponse", () => {
     const tryToParseCompressed = () =>
       parseFeatherQueryResponse(single_bytes_compressed, {
         timestampFormat: TimestampFormat.ISO_8601,
+        useBigInt: false,
       });
 
     expect(tryToParseCompressed).toThrow(

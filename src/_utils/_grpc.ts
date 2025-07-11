@@ -29,7 +29,7 @@ import {
 } from "../gen/proto/chalk/common/v1/online_query.pb";
 import { tableFromIPC } from "apache-arrow";
 import { Metadata } from "@grpc/grpc-js";
-import { processArrowTable } from "../_bulk_response";
+import { ParseOptions, processArrowTable } from "../_bulk_response";
 
 /**  Request-Related **/
 
@@ -256,7 +256,7 @@ export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
   TOutput extends keyof TFeatureMap
 >(
   response: OnlineQueryBulkResponse,
-  parseOptions: Pick<ChalkClientConfig, "timestampFormat">
+  parseOptions: ParseOptions
 ): ChalkOnlineQueryResponse<TFeatureMap, TOutput> => {
   const table = processArrowTable(
     tableFromIPC(response.scalarsData),
@@ -313,7 +313,7 @@ export const mapBulkQueryResponseGrpcToChalk = <
   TOutput extends keyof TFeatureMap
 >(
   response: OnlineQueryBulkResponse,
-  parseOptions: Pick<ChalkClientConfig, "timestampFormat">
+  parseOptions: ParseOptions
 ): ChalkOnlineBulkQueryResponse<TFeatureMap, TOutput> => {
   const table = processArrowTable(
     tableFromIPC(response.scalarsData),

@@ -107,4 +107,13 @@ export interface ChalkGRPCClientOpts extends BaseChalkClientOpts {
    * See https://grpc.github.io/grpc/node/grpc.Client.html for more information on what is supported here.
    */
   grpcClientOptions?: Partial<ClientOptions>;
+
+  /**
+   * When deserializing results from the gRPC query server, whether to retain the original BigInt formatting
+   * provided by apache arrow.
+   *
+   * false by default, as this can lead to unexpected behavior on how Number() and BigInt() are treated
+   * between the HTTP and gRPC clients.
+   */
+  useBigInt?: boolean;
 }
