@@ -1,6 +1,21 @@
-import { tableFromArrays, tableToIPC } from "apache-arrow";
-import { MULTI_QUERY_MAGIC_STR } from "./_bulk_response";
-import { ChalkOnlineBulkQueryRequest } from "./_interface";
+import {
+  Table,
+  Vector,
+  tableFromArrays,
+  tableToIPC,
+  vectorFromArray,
+  List,
+  Struct,
+  LargeUtf8,
+  Field,
+  DataType,
+  Float64,
+  Bool,
+  Int32,
+  Int64,
+} from "apache-arrow";
+import { MULTI_QUERY_MAGIC_STR } from "../_bulk_response";
+import { ChalkOnlineBulkQueryRequest } from "../_interface";
 
 export interface IntermediateRequestBodyJSON<
   TFeatureMap,
@@ -62,16 +77,65 @@ export function featherRequestHeaderFromBody<
   };
 }
 
+function inferElementType(element: unknown): DataType {
+  if (element == null) return new LargeUtf8(); // Default for null values
+
+  if (typeof element === "string") return new LargeUtf8();
+  if (typeof element === "boolean") return new Bool();
+  if (typeof element === "number") {
+    if (Number.isInteger(element)) {
+      return element >= -2147483648 && element <= 2147483647
+        ? new Int32()
+        : new Int64();
+    }
+    return new Float64();
+  }
+  if (Array.isArray(element)) {
+    // For nested arrays, infer type from first non-null element
+    const firstNonNull = element.find((item) => item != null);
+    const childType = inferElementType(firstNonNull);
+    return new List(new Field("item", childType));
+  }
+  if (typeof element === "object") {
+    // For objects, create struct type from keys
+    const structFields = Object.keys(element).map((key) => {
+      const fieldType = inferElementType(
+        (element as Record<string, unknown>)[key]
+      );
+      return new Field(key, fieldType);
+    });
+    return new Struct(structFields);
+  }
+
+  return new LargeUtf8(); // Default fallback
+}
+
+export function tableFromArraysTyped<
+  TFeatureMap,
+  TOutput extends keyof TFeatureMap
+>(inputs: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>["inputs"]): Table {
+  const entries = Object.entries(inputs) as [string, unknown[]][];
+  const vectorMap: Record<string, Vector> = {};
+  for (const [key, col] of entries) {
+    const firstElement = col.at(0);
+    if (col.length === 0 || firstElement == null) {
+      vectorMap[key] = vectorFromArray(col);
+      continue;
+    }
+
+    vectorMap[key] = vectorFromArray(col, inferElementType(firstElement));
+  }
+
+  return new Table(vectorMap);
+}
+
 export function serializeBulkQueryInputFeather<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 >(
   inputs: ChalkOnlineBulkQueryRequest<TFeatureMap, TOutput>["inputs"]
 ): Uint8Array {
-  return tableToIPC(
-    tableFromArrays(inputs as Record<TOutput, Array<TFeatureMap[TOutput]>>),
-    "file"
-  );
+  return tableToIPC(tableFromArraysTyped(inputs), "file");
 }
 
 export function serializeMultipleQueryInputFeather<

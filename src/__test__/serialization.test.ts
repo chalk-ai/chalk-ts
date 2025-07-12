@@ -6,7 +6,7 @@ import {
   featherRequestHeaderFromBody,
   IntermediateRequestBodyJSON,
   serializeMultipleQueryInputFeather,
-} from "../_feather";
+} from "../_utils/_feather";
 
 describe("featherRequestHeaderFromBody", () => {
   const body1: IntermediateRequestBodyJSON<
