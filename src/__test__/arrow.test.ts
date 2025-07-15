@@ -1,11 +1,9 @@
 import {
-  DataType,
   LargeUtf8,
   Int32,
   Int64,
   Bool,
   List,
-  Field,
   Struct,
   Float64,
   Table,
@@ -126,6 +124,17 @@ describe("inferElementType", () => {
       expect(structType.children[0].type).toBeInstanceOf(Struct);
       expect(structType.children[1].name).toBe("count");
       expect(structType.children[1].type).toBeInstanceOf(Int32);
+    });
+
+    test("should return Struct even when fields are null", () => {
+      const result = inferElementType({ mineral: "Talc", hardness: null });
+      expect(result).toBeInstanceOf(Struct);
+      const structType = result as Struct;
+      expect(structType.children).toHaveLength(2);
+      expect(structType.children[0].name).toBe("mineral");
+      expect(structType.children[0].type).toBeInstanceOf(LargeUtf8);
+      expect(structType.children[1].name).toBe("hardness");
+      expect(structType.children[1].type).toBeInstanceOf(LargeUtf8);
     });
 
     test("should handle list of structs", () => {
