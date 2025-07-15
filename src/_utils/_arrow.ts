@@ -48,7 +48,10 @@ export const inferElementType = (element: unknown): DataType => {
 };
 
 /**
- * An improvement
+ * An improvement over the original arrow logic to construct a table from a map of arrays.
+ * This one will check the elements for the first non-null element to infer a more complex shape.
+ * Mixed-type (including struct schema) arrays still cannot be parsed though
+ *
  * @param inputs
  */
 export const tableFromArraysTyped = <
