@@ -7,19 +7,20 @@ import {
   Struct,
   Float64,
   Table,
+  Null,
 } from "apache-arrow";
 import { inferElementType, tableFromArraysTyped } from "../_utils/_arrow";
 
 describe("inferElementType", () => {
   describe("primitive types", () => {
-    test("should return LargeUtf8 for null", () => {
+    test("should return Null for null", () => {
       const result = inferElementType(null);
-      expect(result).toBeInstanceOf(LargeUtf8);
+      expect(result).toBeInstanceOf(Null);
     });
 
-    test("should return LargeUtf8 for undefined", () => {
+    test("should return Null for undefined", () => {
       const result = inferElementType(undefined);
-      expect(result).toBeInstanceOf(LargeUtf8);
+      expect(result).toBeInstanceOf(Null);
     });
 
     test("should return LargeUtf8 for string", () => {
@@ -96,7 +97,7 @@ describe("inferElementType", () => {
       const result = inferElementType([]);
       expect(result).toBeInstanceOf(List);
       const listType = result as List;
-      expect(listType.children[0].type).toBeInstanceOf(LargeUtf8);
+      expect(listType.children[0].type).toBeInstanceOf(Null);
     });
   });
 
@@ -134,7 +135,7 @@ describe("inferElementType", () => {
       expect(structType.children[0].name).toBe("mineral");
       expect(structType.children[0].type).toBeInstanceOf(LargeUtf8);
       expect(structType.children[1].name).toBe("hardness");
-      expect(structType.children[1].type).toBeInstanceOf(LargeUtf8);
+      expect(structType.children[1].type).toBeInstanceOf(Null);
     });
 
     test("should handle list of structs", () => {
