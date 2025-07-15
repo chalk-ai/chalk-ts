@@ -3,7 +3,7 @@ import { ChalkError } from "./_errors";
 import {
   IntermediateRequestBodyJSON,
   serializeMultipleQueryInputFeather,
-} from "./_feather";
+} from "./_utils/_feather";
 import { ChalkHTTPService } from "./_services/_http";
 import { ChalkHttpHeaders, ChalkHttpHeadersStrict } from "./_interface/_header";
 import { CredentialsHolder } from "./_services/_credentials";

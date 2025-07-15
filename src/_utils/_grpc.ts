@@ -18,7 +18,7 @@ import {
   ChalkQueryMeta,
 } from "../_interface";
 import { ChalkHttpHeaders } from "../_interface/_header";
-import { serializeBulkQueryInputFeather } from "../_feather";
+import { serializeBulkQueryInputFeather } from "./_feather";
 import {
   FeatherBodyType,
   GenericSingleQuery,
