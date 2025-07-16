@@ -88,9 +88,9 @@ export const unwrapArrowSpecificTypes = <T>(datum: T): T => {
     return datum;
   } else if (datum.constructor.name === "Vector" || datum instanceof Vector) {
     // the second check sometimes doesn't work, but the constructor still exists
-    return (datum as unknown as Vector)
-      .toArray()
-      .map(unwrapArrowSpecificTypes) as T;
+    return Array.from((datum as unknown as Vector).toArray()).map(
+      unwrapArrowSpecificTypes
+    ) as T;
   } else if (Array.isArray(datum)) {
     return datum.map(unwrapArrowSpecificTypes) as T;
   } else {
