@@ -330,7 +330,7 @@ export const mapBulkQueryResponseGrpcToChalk = <
     Object.fromEntries(
       Object.entries(datum)
         .filter(([key]) => features.has(key))
-        .map((key, value) => [key, unwrapArrowSpecificTypes(value)])
+        .map(([key, value]) => [key, unwrapArrowSpecificTypes(value)])
     )
   );
 
