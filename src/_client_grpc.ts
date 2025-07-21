@@ -2,7 +2,6 @@ import { ChalkHTTPService } from "./_services/_http";
 import { ChalkHttpHeaders, ChalkHttpHeadersStrict } from "./_interface/_header";
 import { CredentialsHolder } from "./_services/_credentials";
 import {
-  ChalkClientInterface,
   ChalkClientConfig,
   ChalkOnlineBulkQueryRequest,
   ChalkOnlineBulkQueryResponse,
@@ -10,6 +9,7 @@ import {
   ChalkOnlineMultiQueryResponse,
   ChalkOnlineQueryRequest,
   ChalkOnlineQueryResponse,
+  ChalkPingQueryServerResponse,
 } from "./_interface";
 import { ChalkScalar } from "./_interface/_types";
 import {
@@ -24,9 +24,11 @@ import { onlineSingleRequestToBulkRequest } from "./_request";
 import { ChalkGRPCService } from "./_services/_grpc";
 import { ChalkRequestOptions } from "./_interface/_request";
 import { configFromOptionsAndEnvironment } from "./_utils/_config";
+import { ChalkError } from "./_errors";
+import { ChalkClientGRPCInterface } from "./_interface";
 
 export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
-  implements ChalkClientInterface<TFeatureMap>
+  implements ChalkClientGRPCInterface<TFeatureMap>
 {
   private readonly config: ChalkClientConfig;
   private readonly http: ChalkHTTPService;
@@ -156,6 +158,54 @@ export class ChalkGRPCClient<TFeatureMap = Record<string, ChalkScalar>>
     );
 
     return mapBulkQueryResponseGrpcToChalk(response, this.config);
+  }
+
+  async pingQueryServer(
+    requestOptions?: ChalkRequestOptions
+  ): Promise<ChalkPingQueryServerResponse> {
+    const queryService = await this.queryService;
+    const headers = await this.getHeaders();
+    const now = Math.floor(new Date().valueOf() / 1000);
+
+    try {
+      const response = await queryService.pingQueryServer(
+        { num: now },
+        headersToMetadata(headers),
+        requestOptions
+      );
+
+      if (response.num !== now) {
+        return {
+          success: false,
+          error: new ChalkError(
+            `Expected value from ping to match request ${now} but got ${response.num}`
+          ),
+        };
+      }
+
+      return {
+        success: true,
+      };
+    } catch (err) {
+      if (err instanceof ChalkError) {
+        return {
+          success: false,
+          error: err,
+        };
+      } else if (err instanceof Error) {
+        return {
+          success: false,
+          error: new ChalkError(`Internal SDK Error: ${err.message}`),
+        };
+      }
+
+      return {
+        success: false,
+        error: new ChalkError(
+          "An unknown error occurred while pinging the query server."
+        ),
+      };
+    }
   }
 
   private async getHeaders(

@@ -9,3 +9,5 @@ build/
 node_modules/
 
 *.log
+
+.claude/
