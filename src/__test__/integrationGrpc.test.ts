@@ -152,6 +152,25 @@ maybe("integration tests (gRPC)", () => {
     );
   });
 
+  describe("ping integration_tests", () => {
+    it("can ping the query server", async () => {
+      const response = await client.pingQueryServer();
+      expect(response.success).toBe(true);
+    });
+
+    it("will fail with bad configuration", async () => {
+      client = new ChalkGRPCClient<IntegrationTestFeatures>({
+        clientId: process.env._INTEGRATION_TEST_CLIENT_ID,
+        clientSecret: process.env._INTEGRATION_TEST_CLIENT_SECRET,
+        apiServer: process.env._INTEGRATION_TEST_API_SERVER,
+        queryServer: "not_a_real_query_server",
+      });
+
+      const response = await client.pingQueryServer();
+      expect(response.success).toBe(false);
+    });
+  });
+
   describe("query integration_tests", () => {
     it(
       "query all_types.int_feat",

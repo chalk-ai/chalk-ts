@@ -7,6 +7,7 @@ import {
   ChalkOnlineMultiQueryResponse,
   ChalkOnlineQueryRequest,
   ChalkOnlineQueryResponse,
+  ChalkPingQueryServerResponse,
   ChalkTriggerResolverRunRequest,
   ChalkTriggerResolverRunResponse,
   ChalkUploadSingleRequest,
@@ -101,4 +102,14 @@ export interface ChalkClientHTTPInterface<
    * Useful as a sanity test of your configuration.
    */
   whoami(): Promise<ChalkWhoamiResponse>;
+}
+
+export interface ChalkClientGRPCInterface<
+  TFeatureMap = Record<string, ChalkScalar>
+> extends ChalkClientInterface<TFeatureMap> {
+  /**
+   * Checks to make sure that the query server is reachable from this client with the given configurations
+   * and credentials.
+   */
+  pingQueryServer(): Promise<ChalkPingQueryServerResponse>;
 }
