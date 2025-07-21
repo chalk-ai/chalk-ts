@@ -4,6 +4,8 @@ export { ChalkError, isChalkError } from "./_errors";
 export { ChalkHttpHeaders } from "./_interface/_header";
 export {
   ChalkClientInterface,
+  ChalkClientGRPCInterface,
+  ChalkClientHTTPInterface,
   ChalkErrorData,
   ChalkGetRunStatusResponse,
   ChalkOnlineQueryRequest,

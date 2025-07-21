@@ -72,6 +72,31 @@ export interface AWSSecretManagerConfig_SecretTagsEntry {
   value: string;
 }
 
+export interface GCPSecretReplicationReplica {
+  location: string;
+}
+
+export interface GCPRegionConfig {
+  /**
+   * Valid values currently, string for readability:
+   * GLOBAL - default, gcp resources are globally-scoped when possible
+   * SINGLE_REGION - gcp resources are replicated to specific regions, but still globally addressable
+   * STRICT_REGIONAL - gcp resources are strictly region-locked, requiring regional api endpoint configuration
+   */
+  scopeType?: string | undefined;
+}
+
+export interface GCPSecretManagerConfig {
+  secretRegion?:
+    | string
+    | undefined;
+  /**
+   * the intention is that replicas should be empty unless the env
+   * uses a user-managed replication policy with explicit regions
+   */
+  replicas: GCPSecretReplicationReplica[];
+}
+
 export interface GCPWorkloadIdentity {
   gcpProjectNumber: string;
   gcpServiceAccount: string;
@@ -122,6 +147,8 @@ export interface GCPCloudConfig {
   region: string;
   managementServiceAccount?: string | undefined;
   dockerBuildConfig: DockerBuildConfig | undefined;
+  secretmanagerConfig: GCPSecretManagerConfig | undefined;
+  regionConfig: GCPRegionConfig | undefined;
 }
 
 export interface CloudConfig {
@@ -442,6 +469,172 @@ export const AWSSecretManagerConfig_SecretTagsEntry: MessageFns<AWSSecretManager
     }
     if (message.value !== "") {
       obj.value = message.value;
+    }
+    return obj;
+  },
+};
+
+function createBaseGCPSecretReplicationReplica(): GCPSecretReplicationReplica {
+  return { location: "" };
+}
+
+export const GCPSecretReplicationReplica: MessageFns<GCPSecretReplicationReplica> = {
+  encode(message: GCPSecretReplicationReplica, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.location !== "") {
+      writer.uint32(10).string(message.location);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GCPSecretReplicationReplica {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGCPSecretReplicationReplica();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.location = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GCPSecretReplicationReplica {
+    return { location: isSet(object.location) ? globalThis.String(object.location) : "" };
+  },
+
+  toJSON(message: GCPSecretReplicationReplica): unknown {
+    const obj: any = {};
+    if (message.location !== "") {
+      obj.location = message.location;
+    }
+    return obj;
+  },
+};
+
+function createBaseGCPRegionConfig(): GCPRegionConfig {
+  return { scopeType: undefined };
+}
+
+export const GCPRegionConfig: MessageFns<GCPRegionConfig> = {
+  encode(message: GCPRegionConfig, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.scopeType !== undefined) {
+      writer.uint32(10).string(message.scopeType);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GCPRegionConfig {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGCPRegionConfig();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.scopeType = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GCPRegionConfig {
+    return { scopeType: isSet(object.scopeType) ? globalThis.String(object.scopeType) : undefined };
+  },
+
+  toJSON(message: GCPRegionConfig): unknown {
+    const obj: any = {};
+    if (message.scopeType !== undefined) {
+      obj.scopeType = message.scopeType;
+    }
+    return obj;
+  },
+};
+
+function createBaseGCPSecretManagerConfig(): GCPSecretManagerConfig {
+  return { secretRegion: undefined, replicas: [] };
+}
+
+export const GCPSecretManagerConfig: MessageFns<GCPSecretManagerConfig> = {
+  encode(message: GCPSecretManagerConfig, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.secretRegion !== undefined) {
+      writer.uint32(10).string(message.secretRegion);
+    }
+    for (const v of message.replicas) {
+      GCPSecretReplicationReplica.encode(v!, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GCPSecretManagerConfig {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGCPSecretManagerConfig();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.secretRegion = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.replicas.push(GCPSecretReplicationReplica.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GCPSecretManagerConfig {
+    return {
+      secretRegion: isSet(object.secretRegion) ? globalThis.String(object.secretRegion) : undefined,
+      replicas: globalThis.Array.isArray(object?.replicas)
+        ? object.replicas.map((e: any) => GCPSecretReplicationReplica.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GCPSecretManagerConfig): unknown {
+    const obj: any = {};
+    if (message.secretRegion !== undefined) {
+      obj.secretRegion = message.secretRegion;
+    }
+    if (message.replicas?.length) {
+      obj.replicas = message.replicas.map((e) => GCPSecretReplicationReplica.toJSON(e));
     }
     return obj;
   },
@@ -989,7 +1182,14 @@ export const AWSCloudConfig: MessageFns<AWSCloudConfig> = {
 };
 
 function createBaseGCPCloudConfig(): GCPCloudConfig {
-  return { projectId: "", region: "", managementServiceAccount: undefined, dockerBuildConfig: undefined };
+  return {
+    projectId: "",
+    region: "",
+    managementServiceAccount: undefined,
+    dockerBuildConfig: undefined,
+    secretmanagerConfig: undefined,
+    regionConfig: undefined,
+  };
 }
 
 export const GCPCloudConfig: MessageFns<GCPCloudConfig> = {
@@ -1005,6 +1205,12 @@ export const GCPCloudConfig: MessageFns<GCPCloudConfig> = {
     }
     if (message.dockerBuildConfig !== undefined) {
       DockerBuildConfig.encode(message.dockerBuildConfig, writer.uint32(34).fork()).join();
+    }
+    if (message.secretmanagerConfig !== undefined) {
+      GCPSecretManagerConfig.encode(message.secretmanagerConfig, writer.uint32(42).fork()).join();
+    }
+    if (message.regionConfig !== undefined) {
+      GCPRegionConfig.encode(message.regionConfig, writer.uint32(50).fork()).join();
     }
     return writer;
   },
@@ -1048,6 +1254,22 @@ export const GCPCloudConfig: MessageFns<GCPCloudConfig> = {
           message.dockerBuildConfig = DockerBuildConfig.decode(reader, reader.uint32());
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.secretmanagerConfig = GCPSecretManagerConfig.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.regionConfig = GCPRegionConfig.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1067,6 +1289,10 @@ export const GCPCloudConfig: MessageFns<GCPCloudConfig> = {
       dockerBuildConfig: isSet(object.dockerBuildConfig)
         ? DockerBuildConfig.fromJSON(object.dockerBuildConfig)
         : undefined,
+      secretmanagerConfig: isSet(object.secretmanagerConfig)
+        ? GCPSecretManagerConfig.fromJSON(object.secretmanagerConfig)
+        : undefined,
+      regionConfig: isSet(object.regionConfig) ? GCPRegionConfig.fromJSON(object.regionConfig) : undefined,
     };
   },
 
@@ -1083,6 +1309,12 @@ export const GCPCloudConfig: MessageFns<GCPCloudConfig> = {
     }
     if (message.dockerBuildConfig !== undefined) {
       obj.dockerBuildConfig = DockerBuildConfig.toJSON(message.dockerBuildConfig);
+    }
+    if (message.secretmanagerConfig !== undefined) {
+      obj.secretmanagerConfig = GCPSecretManagerConfig.toJSON(message.secretmanagerConfig);
+    }
+    if (message.regionConfig !== undefined) {
+      obj.regionConfig = GCPRegionConfig.toJSON(message.regionConfig);
     }
     return obj;
   },

@@ -11,6 +11,63 @@ import { Permission, permissionFromJSON, permissionToJSON } from "./permissions.
 
 export const protobufPackage = "chalk.auth.v1";
 
+export enum AgentKind {
+  AGENT_KIND_UNSPECIFIED = 0,
+  AGENT_KIND_USER = 1,
+  AGENT_KIND_SERVICE_TOKEN = 2,
+  AGENT_KIND_ENGINE = 3,
+  AGENT_KIND_TENANT = 4,
+  AGENT_KIND_METADATA_SERVICE = 5,
+  UNRECOGNIZED = -1,
+}
+
+export function agentKindFromJSON(object: any): AgentKind {
+  switch (object) {
+    case 0:
+    case "AGENT_KIND_UNSPECIFIED":
+      return AgentKind.AGENT_KIND_UNSPECIFIED;
+    case 1:
+    case "AGENT_KIND_USER":
+      return AgentKind.AGENT_KIND_USER;
+    case 2:
+    case "AGENT_KIND_SERVICE_TOKEN":
+      return AgentKind.AGENT_KIND_SERVICE_TOKEN;
+    case 3:
+    case "AGENT_KIND_ENGINE":
+      return AgentKind.AGENT_KIND_ENGINE;
+    case 4:
+    case "AGENT_KIND_TENANT":
+      return AgentKind.AGENT_KIND_TENANT;
+    case 5:
+    case "AGENT_KIND_METADATA_SERVICE":
+      return AgentKind.AGENT_KIND_METADATA_SERVICE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return AgentKind.UNRECOGNIZED;
+  }
+}
+
+export function agentKindToJSON(object: AgentKind): string {
+  switch (object) {
+    case AgentKind.AGENT_KIND_UNSPECIFIED:
+      return "AGENT_KIND_UNSPECIFIED";
+    case AgentKind.AGENT_KIND_USER:
+      return "AGENT_KIND_USER";
+    case AgentKind.AGENT_KIND_SERVICE_TOKEN:
+      return "AGENT_KIND_SERVICE_TOKEN";
+    case AgentKind.AGENT_KIND_ENGINE:
+      return "AGENT_KIND_ENGINE";
+    case AgentKind.AGENT_KIND_TENANT:
+      return "AGENT_KIND_TENANT";
+    case AgentKind.AGENT_KIND_METADATA_SERVICE:
+      return "AGENT_KIND_METADATA_SERVICE";
+    case AgentKind.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface EnvironmentPermissions {
   permissions: Permission[];
   featurePermissions: FeaturePermissions | undefined;

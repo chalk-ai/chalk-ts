@@ -471,6 +471,147 @@ export interface KubernetesPodData_EnvVar {
    * Defaults to "".
    */
   value: string;
+  /**
+   * Source for the environment variable's value. Cannot be used if value is not empty.
+   * +optional
+   */
+  valueFrom?: KubernetesPodData_EnvVarSource | undefined;
+}
+
+/** EnvVarSource represents a source for the value of an EnvVar. */
+export interface KubernetesPodData_EnvVarSource {
+  /**
+   * Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+   * spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+   * +optional
+   */
+  fieldRef?:
+    | KubernetesPodData_ObjectFieldSelector
+    | undefined;
+  /**
+   * Selects a resource of the container: only resources limits and requests
+   * (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+   * +optional
+   */
+  resourceFieldRef?:
+    | KubernetesPodData_ResourceFieldSelector
+    | undefined;
+  /**
+   * Selects a key of a ConfigMap.
+   * +optional
+   */
+  configMapKeyRef?:
+    | KubernetesPodData_ConfigMapKeySelector
+    | undefined;
+  /**
+   * Selects a key of a secret in the pod's namespace
+   * +optional
+   */
+  secretKeyRef?: KubernetesPodData_SecretKeySelector | undefined;
+}
+
+/** ObjectFieldSelector selects an APIVersioned field of an object. */
+export interface KubernetesPodData_ObjectFieldSelector {
+  /**
+   * Version of the schema the FieldPath is written in terms of, defaults to "v1".
+   * +optional
+   */
+  apiVersion: string;
+  /** Path of the field to select in the specified API version. */
+  fieldPath: string;
+}
+
+/** ResourceFieldSelector represents container resources (cpu, memory) and their output format */
+export interface KubernetesPodData_ResourceFieldSelector {
+  /**
+   * Container name: required for volumes, optional for env vars
+   * +optional
+   */
+  containerName: string;
+  /** Required: resource to select */
+  resource: string;
+  /**
+   * Specifies the output format of the exposed resources, defaults to "1"
+   * +optional
+   */
+  divisor?: KubernetesPodData_Quantity | undefined;
+}
+
+/** Selects a key from a ConfigMap. */
+export interface KubernetesPodData_ConfigMapKeySelector {
+  /** The ConfigMap to select from. */
+  name: string;
+  /** The key to select. */
+  key: string;
+  /**
+   * Specify whether the ConfigMap or its key must be defined
+   * +optional
+   */
+  optional?: boolean | undefined;
+}
+
+/** SecretKeySelector selects a key of a Secret. */
+export interface KubernetesPodData_SecretKeySelector {
+  /** The name of the secret in the pod's namespace to select from. */
+  name: string;
+  /** The key of the secret to select from.  Must be a valid secret key. */
+  key: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   * +optional
+   */
+  optional?: boolean | undefined;
+}
+
+/** EnvFromSource represents the source of a set of ConfigMaps */
+export interface KubernetesPodData_EnvFromSource {
+  /**
+   * An optional identifier to prepend to each key in the ConfigMap. Must be a C_IDENTIFIER.
+   * +optional
+   */
+  prefix?:
+    | string
+    | undefined;
+  /**
+   * The ConfigMap to select from
+   * +optional
+   */
+  configMapRef?:
+    | KubernetesPodData_ConfigMapEnvSource
+    | undefined;
+  /**
+   * The Secret to select from
+   * +optional
+   */
+  secretRef?: KubernetesPodData_SecretEnvSource | undefined;
+}
+
+/**
+ * ConfigMapEnvSource selects a ConfigMap to populate the environment
+ * variables with.
+ */
+export interface KubernetesPodData_ConfigMapEnvSource {
+  /** The ConfigMap to select from. */
+  name: string;
+  /**
+   * Specify whether the ConfigMap must be defined
+   * +optional
+   */
+  optional?: boolean | undefined;
+}
+
+/**
+ * SecretEnvSource selects a Secret to populate the environment
+ * variables with.
+ */
+export interface KubernetesPodData_SecretEnvSource {
+  /** The Secret to select from. */
+  name: string;
+  /**
+   * Specify whether the Secret must be defined
+   * +optional
+   */
+  optional?: boolean | undefined;
 }
 
 /** A single application container that you want to run within a pod. */
@@ -527,6 +668,17 @@ export interface KubernetesPodData_Container {
   workingDir?:
     | string
     | undefined;
+  /**
+   * List of sources to populate environment variables in the container.
+   * The keys defined within a source must be a C_IDENTIFIER. All invalid keys
+   * will be reported as an event when the container is starting. When a key exists in multiple
+   * sources, the value associated with the last source will take precedence.
+   * Values defined by an Env with a duplicate key will take precedence.
+   * Cannot be updated.
+   * +optional
+   * +listType=atomic
+   */
+  envFrom: KubernetesPodData_EnvFromSource[];
   /**
    * List of environment variables to set in the container.
    * Cannot be updated.
@@ -2280,7 +2432,7 @@ export const KubernetesPodData_ContainerStateTerminated: MessageFns<KubernetesPo
 };
 
 function createBaseKubernetesPodData_EnvVar(): KubernetesPodData_EnvVar {
-  return { name: "", value: "" };
+  return { name: "", value: "", valueFrom: undefined };
 }
 
 export const KubernetesPodData_EnvVar: MessageFns<KubernetesPodData_EnvVar> = {
@@ -2290,6 +2442,9 @@ export const KubernetesPodData_EnvVar: MessageFns<KubernetesPodData_EnvVar> = {
     }
     if (message.value !== "") {
       writer.uint32(18).string(message.value);
+    }
+    if (message.valueFrom !== undefined) {
+      KubernetesPodData_EnvVarSource.encode(message.valueFrom, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -2317,6 +2472,14 @@ export const KubernetesPodData_EnvVar: MessageFns<KubernetesPodData_EnvVar> = {
           message.value = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.valueFrom = KubernetesPodData_EnvVarSource.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2330,6 +2493,7 @@ export const KubernetesPodData_EnvVar: MessageFns<KubernetesPodData_EnvVar> = {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       value: isSet(object.value) ? globalThis.String(object.value) : "",
+      valueFrom: isSet(object.valueFrom) ? KubernetesPodData_EnvVarSource.fromJSON(object.valueFrom) : undefined,
     };
   },
 
@@ -2340,6 +2504,635 @@ export const KubernetesPodData_EnvVar: MessageFns<KubernetesPodData_EnvVar> = {
     }
     if (message.value !== "") {
       obj.value = message.value;
+    }
+    if (message.valueFrom !== undefined) {
+      obj.valueFrom = KubernetesPodData_EnvVarSource.toJSON(message.valueFrom);
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_EnvVarSource(): KubernetesPodData_EnvVarSource {
+  return { fieldRef: undefined, resourceFieldRef: undefined, configMapKeyRef: undefined, secretKeyRef: undefined };
+}
+
+export const KubernetesPodData_EnvVarSource: MessageFns<KubernetesPodData_EnvVarSource> = {
+  encode(message: KubernetesPodData_EnvVarSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fieldRef !== undefined) {
+      KubernetesPodData_ObjectFieldSelector.encode(message.fieldRef, writer.uint32(10).fork()).join();
+    }
+    if (message.resourceFieldRef !== undefined) {
+      KubernetesPodData_ResourceFieldSelector.encode(message.resourceFieldRef, writer.uint32(18).fork()).join();
+    }
+    if (message.configMapKeyRef !== undefined) {
+      KubernetesPodData_ConfigMapKeySelector.encode(message.configMapKeyRef, writer.uint32(26).fork()).join();
+    }
+    if (message.secretKeyRef !== undefined) {
+      KubernetesPodData_SecretKeySelector.encode(message.secretKeyRef, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_EnvVarSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_EnvVarSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fieldRef = KubernetesPodData_ObjectFieldSelector.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.resourceFieldRef = KubernetesPodData_ResourceFieldSelector.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.configMapKeyRef = KubernetesPodData_ConfigMapKeySelector.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.secretKeyRef = KubernetesPodData_SecretKeySelector.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_EnvVarSource {
+    return {
+      fieldRef: isSet(object.fieldRef) ? KubernetesPodData_ObjectFieldSelector.fromJSON(object.fieldRef) : undefined,
+      resourceFieldRef: isSet(object.resourceFieldRef)
+        ? KubernetesPodData_ResourceFieldSelector.fromJSON(object.resourceFieldRef)
+        : undefined,
+      configMapKeyRef: isSet(object.configMapKeyRef)
+        ? KubernetesPodData_ConfigMapKeySelector.fromJSON(object.configMapKeyRef)
+        : undefined,
+      secretKeyRef: isSet(object.secretKeyRef)
+        ? KubernetesPodData_SecretKeySelector.fromJSON(object.secretKeyRef)
+        : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_EnvVarSource): unknown {
+    const obj: any = {};
+    if (message.fieldRef !== undefined) {
+      obj.fieldRef = KubernetesPodData_ObjectFieldSelector.toJSON(message.fieldRef);
+    }
+    if (message.resourceFieldRef !== undefined) {
+      obj.resourceFieldRef = KubernetesPodData_ResourceFieldSelector.toJSON(message.resourceFieldRef);
+    }
+    if (message.configMapKeyRef !== undefined) {
+      obj.configMapKeyRef = KubernetesPodData_ConfigMapKeySelector.toJSON(message.configMapKeyRef);
+    }
+    if (message.secretKeyRef !== undefined) {
+      obj.secretKeyRef = KubernetesPodData_SecretKeySelector.toJSON(message.secretKeyRef);
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_ObjectFieldSelector(): KubernetesPodData_ObjectFieldSelector {
+  return { apiVersion: "", fieldPath: "" };
+}
+
+export const KubernetesPodData_ObjectFieldSelector: MessageFns<KubernetesPodData_ObjectFieldSelector> = {
+  encode(message: KubernetesPodData_ObjectFieldSelector, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.apiVersion !== "") {
+      writer.uint32(10).string(message.apiVersion);
+    }
+    if (message.fieldPath !== "") {
+      writer.uint32(18).string(message.fieldPath);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_ObjectFieldSelector {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_ObjectFieldSelector();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.apiVersion = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fieldPath = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_ObjectFieldSelector {
+    return {
+      apiVersion: isSet(object.apiVersion) ? globalThis.String(object.apiVersion) : "",
+      fieldPath: isSet(object.fieldPath) ? globalThis.String(object.fieldPath) : "",
+    };
+  },
+
+  toJSON(message: KubernetesPodData_ObjectFieldSelector): unknown {
+    const obj: any = {};
+    if (message.apiVersion !== "") {
+      obj.apiVersion = message.apiVersion;
+    }
+    if (message.fieldPath !== "") {
+      obj.fieldPath = message.fieldPath;
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_ResourceFieldSelector(): KubernetesPodData_ResourceFieldSelector {
+  return { containerName: "", resource: "", divisor: undefined };
+}
+
+export const KubernetesPodData_ResourceFieldSelector: MessageFns<KubernetesPodData_ResourceFieldSelector> = {
+  encode(message: KubernetesPodData_ResourceFieldSelector, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.containerName !== "") {
+      writer.uint32(10).string(message.containerName);
+    }
+    if (message.resource !== "") {
+      writer.uint32(18).string(message.resource);
+    }
+    if (message.divisor !== undefined) {
+      KubernetesPodData_Quantity.encode(message.divisor, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_ResourceFieldSelector {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_ResourceFieldSelector();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.containerName = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.resource = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.divisor = KubernetesPodData_Quantity.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_ResourceFieldSelector {
+    return {
+      containerName: isSet(object.containerName) ? globalThis.String(object.containerName) : "",
+      resource: isSet(object.resource) ? globalThis.String(object.resource) : "",
+      divisor: isSet(object.divisor) ? KubernetesPodData_Quantity.fromJSON(object.divisor) : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_ResourceFieldSelector): unknown {
+    const obj: any = {};
+    if (message.containerName !== "") {
+      obj.containerName = message.containerName;
+    }
+    if (message.resource !== "") {
+      obj.resource = message.resource;
+    }
+    if (message.divisor !== undefined) {
+      obj.divisor = KubernetesPodData_Quantity.toJSON(message.divisor);
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_ConfigMapKeySelector(): KubernetesPodData_ConfigMapKeySelector {
+  return { name: "", key: "", optional: undefined };
+}
+
+export const KubernetesPodData_ConfigMapKeySelector: MessageFns<KubernetesPodData_ConfigMapKeySelector> = {
+  encode(message: KubernetesPodData_ConfigMapKeySelector, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.key !== "") {
+      writer.uint32(18).string(message.key);
+    }
+    if (message.optional !== undefined) {
+      writer.uint32(24).bool(message.optional);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_ConfigMapKeySelector {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_ConfigMapKeySelector();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.optional = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_ConfigMapKeySelector {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      optional: isSet(object.optional) ? globalThis.Boolean(object.optional) : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_ConfigMapKeySelector): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.optional !== undefined) {
+      obj.optional = message.optional;
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_SecretKeySelector(): KubernetesPodData_SecretKeySelector {
+  return { name: "", key: "", optional: undefined };
+}
+
+export const KubernetesPodData_SecretKeySelector: MessageFns<KubernetesPodData_SecretKeySelector> = {
+  encode(message: KubernetesPodData_SecretKeySelector, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.key !== "") {
+      writer.uint32(18).string(message.key);
+    }
+    if (message.optional !== undefined) {
+      writer.uint32(24).bool(message.optional);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_SecretKeySelector {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_SecretKeySelector();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.optional = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_SecretKeySelector {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      optional: isSet(object.optional) ? globalThis.Boolean(object.optional) : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_SecretKeySelector): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.optional !== undefined) {
+      obj.optional = message.optional;
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_EnvFromSource(): KubernetesPodData_EnvFromSource {
+  return { prefix: undefined, configMapRef: undefined, secretRef: undefined };
+}
+
+export const KubernetesPodData_EnvFromSource: MessageFns<KubernetesPodData_EnvFromSource> = {
+  encode(message: KubernetesPodData_EnvFromSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.prefix !== undefined) {
+      writer.uint32(10).string(message.prefix);
+    }
+    if (message.configMapRef !== undefined) {
+      KubernetesPodData_ConfigMapEnvSource.encode(message.configMapRef, writer.uint32(18).fork()).join();
+    }
+    if (message.secretRef !== undefined) {
+      KubernetesPodData_SecretEnvSource.encode(message.secretRef, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_EnvFromSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_EnvFromSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.prefix = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.configMapRef = KubernetesPodData_ConfigMapEnvSource.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.secretRef = KubernetesPodData_SecretEnvSource.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_EnvFromSource {
+    return {
+      prefix: isSet(object.prefix) ? globalThis.String(object.prefix) : undefined,
+      configMapRef: isSet(object.configMapRef)
+        ? KubernetesPodData_ConfigMapEnvSource.fromJSON(object.configMapRef)
+        : undefined,
+      secretRef: isSet(object.secretRef) ? KubernetesPodData_SecretEnvSource.fromJSON(object.secretRef) : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_EnvFromSource): unknown {
+    const obj: any = {};
+    if (message.prefix !== undefined) {
+      obj.prefix = message.prefix;
+    }
+    if (message.configMapRef !== undefined) {
+      obj.configMapRef = KubernetesPodData_ConfigMapEnvSource.toJSON(message.configMapRef);
+    }
+    if (message.secretRef !== undefined) {
+      obj.secretRef = KubernetesPodData_SecretEnvSource.toJSON(message.secretRef);
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_ConfigMapEnvSource(): KubernetesPodData_ConfigMapEnvSource {
+  return { name: "", optional: undefined };
+}
+
+export const KubernetesPodData_ConfigMapEnvSource: MessageFns<KubernetesPodData_ConfigMapEnvSource> = {
+  encode(message: KubernetesPodData_ConfigMapEnvSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.optional !== undefined) {
+      writer.uint32(16).bool(message.optional);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_ConfigMapEnvSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_ConfigMapEnvSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.optional = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_ConfigMapEnvSource {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      optional: isSet(object.optional) ? globalThis.Boolean(object.optional) : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_ConfigMapEnvSource): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.optional !== undefined) {
+      obj.optional = message.optional;
+    }
+    return obj;
+  },
+};
+
+function createBaseKubernetesPodData_SecretEnvSource(): KubernetesPodData_SecretEnvSource {
+  return { name: "", optional: undefined };
+}
+
+export const KubernetesPodData_SecretEnvSource: MessageFns<KubernetesPodData_SecretEnvSource> = {
+  encode(message: KubernetesPodData_SecretEnvSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.optional !== undefined) {
+      writer.uint32(16).bool(message.optional);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KubernetesPodData_SecretEnvSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKubernetesPodData_SecretEnvSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.optional = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KubernetesPodData_SecretEnvSource {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      optional: isSet(object.optional) ? globalThis.Boolean(object.optional) : undefined,
+    };
+  },
+
+  toJSON(message: KubernetesPodData_SecretEnvSource): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.optional !== undefined) {
+      obj.optional = message.optional;
     }
     return obj;
   },
@@ -2352,6 +3145,7 @@ function createBaseKubernetesPodData_Container(): KubernetesPodData_Container {
     command: [],
     args: [],
     workingDir: undefined,
+    envFrom: [],
     env: [],
     resources: undefined,
     restartPolicy: undefined,
@@ -2380,6 +3174,9 @@ export const KubernetesPodData_Container: MessageFns<KubernetesPodData_Container
     }
     if (message.workingDir !== undefined) {
       writer.uint32(42).string(message.workingDir);
+    }
+    for (const v of message.envFrom) {
+      KubernetesPodData_EnvFromSource.encode(v!, writer.uint32(154).fork()).join();
     }
     for (const v of message.env) {
       KubernetesPodData_EnvVar.encode(v!, writer.uint32(58).fork()).join();
@@ -2456,6 +3253,14 @@ export const KubernetesPodData_Container: MessageFns<KubernetesPodData_Container
           }
 
           message.workingDir = reader.string();
+          continue;
+        }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.envFrom.push(KubernetesPodData_EnvFromSource.decode(reader, reader.uint32()));
           continue;
         }
         case 7: {
@@ -2546,6 +3351,9 @@ export const KubernetesPodData_Container: MessageFns<KubernetesPodData_Container
       command: globalThis.Array.isArray(object?.command) ? object.command.map((e: any) => globalThis.String(e)) : [],
       args: globalThis.Array.isArray(object?.args) ? object.args.map((e: any) => globalThis.String(e)) : [],
       workingDir: isSet(object.workingDir) ? globalThis.String(object.workingDir) : undefined,
+      envFrom: globalThis.Array.isArray(object?.envFrom)
+        ? object.envFrom.map((e: any) => KubernetesPodData_EnvFromSource.fromJSON(e))
+        : [],
       env: globalThis.Array.isArray(object?.env)
         ? object.env.map((e: any) => KubernetesPodData_EnvVar.fromJSON(e))
         : [],
@@ -2582,6 +3390,9 @@ export const KubernetesPodData_Container: MessageFns<KubernetesPodData_Container
     }
     if (message.workingDir !== undefined) {
       obj.workingDir = message.workingDir;
+    }
+    if (message.envFrom?.length) {
+      obj.envFrom = message.envFrom.map((e) => KubernetesPodData_EnvFromSource.toJSON(e));
     }
     if (message.env?.length) {
       obj.env = message.env.map((e) => KubernetesPodData_EnvVar.toJSON(e));

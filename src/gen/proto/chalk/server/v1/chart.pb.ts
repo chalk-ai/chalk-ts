@@ -20,7 +20,14 @@ import {
 } from "@grpc/grpc-js";
 import { Duration } from "../../../google/protobuf/duration.pb";
 import { Timestamp } from "../../../google/protobuf/timestamp.pb";
-import { MetricConfig } from "../../artifacts/v1/chart.pb";
+import {
+  Chart as Chart1,
+  ChartLinkKind,
+  chartLinkKindFromJSON,
+  chartLinkKindToJSON,
+  MetricConfig,
+} from "../../artifacts/v1/chart.pb";
+import { DenseTimeSeriesChart } from "../../chart/v1/densetimeserieschart.pb";
 
 export const protobufPackage = "chalk.server.v1";
 
@@ -57,11 +64,61 @@ export interface TimeSeriesChart {
   windowPeriod: Duration | undefined;
 }
 
+export interface ListChartsFilters {
+  linkEntityKind?: ChartLinkKind | undefined;
+  linkedEntityId?: string | undefined;
+}
+
+export interface ListChartPageToken {
+  /** Charts are sorted first by creation time, descending */
+  createdAtHwm:
+    | Date
+    | undefined;
+  /**
+   * Then by id, descending.
+   * Note: this is the chart link id, not the metric config id hwm!
+   */
+  idHwm: string;
+}
+
 export interface ListChartsRequest {
+  filters?: ListChartsFilters | undefined;
+  limit?:
+    | number
+    | undefined;
+  /**
+   * Must be encoded ListChartPageToken
+   * see https://protobuf.dev/best-practices/api/#define-pagination-api
+   */
+  pageToken?: string | undefined;
 }
 
 export interface ListChartsResponse {
+  /**
+   * While still supported, heavily suggest using the second option charts_with_link
+   * which includes metadata about other related entities to the chart
+   *
+   * @deprecated
+   */
   charts: MetricConfig[];
+  chartsWithLinks: Chart1[];
+  /**
+   * encoded ListChartPageToken
+   * see https://protobuf.dev/best-practices/api/#define-pagination-api
+   */
+  nextPageToken?: string | undefined;
+}
+
+export interface GetChartSnapshotRequest {
+  metricConfig: MetricConfig | undefined;
+  startTime: Date | undefined;
+  endTime: Date | undefined;
+}
+
+export interface GetChartSnapshotResponse {
+  charts: DenseTimeSeriesChart[];
+  xSeries: Date[];
+  windowPeriod: Duration | undefined;
 }
 
 function createBaseSeries(): Series {
@@ -478,12 +535,153 @@ export const TimeSeriesChart: MessageFns<TimeSeriesChart> = {
   },
 };
 
+function createBaseListChartsFilters(): ListChartsFilters {
+  return { linkEntityKind: undefined, linkedEntityId: undefined };
+}
+
+export const ListChartsFilters: MessageFns<ListChartsFilters> = {
+  encode(message: ListChartsFilters, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.linkEntityKind !== undefined) {
+      writer.uint32(8).int32(message.linkEntityKind);
+    }
+    if (message.linkedEntityId !== undefined) {
+      writer.uint32(18).string(message.linkedEntityId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListChartsFilters {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListChartsFilters();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.linkEntityKind = reader.int32() as any;
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.linkedEntityId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListChartsFilters {
+    return {
+      linkEntityKind: isSet(object.linkEntityKind) ? chartLinkKindFromJSON(object.linkEntityKind) : undefined,
+      linkedEntityId: isSet(object.linkedEntityId) ? globalThis.String(object.linkedEntityId) : undefined,
+    };
+  },
+
+  toJSON(message: ListChartsFilters): unknown {
+    const obj: any = {};
+    if (message.linkEntityKind !== undefined) {
+      obj.linkEntityKind = chartLinkKindToJSON(message.linkEntityKind);
+    }
+    if (message.linkedEntityId !== undefined) {
+      obj.linkedEntityId = message.linkedEntityId;
+    }
+    return obj;
+  },
+};
+
+function createBaseListChartPageToken(): ListChartPageToken {
+  return { createdAtHwm: undefined, idHwm: "" };
+}
+
+export const ListChartPageToken: MessageFns<ListChartPageToken> = {
+  encode(message: ListChartPageToken, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.createdAtHwm !== undefined) {
+      Timestamp.encode(toTimestamp(message.createdAtHwm), writer.uint32(10).fork()).join();
+    }
+    if (message.idHwm !== "") {
+      writer.uint32(18).string(message.idHwm);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListChartPageToken {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListChartPageToken();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.createdAtHwm = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.idHwm = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListChartPageToken {
+    return {
+      createdAtHwm: isSet(object.createdAtHwm) ? fromJsonTimestamp(object.createdAtHwm) : undefined,
+      idHwm: isSet(object.idHwm) ? globalThis.String(object.idHwm) : "",
+    };
+  },
+
+  toJSON(message: ListChartPageToken): unknown {
+    const obj: any = {};
+    if (message.createdAtHwm !== undefined) {
+      obj.createdAtHwm = message.createdAtHwm.toISOString();
+    }
+    if (message.idHwm !== "") {
+      obj.idHwm = message.idHwm;
+    }
+    return obj;
+  },
+};
+
 function createBaseListChartsRequest(): ListChartsRequest {
-  return {};
+  return { filters: undefined, limit: undefined, pageToken: undefined };
 }
 
 export const ListChartsRequest: MessageFns<ListChartsRequest> = {
-  encode(_: ListChartsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: ListChartsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filters !== undefined) {
+      ListChartsFilters.encode(message.filters, writer.uint32(10).fork()).join();
+    }
+    if (message.limit !== undefined) {
+      writer.uint32(16).int32(message.limit);
+    }
+    if (message.pageToken !== undefined) {
+      writer.uint32(26).string(message.pageToken);
+    }
     return writer;
   },
 
@@ -494,6 +692,30 @@ export const ListChartsRequest: MessageFns<ListChartsRequest> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.filters = ListChartsFilters.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.pageToken = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -503,24 +725,43 @@ export const ListChartsRequest: MessageFns<ListChartsRequest> = {
     return message;
   },
 
-  fromJSON(_: any): ListChartsRequest {
-    return {};
+  fromJSON(object: any): ListChartsRequest {
+    return {
+      filters: isSet(object.filters) ? ListChartsFilters.fromJSON(object.filters) : undefined,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : undefined,
+      pageToken: isSet(object.pageToken) ? globalThis.String(object.pageToken) : undefined,
+    };
   },
 
-  toJSON(_: ListChartsRequest): unknown {
+  toJSON(message: ListChartsRequest): unknown {
     const obj: any = {};
+    if (message.filters !== undefined) {
+      obj.filters = ListChartsFilters.toJSON(message.filters);
+    }
+    if (message.limit !== undefined) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.pageToken !== undefined) {
+      obj.pageToken = message.pageToken;
+    }
     return obj;
   },
 };
 
 function createBaseListChartsResponse(): ListChartsResponse {
-  return { charts: [] };
+  return { charts: [], chartsWithLinks: [], nextPageToken: undefined };
 }
 
 export const ListChartsResponse: MessageFns<ListChartsResponse> = {
   encode(message: ListChartsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     for (const v of message.charts) {
       MetricConfig.encode(v!, writer.uint32(10).fork()).join();
+    }
+    for (const v of message.chartsWithLinks) {
+      Chart1.encode(v!, writer.uint32(18).fork()).join();
+    }
+    if (message.nextPageToken !== undefined) {
+      writer.uint32(26).string(message.nextPageToken);
     }
     return writer;
   },
@@ -540,6 +781,22 @@ export const ListChartsResponse: MessageFns<ListChartsResponse> = {
           message.charts.push(MetricConfig.decode(reader, reader.uint32()));
           continue;
         }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.chartsWithLinks.push(Chart1.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.nextPageToken = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -552,6 +809,10 @@ export const ListChartsResponse: MessageFns<ListChartsResponse> = {
   fromJSON(object: any): ListChartsResponse {
     return {
       charts: globalThis.Array.isArray(object?.charts) ? object.charts.map((e: any) => MetricConfig.fromJSON(e)) : [],
+      chartsWithLinks: globalThis.Array.isArray(object?.chartsWithLinks)
+        ? object.chartsWithLinks.map((e: any) => Chart1.fromJSON(e))
+        : [],
+      nextPageToken: isSet(object.nextPageToken) ? globalThis.String(object.nextPageToken) : undefined,
     };
   },
 
@@ -559,6 +820,176 @@ export const ListChartsResponse: MessageFns<ListChartsResponse> = {
     const obj: any = {};
     if (message.charts?.length) {
       obj.charts = message.charts.map((e) => MetricConfig.toJSON(e));
+    }
+    if (message.chartsWithLinks?.length) {
+      obj.chartsWithLinks = message.chartsWithLinks.map((e) => Chart1.toJSON(e));
+    }
+    if (message.nextPageToken !== undefined) {
+      obj.nextPageToken = message.nextPageToken;
+    }
+    return obj;
+  },
+};
+
+function createBaseGetChartSnapshotRequest(): GetChartSnapshotRequest {
+  return { metricConfig: undefined, startTime: undefined, endTime: undefined };
+}
+
+export const GetChartSnapshotRequest: MessageFns<GetChartSnapshotRequest> = {
+  encode(message: GetChartSnapshotRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metricConfig !== undefined) {
+      MetricConfig.encode(message.metricConfig, writer.uint32(10).fork()).join();
+    }
+    if (message.startTime !== undefined) {
+      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(18).fork()).join();
+    }
+    if (message.endTime !== undefined) {
+      Timestamp.encode(toTimestamp(message.endTime), writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetChartSnapshotRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetChartSnapshotRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.metricConfig = MetricConfig.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.startTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.endTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetChartSnapshotRequest {
+    return {
+      metricConfig: isSet(object.metricConfig) ? MetricConfig.fromJSON(object.metricConfig) : undefined,
+      startTime: isSet(object.startTime) ? fromJsonTimestamp(object.startTime) : undefined,
+      endTime: isSet(object.endTime) ? fromJsonTimestamp(object.endTime) : undefined,
+    };
+  },
+
+  toJSON(message: GetChartSnapshotRequest): unknown {
+    const obj: any = {};
+    if (message.metricConfig !== undefined) {
+      obj.metricConfig = MetricConfig.toJSON(message.metricConfig);
+    }
+    if (message.startTime !== undefined) {
+      obj.startTime = message.startTime.toISOString();
+    }
+    if (message.endTime !== undefined) {
+      obj.endTime = message.endTime.toISOString();
+    }
+    return obj;
+  },
+};
+
+function createBaseGetChartSnapshotResponse(): GetChartSnapshotResponse {
+  return { charts: [], xSeries: [], windowPeriod: undefined };
+}
+
+export const GetChartSnapshotResponse: MessageFns<GetChartSnapshotResponse> = {
+  encode(message: GetChartSnapshotResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.charts) {
+      DenseTimeSeriesChart.encode(v!, writer.uint32(10).fork()).join();
+    }
+    for (const v of message.xSeries) {
+      Timestamp.encode(toTimestamp(v!), writer.uint32(18).fork()).join();
+    }
+    if (message.windowPeriod !== undefined) {
+      Duration.encode(message.windowPeriod, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetChartSnapshotResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetChartSnapshotResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.charts.push(DenseTimeSeriesChart.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.xSeries.push(fromTimestamp(Timestamp.decode(reader, reader.uint32())));
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.windowPeriod = Duration.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetChartSnapshotResponse {
+    return {
+      charts: globalThis.Array.isArray(object?.charts)
+        ? object.charts.map((e: any) => DenseTimeSeriesChart.fromJSON(e))
+        : [],
+      xSeries: globalThis.Array.isArray(object?.xSeries) ? object.xSeries.map((e: any) => fromJsonTimestamp(e)) : [],
+      windowPeriod: isSet(object.windowPeriod) ? Duration.fromJSON(object.windowPeriod) : undefined,
+    };
+  },
+
+  toJSON(message: GetChartSnapshotResponse): unknown {
+    const obj: any = {};
+    if (message.charts?.length) {
+      obj.charts = message.charts.map((e) => DenseTimeSeriesChart.toJSON(e));
+    }
+    if (message.xSeries?.length) {
+      obj.xSeries = message.xSeries.map((e) => e.toISOString());
+    }
+    if (message.windowPeriod !== undefined) {
+      obj.windowPeriod = Duration.toJSON(message.windowPeriod);
     }
     return obj;
   },
@@ -575,10 +1006,21 @@ export const ChartsServiceService = {
     responseSerialize: (value: ListChartsResponse) => Buffer.from(ListChartsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => ListChartsResponse.decode(value),
   },
+  getChartSnapshot: {
+    path: "/chalk.server.v1.ChartsService/GetChartSnapshot",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetChartSnapshotRequest) => Buffer.from(GetChartSnapshotRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetChartSnapshotRequest.decode(value),
+    responseSerialize: (value: GetChartSnapshotResponse) =>
+      Buffer.from(GetChartSnapshotResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetChartSnapshotResponse.decode(value),
+  },
 } as const;
 
 export interface ChartsServiceServer extends UntypedServiceImplementation {
   listCharts: handleUnaryCall<ListChartsRequest, ListChartsResponse>;
+  getChartSnapshot: handleUnaryCall<GetChartSnapshotRequest, GetChartSnapshotResponse>;
 }
 
 export interface ChartsServiceClient extends Client {
@@ -596,6 +1038,21 @@ export interface ChartsServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ListChartsResponse) => void,
+  ): ClientUnaryCall;
+  getChartSnapshot(
+    request: GetChartSnapshotRequest,
+    callback: (error: ServiceError | null, response: GetChartSnapshotResponse) => void,
+  ): ClientUnaryCall;
+  getChartSnapshot(
+    request: GetChartSnapshotRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetChartSnapshotResponse) => void,
+  ): ClientUnaryCall;
+  getChartSnapshot(
+    request: GetChartSnapshotRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetChartSnapshotResponse) => void,
   ): ClientUnaryCall;
 }
 

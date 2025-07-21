@@ -110,14 +110,14 @@ export interface CreateProjectResponse {
 export interface CreateEnvironmentRequest {
   projectId: string;
   name: string;
+  isDefault: boolean;
   /**
    * service_url,
    *  worker_url,
    *  branch_url,
-   *  source_bundle_bucket,
    *  offline_store_secret
    */
-  isDefault: boolean;
+  sourceBundleBucket: string;
 }
 
 export interface CreateEnvironmentResponse {
@@ -128,6 +128,8 @@ export interface UpdateEnvironmentOperation {
   specsConfigJson?: string | undefined;
   additionalEnvVars: { [key: string]: string };
   privatePipRepositories?: string | undefined;
+  onlineStoreSecret?: string | undefined;
+  featureStoreSecret?: string | undefined;
 }
 
 export interface UpdateEnvironmentOperation_AdditionalEnvVarsEntry {
@@ -327,6 +329,13 @@ export interface GetTeamPermissionsResponse {
   scimGroups: ScimGroup[];
   environmentPermissions: EnvironmentPermissions[];
   teamMembers: User[];
+}
+
+export interface ArchiveEnvironmentRequest {
+  id: string;
+}
+
+export interface ArchiveEnvironmentResponse {
 }
 
 function createBaseGetEnvRequest(): GetEnvRequest {
@@ -1248,7 +1257,7 @@ export const CreateProjectResponse: MessageFns<CreateProjectResponse> = {
 };
 
 function createBaseCreateEnvironmentRequest(): CreateEnvironmentRequest {
-  return { projectId: "", name: "", isDefault: false };
+  return { projectId: "", name: "", isDefault: false, sourceBundleBucket: "" };
 }
 
 export const CreateEnvironmentRequest: MessageFns<CreateEnvironmentRequest> = {
@@ -1261,6 +1270,9 @@ export const CreateEnvironmentRequest: MessageFns<CreateEnvironmentRequest> = {
     }
     if (message.isDefault !== false) {
       writer.uint32(24).bool(message.isDefault);
+    }
+    if (message.sourceBundleBucket !== "") {
+      writer.uint32(34).string(message.sourceBundleBucket);
     }
     return writer;
   },
@@ -1296,6 +1308,14 @@ export const CreateEnvironmentRequest: MessageFns<CreateEnvironmentRequest> = {
           message.isDefault = reader.bool();
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.sourceBundleBucket = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1310,6 +1330,7 @@ export const CreateEnvironmentRequest: MessageFns<CreateEnvironmentRequest> = {
       projectId: isSet(object.projectId) ? globalThis.String(object.projectId) : "",
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       isDefault: isSet(object.isDefault) ? globalThis.Boolean(object.isDefault) : false,
+      sourceBundleBucket: isSet(object.sourceBundleBucket) ? globalThis.String(object.sourceBundleBucket) : "",
     };
   },
 
@@ -1323,6 +1344,9 @@ export const CreateEnvironmentRequest: MessageFns<CreateEnvironmentRequest> = {
     }
     if (message.isDefault !== false) {
       obj.isDefault = message.isDefault;
+    }
+    if (message.sourceBundleBucket !== "") {
+      obj.sourceBundleBucket = message.sourceBundleBucket;
     }
     return obj;
   },
@@ -1378,7 +1402,13 @@ export const CreateEnvironmentResponse: MessageFns<CreateEnvironmentResponse> = 
 };
 
 function createBaseUpdateEnvironmentOperation(): UpdateEnvironmentOperation {
-  return { specsConfigJson: undefined, additionalEnvVars: {}, privatePipRepositories: undefined };
+  return {
+    specsConfigJson: undefined,
+    additionalEnvVars: {},
+    privatePipRepositories: undefined,
+    onlineStoreSecret: undefined,
+    featureStoreSecret: undefined,
+  };
 }
 
 export const UpdateEnvironmentOperation: MessageFns<UpdateEnvironmentOperation> = {
@@ -1392,6 +1422,12 @@ export const UpdateEnvironmentOperation: MessageFns<UpdateEnvironmentOperation> 
     });
     if (message.privatePipRepositories !== undefined) {
       writer.uint32(26).string(message.privatePipRepositories);
+    }
+    if (message.onlineStoreSecret !== undefined) {
+      writer.uint32(34).string(message.onlineStoreSecret);
+    }
+    if (message.featureStoreSecret !== undefined) {
+      writer.uint32(42).string(message.featureStoreSecret);
     }
     return writer;
   },
@@ -1430,6 +1466,22 @@ export const UpdateEnvironmentOperation: MessageFns<UpdateEnvironmentOperation> 
           message.privatePipRepositories = reader.string();
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.onlineStoreSecret = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.featureStoreSecret = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1451,6 +1503,8 @@ export const UpdateEnvironmentOperation: MessageFns<UpdateEnvironmentOperation> 
       privatePipRepositories: isSet(object.privatePipRepositories)
         ? globalThis.String(object.privatePipRepositories)
         : undefined,
+      onlineStoreSecret: isSet(object.onlineStoreSecret) ? globalThis.String(object.onlineStoreSecret) : undefined,
+      featureStoreSecret: isSet(object.featureStoreSecret) ? globalThis.String(object.featureStoreSecret) : undefined,
     };
   },
 
@@ -1470,6 +1524,12 @@ export const UpdateEnvironmentOperation: MessageFns<UpdateEnvironmentOperation> 
     }
     if (message.privatePipRepositories !== undefined) {
       obj.privatePipRepositories = message.privatePipRepositories;
+    }
+    if (message.onlineStoreSecret !== undefined) {
+      obj.onlineStoreSecret = message.onlineStoreSecret;
+    }
+    if (message.featureStoreSecret !== undefined) {
+      obj.featureStoreSecret = message.featureStoreSecret;
     }
     return obj;
   },
@@ -4236,6 +4296,90 @@ export const GetTeamPermissionsResponse: MessageFns<GetTeamPermissionsResponse> 
   },
 };
 
+function createBaseArchiveEnvironmentRequest(): ArchiveEnvironmentRequest {
+  return { id: "" };
+}
+
+export const ArchiveEnvironmentRequest: MessageFns<ArchiveEnvironmentRequest> = {
+  encode(message: ArchiveEnvironmentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ArchiveEnvironmentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseArchiveEnvironmentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ArchiveEnvironmentRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: ArchiveEnvironmentRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+};
+
+function createBaseArchiveEnvironmentResponse(): ArchiveEnvironmentResponse {
+  return {};
+}
+
+export const ArchiveEnvironmentResponse: MessageFns<ArchiveEnvironmentResponse> = {
+  encode(_: ArchiveEnvironmentResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ArchiveEnvironmentResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseArchiveEnvironmentResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): ArchiveEnvironmentResponse {
+    return {};
+  },
+
+  toJSON(_: ArchiveEnvironmentResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+};
+
 export type TeamServiceService = typeof TeamServiceService;
 export const TeamServiceService = {
   getEnv: {
@@ -4437,6 +4581,17 @@ export const TeamServiceService = {
       Buffer.from(GetTeamPermissionsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => GetTeamPermissionsResponse.decode(value),
   },
+  archiveEnvironment: {
+    path: "/chalk.server.v1.TeamService/ArchiveEnvironment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ArchiveEnvironmentRequest) =>
+      Buffer.from(ArchiveEnvironmentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => ArchiveEnvironmentRequest.decode(value),
+    responseSerialize: (value: ArchiveEnvironmentResponse) =>
+      Buffer.from(ArchiveEnvironmentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => ArchiveEnvironmentResponse.decode(value),
+  },
 } as const;
 
 export interface TeamServiceServer extends UntypedServiceImplementation {
@@ -4460,6 +4615,7 @@ export interface TeamServiceServer extends UntypedServiceImplementation {
   upsertFeaturePermissions: handleUnaryCall<UpsertFeaturePermissionsRequest, UpsertFeaturePermissionsResponse>;
   updateScimGroupSettings: handleUnaryCall<UpdateScimGroupSettingsRequest, UpdateScimGroupSettingsResponse>;
   getTeamPermissions: handleUnaryCall<GetTeamPermissionsRequest, GetTeamPermissionsResponse>;
+  archiveEnvironment: handleUnaryCall<ArchiveEnvironmentRequest, ArchiveEnvironmentResponse>;
 }
 
 export interface TeamServiceClient extends Client {
@@ -4762,6 +4918,21 @@ export interface TeamServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: GetTeamPermissionsResponse) => void,
+  ): ClientUnaryCall;
+  archiveEnvironment(
+    request: ArchiveEnvironmentRequest,
+    callback: (error: ServiceError | null, response: ArchiveEnvironmentResponse) => void,
+  ): ClientUnaryCall;
+  archiveEnvironment(
+    request: ArchiveEnvironmentRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ArchiveEnvironmentResponse) => void,
+  ): ClientUnaryCall;
+  archiveEnvironment(
+    request: ArchiveEnvironmentRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ArchiveEnvironmentResponse) => void,
   ): ClientUnaryCall;
 }
 

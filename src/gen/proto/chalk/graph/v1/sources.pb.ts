@@ -222,6 +222,7 @@ export interface DatabaseSource {
   trino?: TrinoSource | undefined;
   dynamodb?: DynamoDBSource | undefined;
   athena?: AthenaSource | undefined;
+  clickhouse?: ClickhouseSource | undefined;
 }
 
 export interface BigQuerySource {
@@ -475,6 +476,28 @@ export interface AthenaSource_EngineArgsEntry {
 }
 
 export interface AthenaSource_AsyncEngineArgsEntry {
+  key: string;
+  value: ScalarValue | undefined;
+}
+
+export interface ClickhouseSource {
+  name: string;
+  host: string;
+  port: string;
+  db: string;
+  user: string;
+  password: string;
+  useTls: boolean;
+  engineArgs: { [key: string]: ScalarValue };
+  asyncEngineArgs: { [key: string]: ScalarValue };
+}
+
+export interface ClickhouseSource_EngineArgsEntry {
+  key: string;
+  value: ScalarValue | undefined;
+}
+
+export interface ClickhouseSource_AsyncEngineArgsEntry {
   key: string;
   value: ScalarValue | undefined;
 }
@@ -1285,6 +1308,7 @@ function createBaseDatabaseSource(): DatabaseSource {
     trino: undefined,
     dynamodb: undefined,
     athena: undefined,
+    clickhouse: undefined,
   };
 }
 
@@ -1325,6 +1349,9 @@ export const DatabaseSource: MessageFns<DatabaseSource> = {
     }
     if (message.athena !== undefined) {
       AthenaSource.encode(message.athena, writer.uint32(98).fork()).join();
+    }
+    if (message.clickhouse !== undefined) {
+      ClickhouseSource.encode(message.clickhouse, writer.uint32(106).fork()).join();
     }
     return writer;
   },
@@ -1432,6 +1459,14 @@ export const DatabaseSource: MessageFns<DatabaseSource> = {
           message.athena = AthenaSource.decode(reader, reader.uint32());
           continue;
         }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.clickhouse = ClickhouseSource.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1455,6 +1490,7 @@ export const DatabaseSource: MessageFns<DatabaseSource> = {
       trino: isSet(object.trino) ? TrinoSource.fromJSON(object.trino) : undefined,
       dynamodb: isSet(object.dynamodb) ? DynamoDBSource.fromJSON(object.dynamodb) : undefined,
       athena: isSet(object.athena) ? AthenaSource.fromJSON(object.athena) : undefined,
+      clickhouse: isSet(object.clickhouse) ? ClickhouseSource.fromJSON(object.clickhouse) : undefined,
     };
   },
 
@@ -1495,6 +1531,9 @@ export const DatabaseSource: MessageFns<DatabaseSource> = {
     }
     if (message.athena !== undefined) {
       obj.athena = AthenaSource.toJSON(message.athena);
+    }
+    if (message.clickhouse !== undefined) {
+      obj.clickhouse = ClickhouseSource.toJSON(message.clickhouse);
     }
     return obj;
   },
@@ -5393,6 +5432,347 @@ export const AthenaSource_AsyncEngineArgsEntry: MessageFns<AthenaSource_AsyncEng
   },
 
   toJSON(message: AthenaSource_AsyncEngineArgsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = ScalarValue.toJSON(message.value);
+    }
+    return obj;
+  },
+};
+
+function createBaseClickhouseSource(): ClickhouseSource {
+  return {
+    name: "",
+    host: "",
+    port: "",
+    db: "",
+    user: "",
+    password: "",
+    useTls: false,
+    engineArgs: {},
+    asyncEngineArgs: {},
+  };
+}
+
+export const ClickhouseSource: MessageFns<ClickhouseSource> = {
+  encode(message: ClickhouseSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.host !== "") {
+      writer.uint32(18).string(message.host);
+    }
+    if (message.port !== "") {
+      writer.uint32(26).string(message.port);
+    }
+    if (message.db !== "") {
+      writer.uint32(34).string(message.db);
+    }
+    if (message.user !== "") {
+      writer.uint32(42).string(message.user);
+    }
+    if (message.password !== "") {
+      writer.uint32(50).string(message.password);
+    }
+    if (message.useTls !== false) {
+      writer.uint32(56).bool(message.useTls);
+    }
+    Object.entries(message.engineArgs).forEach(([key, value]) => {
+      ClickhouseSource_EngineArgsEntry.encode({ key: key as any, value }, writer.uint32(66).fork()).join();
+    });
+    Object.entries(message.asyncEngineArgs).forEach(([key, value]) => {
+      ClickhouseSource_AsyncEngineArgsEntry.encode({ key: key as any, value }, writer.uint32(74).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ClickhouseSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseClickhouseSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.host = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.port = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.db = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.user = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.password = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.useTls = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          const entry8 = ClickhouseSource_EngineArgsEntry.decode(reader, reader.uint32());
+          if (entry8.value !== undefined) {
+            message.engineArgs[entry8.key] = entry8.value;
+          }
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          const entry9 = ClickhouseSource_AsyncEngineArgsEntry.decode(reader, reader.uint32());
+          if (entry9.value !== undefined) {
+            message.asyncEngineArgs[entry9.key] = entry9.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ClickhouseSource {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      host: isSet(object.host) ? globalThis.String(object.host) : "",
+      port: isSet(object.port) ? globalThis.String(object.port) : "",
+      db: isSet(object.db) ? globalThis.String(object.db) : "",
+      user: isSet(object.user) ? globalThis.String(object.user) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
+      useTls: isSet(object.useTls) ? globalThis.Boolean(object.useTls) : false,
+      engineArgs: isObject(object.engineArgs)
+        ? Object.entries(object.engineArgs).reduce<{ [key: string]: ScalarValue }>((acc, [key, value]) => {
+          acc[key] = ScalarValue.fromJSON(value);
+          return acc;
+        }, {})
+        : {},
+      asyncEngineArgs: isObject(object.asyncEngineArgs)
+        ? Object.entries(object.asyncEngineArgs).reduce<{ [key: string]: ScalarValue }>((acc, [key, value]) => {
+          acc[key] = ScalarValue.fromJSON(value);
+          return acc;
+        }, {})
+        : {},
+    };
+  },
+
+  toJSON(message: ClickhouseSource): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.host !== "") {
+      obj.host = message.host;
+    }
+    if (message.port !== "") {
+      obj.port = message.port;
+    }
+    if (message.db !== "") {
+      obj.db = message.db;
+    }
+    if (message.user !== "") {
+      obj.user = message.user;
+    }
+    if (message.password !== "") {
+      obj.password = message.password;
+    }
+    if (message.useTls !== false) {
+      obj.useTls = message.useTls;
+    }
+    if (message.engineArgs) {
+      const entries = Object.entries(message.engineArgs);
+      if (entries.length > 0) {
+        obj.engineArgs = {};
+        entries.forEach(([k, v]) => {
+          obj.engineArgs[k] = ScalarValue.toJSON(v);
+        });
+      }
+    }
+    if (message.asyncEngineArgs) {
+      const entries = Object.entries(message.asyncEngineArgs);
+      if (entries.length > 0) {
+        obj.asyncEngineArgs = {};
+        entries.forEach(([k, v]) => {
+          obj.asyncEngineArgs[k] = ScalarValue.toJSON(v);
+        });
+      }
+    }
+    return obj;
+  },
+};
+
+function createBaseClickhouseSource_EngineArgsEntry(): ClickhouseSource_EngineArgsEntry {
+  return { key: "", value: undefined };
+}
+
+export const ClickhouseSource_EngineArgsEntry: MessageFns<ClickhouseSource_EngineArgsEntry> = {
+  encode(message: ClickhouseSource_EngineArgsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      ScalarValue.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ClickhouseSource_EngineArgsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseClickhouseSource_EngineArgsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = ScalarValue.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ClickhouseSource_EngineArgsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? ScalarValue.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: ClickhouseSource_EngineArgsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = ScalarValue.toJSON(message.value);
+    }
+    return obj;
+  },
+};
+
+function createBaseClickhouseSource_AsyncEngineArgsEntry(): ClickhouseSource_AsyncEngineArgsEntry {
+  return { key: "", value: undefined };
+}
+
+export const ClickhouseSource_AsyncEngineArgsEntry: MessageFns<ClickhouseSource_AsyncEngineArgsEntry> = {
+  encode(message: ClickhouseSource_AsyncEngineArgsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      ScalarValue.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ClickhouseSource_AsyncEngineArgsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseClickhouseSource_AsyncEngineArgsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = ScalarValue.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ClickhouseSource_AsyncEngineArgsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? ScalarValue.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: ClickhouseSource_AsyncEngineArgsEntry): unknown {
     const obj: any = {};
     if (message.key !== "") {
       obj.key = message.key;

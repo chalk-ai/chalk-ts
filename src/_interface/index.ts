@@ -1,4 +1,7 @@
+import { ChalkError } from "../_errors";
+
 export type {
+  ChalkClientGRPCInterface,
   ChalkClientHTTPInterface,
   ChalkClientInterface,
   ChalkClientConfig,
@@ -290,4 +293,9 @@ export interface ChalkTriggerResolverRunResponse {
 export interface ChalkWhoamiResponse {
   // The id of the user.
   user: string;
+}
+
+export interface ChalkPingQueryServerResponse {
+  success?: boolean;
+  error?: ChalkError;
 }

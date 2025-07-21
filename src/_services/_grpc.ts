@@ -20,6 +20,10 @@ import {
   OnlineQueryMultiRequest,
   OnlineQueryMultiResponse,
 } from "../gen/proto/chalk/common/v1/online_query.pb";
+import {
+  PingRequest,
+  PingResponse,
+} from "../gen/proto/chalk/engine/v1/query_server.pb";
 import { USER_AGENT } from "../_user_agent";
 import { ChalkRequestOptions } from "../_interface/_request";
 
@@ -138,5 +142,13 @@ export class ChalkGRPCService {
       OnlineQueryMultiRequest,
       OnlineQueryMultiResponse
     >((...callArgs) => this.queryClient.onlineQueryMulti(...callArgs))(...args);
+  };
+
+  public pingQueryServer = (
+    ...args: GRPCCallArgs<PingRequest>
+  ): Promise<PingResponse> => {
+    return this.promisfyGRPCCall<PingRequest, PingResponse>((...callArgs) =>
+      this.queryClient.ping(...callArgs)
+    )(...args);
   };
 }

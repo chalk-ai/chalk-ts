@@ -21,6 +21,7 @@ import {
 import { Timestamp } from "../../../google/protobuf/timestamp.pb";
 import { Graph } from "../../graph/v1/graph.pb";
 import { LSP } from "../../lsp/v1/lsp.pb";
+import { GKENodePool } from "../../nodepools/v1/gke.pb";
 import { KarpenterNodepool } from "../../nodepools/v1/karpenter.pb";
 import { Deployment } from "./deployment.pb";
 import { LogEntry } from "./log.pb";
@@ -202,6 +203,7 @@ export interface RedeployDeploymentRequest {
   existingDeploymentId: string;
   enableProfiling: boolean;
   deploymentTags: string[];
+  baseImageOverride?: string | undefined;
 }
 
 export interface RedeployDeploymentResponse {
@@ -410,6 +412,10 @@ export interface EnvoyGatewaySpecs {
   listeners: EnvoyGatewayListener[];
   config?: GatewayProviderConfig | undefined;
   includeChalkNodeSelector: boolean;
+  /** Optional IP allowlist for restricting access to the gateway */
+  ipAllowlist: string[];
+  /** Optional TLS certificate configuration */
+  tlsCertificate?: TLSCertificateConfig | undefined;
 }
 
 export interface EnvoyGatewayListener {
@@ -441,6 +447,18 @@ export interface EnvoyGatewayProviderConfig {
 
 export interface GCPGatewayProviderConfig {
   dnsHostname: string;
+}
+
+/** TLS certificate configuration with extensible design */
+export interface TLSCertificateConfig {
+  /** Future: TLSLetsEncryptRef letsencrypt_certificate = 2; */
+  manualCertificate?: TLSManualCertificateRef | undefined;
+}
+
+/** Manual certificate referencing a Kubernetes secret */
+export interface TLSManualCertificateRef {
+  secretName: string;
+  secretNamespace: string;
 }
 
 export interface CreateClusterGatewayResponse {
@@ -496,6 +514,7 @@ export interface BackgroundPersistenceCommonSpecs {
   bqUploadBucket: string;
   bqUploadTopic: string;
   includeChalkNodeSelector: boolean;
+  busWriterImageRust: string;
 }
 
 export interface BackgroundPersistenceWriterHpaSpecs {
@@ -575,6 +594,14 @@ export interface StartBranchResponse {
   state: BranchScalingState;
 }
 
+export interface ScaleBranchRequest {
+  replicas: number;
+}
+
+export interface ScaleBranchResponse {
+  state: BranchScalingState;
+}
+
 export interface KafkaTopic {
   name: string;
   partitions: number;
@@ -594,6 +621,42 @@ export interface GetKafkaTopicsRequest {
 
 export interface GetKafkaTopicsResponse {
   topics: KafkaTopic[];
+}
+
+export interface GetNodepoolsRequest {
+}
+
+export interface GetNodepoolsResponse {
+  karpenterNodepools: KarpenterNodepool[];
+  gkeNodepools: GKENodePool[];
+}
+
+export interface AddNodepoolRequest {
+  karpenterNodepool?: KarpenterNodepool | undefined;
+  gkeNodepool?: GKENodePool | undefined;
+}
+
+export interface AddNodepoolResponse {
+  karpenterNodepool?: KarpenterNodepool | undefined;
+  gkeNodepool?: GKENodePool | undefined;
+}
+
+export interface UpdateNodepoolRequest {
+  name: string;
+  gkeNodepool?: GKENodePool | undefined;
+  karpenterNodepool?: KarpenterNodepool | undefined;
+}
+
+export interface UpdateNodepoolResponse {
+  karpenterNodepool?: KarpenterNodepool | undefined;
+  gkeNodepool?: GKENodePool | undefined;
+}
+
+export interface DeleteNodepoolRequest {
+  name: string;
+}
+
+export interface DeleteNodepoolResponse {
 }
 
 export interface GetKarpenterNodepoolsRequest {
@@ -643,6 +706,7 @@ export interface DeploymentTag {
   tag: string;
   weight?: number | undefined;
   deploymentId?: string | undefined;
+  mirrorWeight?: number | undefined;
 }
 
 export interface GetTagWeightsRequest {
@@ -1164,7 +1228,7 @@ export const RebuildDeploymentResponse: MessageFns<RebuildDeploymentResponse> = 
 };
 
 function createBaseRedeployDeploymentRequest(): RedeployDeploymentRequest {
-  return { existingDeploymentId: "", enableProfiling: false, deploymentTags: [] };
+  return { existingDeploymentId: "", enableProfiling: false, deploymentTags: [], baseImageOverride: undefined };
 }
 
 export const RedeployDeploymentRequest: MessageFns<RedeployDeploymentRequest> = {
@@ -1177,6 +1241,9 @@ export const RedeployDeploymentRequest: MessageFns<RedeployDeploymentRequest> = 
     }
     for (const v of message.deploymentTags) {
       writer.uint32(26).string(v!);
+    }
+    if (message.baseImageOverride !== undefined) {
+      writer.uint32(34).string(message.baseImageOverride);
     }
     return writer;
   },
@@ -1212,6 +1279,14 @@ export const RedeployDeploymentRequest: MessageFns<RedeployDeploymentRequest> = 
           message.deploymentTags.push(reader.string());
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.baseImageOverride = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1228,6 +1303,7 @@ export const RedeployDeploymentRequest: MessageFns<RedeployDeploymentRequest> = 
       deploymentTags: globalThis.Array.isArray(object?.deploymentTags)
         ? object.deploymentTags.map((e: any) => globalThis.String(e))
         : [],
+      baseImageOverride: isSet(object.baseImageOverride) ? globalThis.String(object.baseImageOverride) : undefined,
     };
   },
 
@@ -1241,6 +1317,9 @@ export const RedeployDeploymentRequest: MessageFns<RedeployDeploymentRequest> = 
     }
     if (message.deploymentTags?.length) {
       obj.deploymentTags = message.deploymentTags;
+    }
+    if (message.baseImageOverride !== undefined) {
+      obj.baseImageOverride = message.baseImageOverride;
     }
     return obj;
   },
@@ -3439,6 +3518,8 @@ function createBaseEnvoyGatewaySpecs(): EnvoyGatewaySpecs {
     listeners: [],
     config: undefined,
     includeChalkNodeSelector: false,
+    ipAllowlist: [],
+    tlsCertificate: undefined,
   };
 }
 
@@ -3461,6 +3542,12 @@ export const EnvoyGatewaySpecs: MessageFns<EnvoyGatewaySpecs> = {
     }
     if (message.includeChalkNodeSelector !== false) {
       writer.uint32(48).bool(message.includeChalkNodeSelector);
+    }
+    for (const v of message.ipAllowlist) {
+      writer.uint32(58).string(v!);
+    }
+    if (message.tlsCertificate !== undefined) {
+      TLSCertificateConfig.encode(message.tlsCertificate, writer.uint32(66).fork()).join();
     }
     return writer;
   },
@@ -3520,6 +3607,22 @@ export const EnvoyGatewaySpecs: MessageFns<EnvoyGatewaySpecs> = {
           message.includeChalkNodeSelector = reader.bool();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.ipAllowlist.push(reader.string());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.tlsCertificate = TLSCertificateConfig.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3541,6 +3644,10 @@ export const EnvoyGatewaySpecs: MessageFns<EnvoyGatewaySpecs> = {
       includeChalkNodeSelector: isSet(object.includeChalkNodeSelector)
         ? globalThis.Boolean(object.includeChalkNodeSelector)
         : false,
+      ipAllowlist: globalThis.Array.isArray(object?.ipAllowlist)
+        ? object.ipAllowlist.map((e: any) => globalThis.String(e))
+        : [],
+      tlsCertificate: isSet(object.tlsCertificate) ? TLSCertificateConfig.fromJSON(object.tlsCertificate) : undefined,
     };
   },
 
@@ -3563,6 +3670,12 @@ export const EnvoyGatewaySpecs: MessageFns<EnvoyGatewaySpecs> = {
     }
     if (message.includeChalkNodeSelector !== false) {
       obj.includeChalkNodeSelector = message.includeChalkNodeSelector;
+    }
+    if (message.ipAllowlist?.length) {
+      obj.ipAllowlist = message.ipAllowlist;
+    }
+    if (message.tlsCertificate !== undefined) {
+      obj.tlsCertificate = TLSCertificateConfig.toJSON(message.tlsCertificate);
     }
     return obj;
   },
@@ -3975,6 +4088,125 @@ export const GCPGatewayProviderConfig: MessageFns<GCPGatewayProviderConfig> = {
   },
 };
 
+function createBaseTLSCertificateConfig(): TLSCertificateConfig {
+  return { manualCertificate: undefined };
+}
+
+export const TLSCertificateConfig: MessageFns<TLSCertificateConfig> = {
+  encode(message: TLSCertificateConfig, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.manualCertificate !== undefined) {
+      TLSManualCertificateRef.encode(message.manualCertificate, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TLSCertificateConfig {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTLSCertificateConfig();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.manualCertificate = TLSManualCertificateRef.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TLSCertificateConfig {
+    return {
+      manualCertificate: isSet(object.manualCertificate)
+        ? TLSManualCertificateRef.fromJSON(object.manualCertificate)
+        : undefined,
+    };
+  },
+
+  toJSON(message: TLSCertificateConfig): unknown {
+    const obj: any = {};
+    if (message.manualCertificate !== undefined) {
+      obj.manualCertificate = TLSManualCertificateRef.toJSON(message.manualCertificate);
+    }
+    return obj;
+  },
+};
+
+function createBaseTLSManualCertificateRef(): TLSManualCertificateRef {
+  return { secretName: "", secretNamespace: "" };
+}
+
+export const TLSManualCertificateRef: MessageFns<TLSManualCertificateRef> = {
+  encode(message: TLSManualCertificateRef, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.secretName !== "") {
+      writer.uint32(10).string(message.secretName);
+    }
+    if (message.secretNamespace !== "") {
+      writer.uint32(18).string(message.secretNamespace);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TLSManualCertificateRef {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTLSManualCertificateRef();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.secretName = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.secretNamespace = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TLSManualCertificateRef {
+    return {
+      secretName: isSet(object.secretName) ? globalThis.String(object.secretName) : "",
+      secretNamespace: isSet(object.secretNamespace) ? globalThis.String(object.secretNamespace) : "",
+    };
+  },
+
+  toJSON(message: TLSManualCertificateRef): unknown {
+    const obj: any = {};
+    if (message.secretName !== "") {
+      obj.secretName = message.secretName;
+    }
+    if (message.secretNamespace !== "") {
+      obj.secretNamespace = message.secretNamespace;
+    }
+    return obj;
+  },
+};
+
 function createBaseCreateClusterGatewayResponse(): CreateClusterGatewayResponse {
   return {};
 }
@@ -4123,6 +4355,7 @@ function createBaseBackgroundPersistenceCommonSpecs(): BackgroundPersistenceComm
     bqUploadBucket: "",
     bqUploadTopic: "",
     includeChalkNodeSelector: false,
+    busWriterImageRust: "",
   };
 }
 
@@ -4211,6 +4444,9 @@ export const BackgroundPersistenceCommonSpecs: MessageFns<BackgroundPersistenceC
     }
     if (message.includeChalkNodeSelector !== false) {
       writer.uint32(224).bool(message.includeChalkNodeSelector);
+    }
+    if (message.busWriterImageRust !== "") {
+      writer.uint32(234).string(message.busWriterImageRust);
     }
     return writer;
   },
@@ -4446,6 +4682,14 @@ export const BackgroundPersistenceCommonSpecs: MessageFns<BackgroundPersistenceC
           message.includeChalkNodeSelector = reader.bool();
           continue;
         }
+        case 29: {
+          if (tag !== 234) {
+            break;
+          }
+
+          message.busWriterImageRust = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -4507,6 +4751,7 @@ export const BackgroundPersistenceCommonSpecs: MessageFns<BackgroundPersistenceC
       includeChalkNodeSelector: isSet(object.includeChalkNodeSelector)
         ? globalThis.Boolean(object.includeChalkNodeSelector)
         : false,
+      busWriterImageRust: isSet(object.busWriterImageRust) ? globalThis.String(object.busWriterImageRust) : "",
     };
   },
 
@@ -4595,6 +4840,9 @@ export const BackgroundPersistenceCommonSpecs: MessageFns<BackgroundPersistenceC
     }
     if (message.includeChalkNodeSelector !== false) {
       obj.includeChalkNodeSelector = message.includeChalkNodeSelector;
+    }
+    if (message.busWriterImageRust !== "") {
+      obj.busWriterImageRust = message.busWriterImageRust;
     }
     return obj;
   },
@@ -5746,6 +5994,104 @@ export const StartBranchResponse: MessageFns<StartBranchResponse> = {
   },
 };
 
+function createBaseScaleBranchRequest(): ScaleBranchRequest {
+  return { replicas: 0 };
+}
+
+export const ScaleBranchRequest: MessageFns<ScaleBranchRequest> = {
+  encode(message: ScaleBranchRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.replicas !== 0) {
+      writer.uint32(8).int32(message.replicas);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ScaleBranchRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseScaleBranchRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.replicas = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ScaleBranchRequest {
+    return { replicas: isSet(object.replicas) ? globalThis.Number(object.replicas) : 0 };
+  },
+
+  toJSON(message: ScaleBranchRequest): unknown {
+    const obj: any = {};
+    if (message.replicas !== 0) {
+      obj.replicas = Math.round(message.replicas);
+    }
+    return obj;
+  },
+};
+
+function createBaseScaleBranchResponse(): ScaleBranchResponse {
+  return { state: 0 };
+}
+
+export const ScaleBranchResponse: MessageFns<ScaleBranchResponse> = {
+  encode(message: ScaleBranchResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.state !== 0) {
+      writer.uint32(8).int32(message.state);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ScaleBranchResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseScaleBranchResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.state = reader.int32() as any;
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ScaleBranchResponse {
+    return { state: isSet(object.state) ? branchScalingStateFromJSON(object.state) : 0 };
+  },
+
+  toJSON(message: ScaleBranchResponse): unknown {
+    const obj: any = {};
+    if (message.state !== 0) {
+      obj.state = branchScalingStateToJSON(message.state);
+    }
+    return obj;
+  },
+};
+
 function createBaseKafkaTopic(): KafkaTopic {
   return { name: "", partitions: 0, replication: undefined, retentionMs: 0 };
 }
@@ -6010,6 +6356,482 @@ export const GetKafkaTopicsResponse: MessageFns<GetKafkaTopicsResponse> = {
     if (message.topics?.length) {
       obj.topics = message.topics.map((e) => KafkaTopic.toJSON(e));
     }
+    return obj;
+  },
+};
+
+function createBaseGetNodepoolsRequest(): GetNodepoolsRequest {
+  return {};
+}
+
+export const GetNodepoolsRequest: MessageFns<GetNodepoolsRequest> = {
+  encode(_: GetNodepoolsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetNodepoolsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetNodepoolsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): GetNodepoolsRequest {
+    return {};
+  },
+
+  toJSON(_: GetNodepoolsRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+};
+
+function createBaseGetNodepoolsResponse(): GetNodepoolsResponse {
+  return { karpenterNodepools: [], gkeNodepools: [] };
+}
+
+export const GetNodepoolsResponse: MessageFns<GetNodepoolsResponse> = {
+  encode(message: GetNodepoolsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.karpenterNodepools) {
+      KarpenterNodepool.encode(v!, writer.uint32(10).fork()).join();
+    }
+    for (const v of message.gkeNodepools) {
+      GKENodePool.encode(v!, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetNodepoolsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetNodepoolsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.karpenterNodepools.push(KarpenterNodepool.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.gkeNodepools.push(GKENodePool.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNodepoolsResponse {
+    return {
+      karpenterNodepools: globalThis.Array.isArray(object?.karpenterNodepools)
+        ? object.karpenterNodepools.map((e: any) => KarpenterNodepool.fromJSON(e))
+        : [],
+      gkeNodepools: globalThis.Array.isArray(object?.gkeNodepools)
+        ? object.gkeNodepools.map((e: any) => GKENodePool.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetNodepoolsResponse): unknown {
+    const obj: any = {};
+    if (message.karpenterNodepools?.length) {
+      obj.karpenterNodepools = message.karpenterNodepools.map((e) => KarpenterNodepool.toJSON(e));
+    }
+    if (message.gkeNodepools?.length) {
+      obj.gkeNodepools = message.gkeNodepools.map((e) => GKENodePool.toJSON(e));
+    }
+    return obj;
+  },
+};
+
+function createBaseAddNodepoolRequest(): AddNodepoolRequest {
+  return { karpenterNodepool: undefined, gkeNodepool: undefined };
+}
+
+export const AddNodepoolRequest: MessageFns<AddNodepoolRequest> = {
+  encode(message: AddNodepoolRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.karpenterNodepool !== undefined) {
+      KarpenterNodepool.encode(message.karpenterNodepool, writer.uint32(10).fork()).join();
+    }
+    if (message.gkeNodepool !== undefined) {
+      GKENodePool.encode(message.gkeNodepool, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AddNodepoolRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddNodepoolRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.karpenterNodepool = KarpenterNodepool.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.gkeNodepool = GKENodePool.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddNodepoolRequest {
+    return {
+      karpenterNodepool: isSet(object.karpenterNodepool)
+        ? KarpenterNodepool.fromJSON(object.karpenterNodepool)
+        : undefined,
+      gkeNodepool: isSet(object.gkeNodepool) ? GKENodePool.fromJSON(object.gkeNodepool) : undefined,
+    };
+  },
+
+  toJSON(message: AddNodepoolRequest): unknown {
+    const obj: any = {};
+    if (message.karpenterNodepool !== undefined) {
+      obj.karpenterNodepool = KarpenterNodepool.toJSON(message.karpenterNodepool);
+    }
+    if (message.gkeNodepool !== undefined) {
+      obj.gkeNodepool = GKENodePool.toJSON(message.gkeNodepool);
+    }
+    return obj;
+  },
+};
+
+function createBaseAddNodepoolResponse(): AddNodepoolResponse {
+  return { karpenterNodepool: undefined, gkeNodepool: undefined };
+}
+
+export const AddNodepoolResponse: MessageFns<AddNodepoolResponse> = {
+  encode(message: AddNodepoolResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.karpenterNodepool !== undefined) {
+      KarpenterNodepool.encode(message.karpenterNodepool, writer.uint32(10).fork()).join();
+    }
+    if (message.gkeNodepool !== undefined) {
+      GKENodePool.encode(message.gkeNodepool, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AddNodepoolResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddNodepoolResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.karpenterNodepool = KarpenterNodepool.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.gkeNodepool = GKENodePool.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddNodepoolResponse {
+    return {
+      karpenterNodepool: isSet(object.karpenterNodepool)
+        ? KarpenterNodepool.fromJSON(object.karpenterNodepool)
+        : undefined,
+      gkeNodepool: isSet(object.gkeNodepool) ? GKENodePool.fromJSON(object.gkeNodepool) : undefined,
+    };
+  },
+
+  toJSON(message: AddNodepoolResponse): unknown {
+    const obj: any = {};
+    if (message.karpenterNodepool !== undefined) {
+      obj.karpenterNodepool = KarpenterNodepool.toJSON(message.karpenterNodepool);
+    }
+    if (message.gkeNodepool !== undefined) {
+      obj.gkeNodepool = GKENodePool.toJSON(message.gkeNodepool);
+    }
+    return obj;
+  },
+};
+
+function createBaseUpdateNodepoolRequest(): UpdateNodepoolRequest {
+  return { name: "", gkeNodepool: undefined, karpenterNodepool: undefined };
+}
+
+export const UpdateNodepoolRequest: MessageFns<UpdateNodepoolRequest> = {
+  encode(message: UpdateNodepoolRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.gkeNodepool !== undefined) {
+      GKENodePool.encode(message.gkeNodepool, writer.uint32(18).fork()).join();
+    }
+    if (message.karpenterNodepool !== undefined) {
+      KarpenterNodepool.encode(message.karpenterNodepool, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateNodepoolRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateNodepoolRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.gkeNodepool = GKENodePool.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.karpenterNodepool = KarpenterNodepool.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateNodepoolRequest {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      gkeNodepool: isSet(object.gkeNodepool) ? GKENodePool.fromJSON(object.gkeNodepool) : undefined,
+      karpenterNodepool: isSet(object.karpenterNodepool)
+        ? KarpenterNodepool.fromJSON(object.karpenterNodepool)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UpdateNodepoolRequest): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.gkeNodepool !== undefined) {
+      obj.gkeNodepool = GKENodePool.toJSON(message.gkeNodepool);
+    }
+    if (message.karpenterNodepool !== undefined) {
+      obj.karpenterNodepool = KarpenterNodepool.toJSON(message.karpenterNodepool);
+    }
+    return obj;
+  },
+};
+
+function createBaseUpdateNodepoolResponse(): UpdateNodepoolResponse {
+  return { karpenterNodepool: undefined, gkeNodepool: undefined };
+}
+
+export const UpdateNodepoolResponse: MessageFns<UpdateNodepoolResponse> = {
+  encode(message: UpdateNodepoolResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.karpenterNodepool !== undefined) {
+      KarpenterNodepool.encode(message.karpenterNodepool, writer.uint32(10).fork()).join();
+    }
+    if (message.gkeNodepool !== undefined) {
+      GKENodePool.encode(message.gkeNodepool, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateNodepoolResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateNodepoolResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.karpenterNodepool = KarpenterNodepool.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.gkeNodepool = GKENodePool.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateNodepoolResponse {
+    return {
+      karpenterNodepool: isSet(object.karpenterNodepool)
+        ? KarpenterNodepool.fromJSON(object.karpenterNodepool)
+        : undefined,
+      gkeNodepool: isSet(object.gkeNodepool) ? GKENodePool.fromJSON(object.gkeNodepool) : undefined,
+    };
+  },
+
+  toJSON(message: UpdateNodepoolResponse): unknown {
+    const obj: any = {};
+    if (message.karpenterNodepool !== undefined) {
+      obj.karpenterNodepool = KarpenterNodepool.toJSON(message.karpenterNodepool);
+    }
+    if (message.gkeNodepool !== undefined) {
+      obj.gkeNodepool = GKENodePool.toJSON(message.gkeNodepool);
+    }
+    return obj;
+  },
+};
+
+function createBaseDeleteNodepoolRequest(): DeleteNodepoolRequest {
+  return { name: "" };
+}
+
+export const DeleteNodepoolRequest: MessageFns<DeleteNodepoolRequest> = {
+  encode(message: DeleteNodepoolRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteNodepoolRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteNodepoolRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteNodepoolRequest {
+    return { name: isSet(object.name) ? globalThis.String(object.name) : "" };
+  },
+
+  toJSON(message: DeleteNodepoolRequest): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    return obj;
+  },
+};
+
+function createBaseDeleteNodepoolResponse(): DeleteNodepoolResponse {
+  return {};
+}
+
+export const DeleteNodepoolResponse: MessageFns<DeleteNodepoolResponse> = {
+  encode(_: DeleteNodepoolResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteNodepoolResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteNodepoolResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): DeleteNodepoolResponse {
+    return {};
+  },
+
+  toJSON(_: DeleteNodepoolResponse): unknown {
+    const obj: any = {};
     return obj;
   },
 };
@@ -6577,7 +7399,7 @@ export const GetKarpenterInstallationMetadataResponse_DeploymentLabelsEntry: Mes
 };
 
 function createBaseDeploymentTag(): DeploymentTag {
-  return { tag: "", weight: undefined, deploymentId: undefined };
+  return { tag: "", weight: undefined, deploymentId: undefined, mirrorWeight: undefined };
 }
 
 export const DeploymentTag: MessageFns<DeploymentTag> = {
@@ -6590,6 +7412,9 @@ export const DeploymentTag: MessageFns<DeploymentTag> = {
     }
     if (message.deploymentId !== undefined) {
       writer.uint32(26).string(message.deploymentId);
+    }
+    if (message.mirrorWeight !== undefined) {
+      writer.uint32(32).int32(message.mirrorWeight);
     }
     return writer;
   },
@@ -6625,6 +7450,14 @@ export const DeploymentTag: MessageFns<DeploymentTag> = {
           message.deploymentId = reader.string();
           continue;
         }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.mirrorWeight = reader.int32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -6639,6 +7472,7 @@ export const DeploymentTag: MessageFns<DeploymentTag> = {
       tag: isSet(object.tag) ? globalThis.String(object.tag) : "",
       weight: isSet(object.weight) ? globalThis.Number(object.weight) : undefined,
       deploymentId: isSet(object.deploymentId) ? globalThis.String(object.deploymentId) : undefined,
+      mirrorWeight: isSet(object.mirrorWeight) ? globalThis.Number(object.mirrorWeight) : undefined,
     };
   },
 
@@ -6652,6 +7486,9 @@ export const DeploymentTag: MessageFns<DeploymentTag> = {
     }
     if (message.deploymentId !== undefined) {
       obj.deploymentId = message.deploymentId;
+    }
+    if (message.mirrorWeight !== undefined) {
+      obj.mirrorWeight = Math.round(message.mirrorWeight);
     }
     return obj;
   },
@@ -7057,6 +7894,52 @@ export const BuilderServiceService = {
     responseSerialize: (value: StartBranchResponse) => Buffer.from(StartBranchResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => StartBranchResponse.decode(value),
   },
+  scaleBranch: {
+    path: "/chalk.server.v1.BuilderService/ScaleBranch",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ScaleBranchRequest) => Buffer.from(ScaleBranchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => ScaleBranchRequest.decode(value),
+    responseSerialize: (value: ScaleBranchResponse) => Buffer.from(ScaleBranchResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => ScaleBranchResponse.decode(value),
+  },
+  getNodepools: {
+    path: "/chalk.server.v1.BuilderService/GetNodepools",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetNodepoolsRequest) => Buffer.from(GetNodepoolsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetNodepoolsRequest.decode(value),
+    responseSerialize: (value: GetNodepoolsResponse) => Buffer.from(GetNodepoolsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetNodepoolsResponse.decode(value),
+  },
+  addNodepool: {
+    path: "/chalk.server.v1.BuilderService/AddNodepool",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: AddNodepoolRequest) => Buffer.from(AddNodepoolRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => AddNodepoolRequest.decode(value),
+    responseSerialize: (value: AddNodepoolResponse) => Buffer.from(AddNodepoolResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => AddNodepoolResponse.decode(value),
+  },
+  updateNodepool: {
+    path: "/chalk.server.v1.BuilderService/UpdateNodepool",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateNodepoolRequest) => Buffer.from(UpdateNodepoolRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => UpdateNodepoolRequest.decode(value),
+    responseSerialize: (value: UpdateNodepoolResponse) => Buffer.from(UpdateNodepoolResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => UpdateNodepoolResponse.decode(value),
+  },
+  deleteNodepool: {
+    path: "/chalk.server.v1.BuilderService/DeleteNodepool",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteNodepoolRequest) => Buffer.from(DeleteNodepoolRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => DeleteNodepoolRequest.decode(value),
+    responseSerialize: (value: DeleteNodepoolResponse) => Buffer.from(DeleteNodepoolResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => DeleteNodepoolResponse.decode(value),
+  },
+  /** to be deprecated */
   getKarpenterNodepools: {
     path: "/chalk.server.v1.BuilderService/GetKarpenterNodepools",
     requestStream: false,
@@ -7068,6 +7951,7 @@ export const BuilderServiceService = {
       Buffer.from(GetKarpenterNodepoolsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => GetKarpenterNodepoolsResponse.decode(value),
   },
+  /** to be deprecated */
   addKarpenterNodepool: {
     path: "/chalk.server.v1.BuilderService/AddKarpenterNodepool",
     requestStream: false,
@@ -7079,6 +7963,7 @@ export const BuilderServiceService = {
       Buffer.from(AddKarpenterNodepoolResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => AddKarpenterNodepoolResponse.decode(value),
   },
+  /** to be deprecated */
   updateKarpenterNodepool: {
     path: "/chalk.server.v1.BuilderService/UpdateKarpenterNodepool",
     requestStream: false,
@@ -7090,6 +7975,7 @@ export const BuilderServiceService = {
       Buffer.from(UpdateKarpenterNodepoolResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => UpdateKarpenterNodepoolResponse.decode(value),
   },
+  /** to be deprecated */
   deleteKarpenterNodepool: {
     path: "/chalk.server.v1.BuilderService/DeleteKarpenterNodepool",
     requestStream: false,
@@ -7172,9 +8058,18 @@ export interface BuilderServiceServer extends UntypedServiceImplementation {
   >;
   updateEnvironmentVariables: handleUnaryCall<UpdateEnvironmentVariablesRequest, UpdateEnvironmentVariablesResponse>;
   startBranch: handleUnaryCall<StartBranchRequest, StartBranchResponse>;
+  scaleBranch: handleUnaryCall<ScaleBranchRequest, ScaleBranchResponse>;
+  getNodepools: handleUnaryCall<GetNodepoolsRequest, GetNodepoolsResponse>;
+  addNodepool: handleUnaryCall<AddNodepoolRequest, AddNodepoolResponse>;
+  updateNodepool: handleUnaryCall<UpdateNodepoolRequest, UpdateNodepoolResponse>;
+  deleteNodepool: handleUnaryCall<DeleteNodepoolRequest, DeleteNodepoolResponse>;
+  /** to be deprecated */
   getKarpenterNodepools: handleUnaryCall<GetKarpenterNodepoolsRequest, GetKarpenterNodepoolsResponse>;
+  /** to be deprecated */
   addKarpenterNodepool: handleUnaryCall<AddKarpenterNodepoolRequest, AddKarpenterNodepoolResponse>;
+  /** to be deprecated */
   updateKarpenterNodepool: handleUnaryCall<UpdateKarpenterNodepoolRequest, UpdateKarpenterNodepoolResponse>;
+  /** to be deprecated */
   deleteKarpenterNodepool: handleUnaryCall<DeleteKarpenterNodepoolRequest, DeleteKarpenterNodepoolResponse>;
   getKarpenterInstallationMetadata: handleUnaryCall<
     GetKarpenterInstallationMetadataRequest,
@@ -7484,6 +8379,82 @@ export interface BuilderServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StartBranchResponse) => void,
   ): ClientUnaryCall;
+  scaleBranch(
+    request: ScaleBranchRequest,
+    callback: (error: ServiceError | null, response: ScaleBranchResponse) => void,
+  ): ClientUnaryCall;
+  scaleBranch(
+    request: ScaleBranchRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ScaleBranchResponse) => void,
+  ): ClientUnaryCall;
+  scaleBranch(
+    request: ScaleBranchRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ScaleBranchResponse) => void,
+  ): ClientUnaryCall;
+  getNodepools(
+    request: GetNodepoolsRequest,
+    callback: (error: ServiceError | null, response: GetNodepoolsResponse) => void,
+  ): ClientUnaryCall;
+  getNodepools(
+    request: GetNodepoolsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetNodepoolsResponse) => void,
+  ): ClientUnaryCall;
+  getNodepools(
+    request: GetNodepoolsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetNodepoolsResponse) => void,
+  ): ClientUnaryCall;
+  addNodepool(
+    request: AddNodepoolRequest,
+    callback: (error: ServiceError | null, response: AddNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  addNodepool(
+    request: AddNodepoolRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: AddNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  addNodepool(
+    request: AddNodepoolRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: AddNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  updateNodepool(
+    request: UpdateNodepoolRequest,
+    callback: (error: ServiceError | null, response: UpdateNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  updateNodepool(
+    request: UpdateNodepoolRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  updateNodepool(
+    request: UpdateNodepoolRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  deleteNodepool(
+    request: DeleteNodepoolRequest,
+    callback: (error: ServiceError | null, response: DeleteNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  deleteNodepool(
+    request: DeleteNodepoolRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  deleteNodepool(
+    request: DeleteNodepoolRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteNodepoolResponse) => void,
+  ): ClientUnaryCall;
+  /** to be deprecated */
   getKarpenterNodepools(
     request: GetKarpenterNodepoolsRequest,
     callback: (error: ServiceError | null, response: GetKarpenterNodepoolsResponse) => void,
@@ -7499,6 +8470,7 @@ export interface BuilderServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: GetKarpenterNodepoolsResponse) => void,
   ): ClientUnaryCall;
+  /** to be deprecated */
   addKarpenterNodepool(
     request: AddKarpenterNodepoolRequest,
     callback: (error: ServiceError | null, response: AddKarpenterNodepoolResponse) => void,
@@ -7514,6 +8486,7 @@ export interface BuilderServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: AddKarpenterNodepoolResponse) => void,
   ): ClientUnaryCall;
+  /** to be deprecated */
   updateKarpenterNodepool(
     request: UpdateKarpenterNodepoolRequest,
     callback: (error: ServiceError | null, response: UpdateKarpenterNodepoolResponse) => void,
@@ -7529,6 +8502,7 @@ export interface BuilderServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: UpdateKarpenterNodepoolResponse) => void,
   ): ClientUnaryCall;
+  /** to be deprecated */
   deleteKarpenterNodepool(
     request: DeleteKarpenterNodepoolRequest,
     callback: (error: ServiceError | null, response: DeleteKarpenterNodepoolResponse) => void,

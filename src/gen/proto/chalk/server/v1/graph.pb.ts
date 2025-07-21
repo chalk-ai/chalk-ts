@@ -18,6 +18,7 @@ import {
   type ServiceError,
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
+import { ArrowType } from "../../arrow/v1/arrow.pb";
 import { Export } from "../../artifacts/v1/export.pb";
 import { ChalkError } from "../../common/v1/chalk_error.pb";
 import { Graph } from "../../graph/v1/graph.pb";
@@ -66,6 +67,8 @@ export interface FeatureMetadata {
   tags: string[];
   maxStaleness?: string | undefined;
   etlOfflineToOnline: boolean;
+  paDtype: ArrowType | undefined;
+  nullable: boolean;
 }
 
 export interface GetFeaturesMetadataResponse {
@@ -75,6 +78,11 @@ export interface GetFeaturesMetadataResponse {
 }
 
 export interface GetFeaturesMetadataRequest {
+  /**
+   * Return one metadata for each feature matching the FQNs in this list.
+   * If a feature is not found, an error will be returned.
+   */
+  fqnsFilter: string[];
 }
 
 export interface UpdateGraphRequest {
@@ -107,6 +115,7 @@ export interface GetGraphResponse {
   chalkpyVersion: string;
   tag?: string | undefined;
   export: Export | undefined;
+  deploymentId: string;
 }
 
 export interface PythonVersion {
@@ -531,6 +540,8 @@ function createBaseFeatureMetadata(): FeatureMetadata {
     tags: [],
     maxStaleness: undefined,
     etlOfflineToOnline: false,
+    paDtype: undefined,
+    nullable: false,
   };
 }
 
@@ -559,6 +570,12 @@ export const FeatureMetadata: MessageFns<FeatureMetadata> = {
     }
     if (message.etlOfflineToOnline !== false) {
       writer.uint32(64).bool(message.etlOfflineToOnline);
+    }
+    if (message.paDtype !== undefined) {
+      ArrowType.encode(message.paDtype, writer.uint32(74).fork()).join();
+    }
+    if (message.nullable !== false) {
+      writer.uint32(80).bool(message.nullable);
     }
     return writer;
   },
@@ -634,6 +651,22 @@ export const FeatureMetadata: MessageFns<FeatureMetadata> = {
           message.etlOfflineToOnline = reader.bool();
           continue;
         }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.paDtype = ArrowType.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.nullable = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -653,6 +686,8 @@ export const FeatureMetadata: MessageFns<FeatureMetadata> = {
       tags: globalThis.Array.isArray(object?.tags) ? object.tags.map((e: any) => globalThis.String(e)) : [],
       maxStaleness: isSet(object.maxStaleness) ? globalThis.String(object.maxStaleness) : undefined,
       etlOfflineToOnline: isSet(object.etlOfflineToOnline) ? globalThis.Boolean(object.etlOfflineToOnline) : false,
+      paDtype: isSet(object.paDtype) ? ArrowType.fromJSON(object.paDtype) : undefined,
+      nullable: isSet(object.nullable) ? globalThis.Boolean(object.nullable) : false,
     };
   },
 
@@ -681,6 +716,12 @@ export const FeatureMetadata: MessageFns<FeatureMetadata> = {
     }
     if (message.etlOfflineToOnline !== false) {
       obj.etlOfflineToOnline = message.etlOfflineToOnline;
+    }
+    if (message.paDtype !== undefined) {
+      obj.paDtype = ArrowType.toJSON(message.paDtype);
+    }
+    if (message.nullable !== false) {
+      obj.nullable = message.nullable;
     }
     return obj;
   },
@@ -770,11 +811,14 @@ export const GetFeaturesMetadataResponse: MessageFns<GetFeaturesMetadataResponse
 };
 
 function createBaseGetFeaturesMetadataRequest(): GetFeaturesMetadataRequest {
-  return {};
+  return { fqnsFilter: [] };
 }
 
 export const GetFeaturesMetadataRequest: MessageFns<GetFeaturesMetadataRequest> = {
-  encode(_: GetFeaturesMetadataRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: GetFeaturesMetadataRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.fqnsFilter) {
+      writer.uint32(10).string(v!);
+    }
     return writer;
   },
 
@@ -785,6 +829,14 @@ export const GetFeaturesMetadataRequest: MessageFns<GetFeaturesMetadataRequest> 
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fqnsFilter.push(reader.string());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -794,12 +846,19 @@ export const GetFeaturesMetadataRequest: MessageFns<GetFeaturesMetadataRequest> 
     return message;
   },
 
-  fromJSON(_: any): GetFeaturesMetadataRequest {
-    return {};
+  fromJSON(object: any): GetFeaturesMetadataRequest {
+    return {
+      fqnsFilter: globalThis.Array.isArray(object?.fqnsFilter)
+        ? object.fqnsFilter.map((e: any) => globalThis.String(e))
+        : [],
+    };
   },
 
-  toJSON(_: GetFeaturesMetadataRequest): unknown {
+  toJSON(message: GetFeaturesMetadataRequest): unknown {
     const obj: any = {};
+    if (message.fqnsFilter?.length) {
+      obj.fqnsFilter = message.fqnsFilter;
+    }
     return obj;
   },
 };
@@ -1000,7 +1059,7 @@ export const GetGraphRequest: MessageFns<GetGraphRequest> = {
 };
 
 function createBaseGetGraphResponse(): GetGraphResponse {
-  return { graph: undefined, chalkpyVersion: "", tag: undefined, export: undefined };
+  return { graph: undefined, chalkpyVersion: "", tag: undefined, export: undefined, deploymentId: "" };
 }
 
 export const GetGraphResponse: MessageFns<GetGraphResponse> = {
@@ -1016,6 +1075,9 @@ export const GetGraphResponse: MessageFns<GetGraphResponse> = {
     }
     if (message.export !== undefined) {
       Export.encode(message.export, writer.uint32(34).fork()).join();
+    }
+    if (message.deploymentId !== "") {
+      writer.uint32(42).string(message.deploymentId);
     }
     return writer;
   },
@@ -1059,6 +1121,14 @@ export const GetGraphResponse: MessageFns<GetGraphResponse> = {
           message.export = Export.decode(reader, reader.uint32());
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.deploymentId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1074,6 +1144,7 @@ export const GetGraphResponse: MessageFns<GetGraphResponse> = {
       chalkpyVersion: isSet(object.chalkpyVersion) ? globalThis.String(object.chalkpyVersion) : "",
       tag: isSet(object.tag) ? globalThis.String(object.tag) : undefined,
       export: isSet(object.export) ? Export.fromJSON(object.export) : undefined,
+      deploymentId: isSet(object.deploymentId) ? globalThis.String(object.deploymentId) : "",
     };
   },
 
@@ -1090,6 +1161,9 @@ export const GetGraphResponse: MessageFns<GetGraphResponse> = {
     }
     if (message.export !== undefined) {
       obj.export = Export.toJSON(message.export);
+    }
+    if (message.deploymentId !== "") {
+      obj.deploymentId = message.deploymentId;
     }
     return obj;
   },

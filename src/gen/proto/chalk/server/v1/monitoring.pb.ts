@@ -158,6 +158,30 @@ export interface PagerDutyIntegration {
   environmentId: string;
 }
 
+export interface IncidentIoIntegration {
+  id: string;
+  token: string;
+  environmentId: string;
+  name?: string | undefined;
+  sourceId: string;
+  sourceToken: string;
+  /** @deprecated */
+  severityId: string;
+  /** @deprecated */
+  severityToken: string;
+}
+
+/** @deprecated */
+export interface IncidentIoEventV2 {
+  routeId: string;
+  routeToken: string;
+  dedupKey?: string | undefined;
+  sourceUrl?: string | undefined;
+  description?: string | undefined;
+  status: string;
+  title: string;
+}
+
 export interface TestPagerDutyIntegrationRequest {
   id: string;
 }
@@ -215,6 +239,58 @@ export interface GetAllPagerDutyIntegrationsRequest {
 
 export interface GetAllPagerDutyIntegrationsResponse {
   integrations: PagerDutyIntegration[];
+}
+
+export interface TestIncidentIoIntegrationRequest {
+  id: string;
+}
+
+export interface TestIncidentIoIntegrationResponse {
+  status: string;
+  message: string;
+}
+
+export interface GetIncidentIoIntegrationRequest {
+  id: string;
+}
+
+export interface GetIncidentIoIntegrationResponse {
+  integration: IncidentIoIntegration | undefined;
+}
+
+export interface AddIncidentIoIntegrationRequest {
+  integrationName?: string | undefined;
+  integrationToken: string;
+  integrationSourceId: string;
+}
+
+export interface AddIncidentIoIntegrationResponse {
+  integration: IncidentIoIntegration | undefined;
+}
+
+export interface DeleteIncidentIoIntegrationRequest {
+  id: string;
+}
+
+export interface DeleteIncidentIoIntegrationResponse {
+}
+
+export interface UpdateIncidentIoIntegrationRequest {
+  id: string;
+  name?: string | undefined;
+  token?: string | undefined;
+  sourceId?: string | undefined;
+}
+
+export interface UpdateIncidentIoIntegrationResponse {
+  integration: IncidentIoIntegration | undefined;
+}
+
+export interface GetAllIncidentIoIntegrationsRequest {
+}
+
+export interface GetAllIncidentIoIntegrationsResponse {
+  integrations: IncidentIoIntegration[];
 }
 
 function createBasePagerDutyEventV2Payload(): PagerDutyEventV2Payload {
@@ -788,6 +864,320 @@ export const PagerDutyIntegration: MessageFns<PagerDutyIntegration> = {
     }
     if (message.environmentId !== "") {
       obj.environmentId = message.environmentId;
+    }
+    return obj;
+  },
+};
+
+function createBaseIncidentIoIntegration(): IncidentIoIntegration {
+  return {
+    id: "",
+    token: "",
+    environmentId: "",
+    name: undefined,
+    sourceId: "",
+    sourceToken: "",
+    severityId: "",
+    severityToken: "",
+  };
+}
+
+export const IncidentIoIntegration: MessageFns<IncidentIoIntegration> = {
+  encode(message: IncidentIoIntegration, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.token !== "") {
+      writer.uint32(18).string(message.token);
+    }
+    if (message.environmentId !== "") {
+      writer.uint32(26).string(message.environmentId);
+    }
+    if (message.name !== undefined) {
+      writer.uint32(34).string(message.name);
+    }
+    if (message.sourceId !== "") {
+      writer.uint32(42).string(message.sourceId);
+    }
+    if (message.sourceToken !== "") {
+      writer.uint32(50).string(message.sourceToken);
+    }
+    if (message.severityId !== "") {
+      writer.uint32(58).string(message.severityId);
+    }
+    if (message.severityToken !== "") {
+      writer.uint32(66).string(message.severityToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): IncidentIoIntegration {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseIncidentIoIntegration();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.token = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.environmentId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.sourceId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.sourceToken = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.severityId = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.severityToken = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): IncidentIoIntegration {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      token: isSet(object.token) ? globalThis.String(object.token) : "",
+      environmentId: isSet(object.environmentId) ? globalThis.String(object.environmentId) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : undefined,
+      sourceId: isSet(object.sourceId) ? globalThis.String(object.sourceId) : "",
+      sourceToken: isSet(object.sourceToken) ? globalThis.String(object.sourceToken) : "",
+      severityId: isSet(object.severityId) ? globalThis.String(object.severityId) : "",
+      severityToken: isSet(object.severityToken) ? globalThis.String(object.severityToken) : "",
+    };
+  },
+
+  toJSON(message: IncidentIoIntegration): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.token !== "") {
+      obj.token = message.token;
+    }
+    if (message.environmentId !== "") {
+      obj.environmentId = message.environmentId;
+    }
+    if (message.name !== undefined) {
+      obj.name = message.name;
+    }
+    if (message.sourceId !== "") {
+      obj.sourceId = message.sourceId;
+    }
+    if (message.sourceToken !== "") {
+      obj.sourceToken = message.sourceToken;
+    }
+    if (message.severityId !== "") {
+      obj.severityId = message.severityId;
+    }
+    if (message.severityToken !== "") {
+      obj.severityToken = message.severityToken;
+    }
+    return obj;
+  },
+};
+
+function createBaseIncidentIoEventV2(): IncidentIoEventV2 {
+  return {
+    routeId: "",
+    routeToken: "",
+    dedupKey: undefined,
+    sourceUrl: undefined,
+    description: undefined,
+    status: "",
+    title: "",
+  };
+}
+
+export const IncidentIoEventV2: MessageFns<IncidentIoEventV2> = {
+  encode(message: IncidentIoEventV2, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.routeId !== "") {
+      writer.uint32(10).string(message.routeId);
+    }
+    if (message.routeToken !== "") {
+      writer.uint32(18).string(message.routeToken);
+    }
+    if (message.dedupKey !== undefined) {
+      writer.uint32(26).string(message.dedupKey);
+    }
+    if (message.sourceUrl !== undefined) {
+      writer.uint32(34).string(message.sourceUrl);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(42).string(message.description);
+    }
+    if (message.status !== "") {
+      writer.uint32(50).string(message.status);
+    }
+    if (message.title !== "") {
+      writer.uint32(58).string(message.title);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): IncidentIoEventV2 {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseIncidentIoEventV2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.routeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.routeToken = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.dedupKey = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.sourceUrl = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): IncidentIoEventV2 {
+    return {
+      routeId: isSet(object.routeId) ? globalThis.String(object.routeId) : "",
+      routeToken: isSet(object.routeToken) ? globalThis.String(object.routeToken) : "",
+      dedupKey: isSet(object.dedupKey) ? globalThis.String(object.dedupKey) : undefined,
+      sourceUrl: isSet(object.sourceUrl) ? globalThis.String(object.sourceUrl) : undefined,
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+    };
+  },
+
+  toJSON(message: IncidentIoEventV2): unknown {
+    const obj: any = {};
+    if (message.routeId !== "") {
+      obj.routeId = message.routeId;
+    }
+    if (message.routeToken !== "") {
+      obj.routeToken = message.routeToken;
+    }
+    if (message.dedupKey !== undefined) {
+      obj.dedupKey = message.dedupKey;
+    }
+    if (message.sourceUrl !== undefined) {
+      obj.sourceUrl = message.sourceUrl;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
     }
     return obj;
   },
@@ -1536,6 +1926,666 @@ export const GetAllPagerDutyIntegrationsResponse: MessageFns<GetAllPagerDutyInte
   },
 };
 
+function createBaseTestIncidentIoIntegrationRequest(): TestIncidentIoIntegrationRequest {
+  return { id: "" };
+}
+
+export const TestIncidentIoIntegrationRequest: MessageFns<TestIncidentIoIntegrationRequest> = {
+  encode(message: TestIncidentIoIntegrationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestIncidentIoIntegrationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestIncidentIoIntegrationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestIncidentIoIntegrationRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: TestIncidentIoIntegrationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+};
+
+function createBaseTestIncidentIoIntegrationResponse(): TestIncidentIoIntegrationResponse {
+  return { status: "", message: "" };
+}
+
+export const TestIncidentIoIntegrationResponse: MessageFns<TestIncidentIoIntegrationResponse> = {
+  encode(message: TestIncidentIoIntegrationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.status !== "") {
+      writer.uint32(10).string(message.status);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestIncidentIoIntegrationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestIncidentIoIntegrationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestIncidentIoIntegrationResponse {
+    return {
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: TestIncidentIoIntegrationResponse): unknown {
+    const obj: any = {};
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+};
+
+function createBaseGetIncidentIoIntegrationRequest(): GetIncidentIoIntegrationRequest {
+  return { id: "" };
+}
+
+export const GetIncidentIoIntegrationRequest: MessageFns<GetIncidentIoIntegrationRequest> = {
+  encode(message: GetIncidentIoIntegrationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetIncidentIoIntegrationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetIncidentIoIntegrationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetIncidentIoIntegrationRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: GetIncidentIoIntegrationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+};
+
+function createBaseGetIncidentIoIntegrationResponse(): GetIncidentIoIntegrationResponse {
+  return { integration: undefined };
+}
+
+export const GetIncidentIoIntegrationResponse: MessageFns<GetIncidentIoIntegrationResponse> = {
+  encode(message: GetIncidentIoIntegrationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.integration !== undefined) {
+      IncidentIoIntegration.encode(message.integration, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetIncidentIoIntegrationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetIncidentIoIntegrationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.integration = IncidentIoIntegration.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetIncidentIoIntegrationResponse {
+    return { integration: isSet(object.integration) ? IncidentIoIntegration.fromJSON(object.integration) : undefined };
+  },
+
+  toJSON(message: GetIncidentIoIntegrationResponse): unknown {
+    const obj: any = {};
+    if (message.integration !== undefined) {
+      obj.integration = IncidentIoIntegration.toJSON(message.integration);
+    }
+    return obj;
+  },
+};
+
+function createBaseAddIncidentIoIntegrationRequest(): AddIncidentIoIntegrationRequest {
+  return { integrationName: undefined, integrationToken: "", integrationSourceId: "" };
+}
+
+export const AddIncidentIoIntegrationRequest: MessageFns<AddIncidentIoIntegrationRequest> = {
+  encode(message: AddIncidentIoIntegrationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.integrationName !== undefined) {
+      writer.uint32(10).string(message.integrationName);
+    }
+    if (message.integrationToken !== "") {
+      writer.uint32(26).string(message.integrationToken);
+    }
+    if (message.integrationSourceId !== "") {
+      writer.uint32(34).string(message.integrationSourceId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AddIncidentIoIntegrationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddIncidentIoIntegrationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.integrationName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.integrationToken = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.integrationSourceId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddIncidentIoIntegrationRequest {
+    return {
+      integrationName: isSet(object.integrationName) ? globalThis.String(object.integrationName) : undefined,
+      integrationToken: isSet(object.integrationToken) ? globalThis.String(object.integrationToken) : "",
+      integrationSourceId: isSet(object.integrationSourceId) ? globalThis.String(object.integrationSourceId) : "",
+    };
+  },
+
+  toJSON(message: AddIncidentIoIntegrationRequest): unknown {
+    const obj: any = {};
+    if (message.integrationName !== undefined) {
+      obj.integrationName = message.integrationName;
+    }
+    if (message.integrationToken !== "") {
+      obj.integrationToken = message.integrationToken;
+    }
+    if (message.integrationSourceId !== "") {
+      obj.integrationSourceId = message.integrationSourceId;
+    }
+    return obj;
+  },
+};
+
+function createBaseAddIncidentIoIntegrationResponse(): AddIncidentIoIntegrationResponse {
+  return { integration: undefined };
+}
+
+export const AddIncidentIoIntegrationResponse: MessageFns<AddIncidentIoIntegrationResponse> = {
+  encode(message: AddIncidentIoIntegrationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.integration !== undefined) {
+      IncidentIoIntegration.encode(message.integration, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AddIncidentIoIntegrationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddIncidentIoIntegrationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.integration = IncidentIoIntegration.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddIncidentIoIntegrationResponse {
+    return { integration: isSet(object.integration) ? IncidentIoIntegration.fromJSON(object.integration) : undefined };
+  },
+
+  toJSON(message: AddIncidentIoIntegrationResponse): unknown {
+    const obj: any = {};
+    if (message.integration !== undefined) {
+      obj.integration = IncidentIoIntegration.toJSON(message.integration);
+    }
+    return obj;
+  },
+};
+
+function createBaseDeleteIncidentIoIntegrationRequest(): DeleteIncidentIoIntegrationRequest {
+  return { id: "" };
+}
+
+export const DeleteIncidentIoIntegrationRequest: MessageFns<DeleteIncidentIoIntegrationRequest> = {
+  encode(message: DeleteIncidentIoIntegrationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteIncidentIoIntegrationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteIncidentIoIntegrationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteIncidentIoIntegrationRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: DeleteIncidentIoIntegrationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+};
+
+function createBaseDeleteIncidentIoIntegrationResponse(): DeleteIncidentIoIntegrationResponse {
+  return {};
+}
+
+export const DeleteIncidentIoIntegrationResponse: MessageFns<DeleteIncidentIoIntegrationResponse> = {
+  encode(_: DeleteIncidentIoIntegrationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteIncidentIoIntegrationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteIncidentIoIntegrationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): DeleteIncidentIoIntegrationResponse {
+    return {};
+  },
+
+  toJSON(_: DeleteIncidentIoIntegrationResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+};
+
+function createBaseUpdateIncidentIoIntegrationRequest(): UpdateIncidentIoIntegrationRequest {
+  return { id: "", name: undefined, token: undefined, sourceId: undefined };
+}
+
+export const UpdateIncidentIoIntegrationRequest: MessageFns<UpdateIncidentIoIntegrationRequest> = {
+  encode(message: UpdateIncidentIoIntegrationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== undefined) {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.token !== undefined) {
+      writer.uint32(26).string(message.token);
+    }
+    if (message.sourceId !== undefined) {
+      writer.uint32(34).string(message.sourceId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateIncidentIoIntegrationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateIncidentIoIntegrationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.token = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.sourceId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateIncidentIoIntegrationRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : undefined,
+      token: isSet(object.token) ? globalThis.String(object.token) : undefined,
+      sourceId: isSet(object.sourceId) ? globalThis.String(object.sourceId) : undefined,
+    };
+  },
+
+  toJSON(message: UpdateIncidentIoIntegrationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.name !== undefined) {
+      obj.name = message.name;
+    }
+    if (message.token !== undefined) {
+      obj.token = message.token;
+    }
+    if (message.sourceId !== undefined) {
+      obj.sourceId = message.sourceId;
+    }
+    return obj;
+  },
+};
+
+function createBaseUpdateIncidentIoIntegrationResponse(): UpdateIncidentIoIntegrationResponse {
+  return { integration: undefined };
+}
+
+export const UpdateIncidentIoIntegrationResponse: MessageFns<UpdateIncidentIoIntegrationResponse> = {
+  encode(message: UpdateIncidentIoIntegrationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.integration !== undefined) {
+      IncidentIoIntegration.encode(message.integration, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateIncidentIoIntegrationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateIncidentIoIntegrationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.integration = IncidentIoIntegration.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateIncidentIoIntegrationResponse {
+    return { integration: isSet(object.integration) ? IncidentIoIntegration.fromJSON(object.integration) : undefined };
+  },
+
+  toJSON(message: UpdateIncidentIoIntegrationResponse): unknown {
+    const obj: any = {};
+    if (message.integration !== undefined) {
+      obj.integration = IncidentIoIntegration.toJSON(message.integration);
+    }
+    return obj;
+  },
+};
+
+function createBaseGetAllIncidentIoIntegrationsRequest(): GetAllIncidentIoIntegrationsRequest {
+  return {};
+}
+
+export const GetAllIncidentIoIntegrationsRequest: MessageFns<GetAllIncidentIoIntegrationsRequest> = {
+  encode(_: GetAllIncidentIoIntegrationsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAllIncidentIoIntegrationsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAllIncidentIoIntegrationsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): GetAllIncidentIoIntegrationsRequest {
+    return {};
+  },
+
+  toJSON(_: GetAllIncidentIoIntegrationsRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+};
+
+function createBaseGetAllIncidentIoIntegrationsResponse(): GetAllIncidentIoIntegrationsResponse {
+  return { integrations: [] };
+}
+
+export const GetAllIncidentIoIntegrationsResponse: MessageFns<GetAllIncidentIoIntegrationsResponse> = {
+  encode(message: GetAllIncidentIoIntegrationsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.integrations) {
+      IncidentIoIntegration.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAllIncidentIoIntegrationsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAllIncidentIoIntegrationsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.integrations.push(IncidentIoIntegration.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAllIncidentIoIntegrationsResponse {
+    return {
+      integrations: globalThis.Array.isArray(object?.integrations)
+        ? object.integrations.map((e: any) => IncidentIoIntegration.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetAllIncidentIoIntegrationsResponse): unknown {
+    const obj: any = {};
+    if (message.integrations?.length) {
+      obj.integrations = message.integrations.map((e) => IncidentIoIntegration.toJSON(e));
+    }
+    return obj;
+  },
+};
+
 export type MonitoringServiceService = typeof MonitoringServiceService;
 export const MonitoringServiceService = {
   testPagerDutyIntegration: {
@@ -1615,6 +2665,72 @@ export const MonitoringServiceService = {
       Buffer.from(GetPagerDutyIntegrationResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => GetPagerDutyIntegrationResponse.decode(value),
   },
+  testIncidentIoIntegration: {
+    path: "/chalk.server.v1.MonitoringService/TestIncidentIoIntegration",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: TestIncidentIoIntegrationRequest) =>
+      Buffer.from(TestIncidentIoIntegrationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => TestIncidentIoIntegrationRequest.decode(value),
+    responseSerialize: (value: TestIncidentIoIntegrationResponse) =>
+      Buffer.from(TestIncidentIoIntegrationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => TestIncidentIoIntegrationResponse.decode(value),
+  },
+  addIncidentIoIntegration: {
+    path: "/chalk.server.v1.MonitoringService/AddIncidentIoIntegration",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: AddIncidentIoIntegrationRequest) =>
+      Buffer.from(AddIncidentIoIntegrationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => AddIncidentIoIntegrationRequest.decode(value),
+    responseSerialize: (value: AddIncidentIoIntegrationResponse) =>
+      Buffer.from(AddIncidentIoIntegrationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => AddIncidentIoIntegrationResponse.decode(value),
+  },
+  deleteIncidentIoIntegration: {
+    path: "/chalk.server.v1.MonitoringService/DeleteIncidentIoIntegration",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteIncidentIoIntegrationRequest) =>
+      Buffer.from(DeleteIncidentIoIntegrationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => DeleteIncidentIoIntegrationRequest.decode(value),
+    responseSerialize: (value: DeleteIncidentIoIntegrationResponse) =>
+      Buffer.from(DeleteIncidentIoIntegrationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => DeleteIncidentIoIntegrationResponse.decode(value),
+  },
+  updateIncidentIoIntegration: {
+    path: "/chalk.server.v1.MonitoringService/UpdateIncidentIoIntegration",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateIncidentIoIntegrationRequest) =>
+      Buffer.from(UpdateIncidentIoIntegrationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => UpdateIncidentIoIntegrationRequest.decode(value),
+    responseSerialize: (value: UpdateIncidentIoIntegrationResponse) =>
+      Buffer.from(UpdateIncidentIoIntegrationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => UpdateIncidentIoIntegrationResponse.decode(value),
+  },
+  getAllIncidentIoIntegrations: {
+    path: "/chalk.server.v1.MonitoringService/GetAllIncidentIoIntegrations",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetAllIncidentIoIntegrationsRequest) =>
+      Buffer.from(GetAllIncidentIoIntegrationsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetAllIncidentIoIntegrationsRequest.decode(value),
+    responseSerialize: (value: GetAllIncidentIoIntegrationsResponse) =>
+      Buffer.from(GetAllIncidentIoIntegrationsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetAllIncidentIoIntegrationsResponse.decode(value),
+  },
+  getIncidentIoIntegration: {
+    path: "/chalk.server.v1.MonitoringService/GetIncidentIoIntegration",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetIncidentIoIntegrationRequest) =>
+      Buffer.from(GetIncidentIoIntegrationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetIncidentIoIntegrationRequest.decode(value),
+    responseSerialize: (value: GetIncidentIoIntegrationResponse) =>
+      Buffer.from(GetIncidentIoIntegrationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetIncidentIoIntegrationResponse.decode(value),
+  },
 } as const;
 
 export interface MonitoringServiceServer extends UntypedServiceImplementation {
@@ -1628,6 +2744,15 @@ export interface MonitoringServiceServer extends UntypedServiceImplementation {
   updatePagerDutyIntegration: handleUnaryCall<UpdatePagerDutyIntegrationRequest, UpdatePagerDutyIntegrationResponse>;
   getAllPagerDutyIntegrations: handleUnaryCall<GetAllPagerDutyIntegrationsRequest, GetAllPagerDutyIntegrationsResponse>;
   getPagerDutyIntegration: handleUnaryCall<GetPagerDutyIntegrationRequest, GetPagerDutyIntegrationResponse>;
+  testIncidentIoIntegration: handleUnaryCall<TestIncidentIoIntegrationRequest, TestIncidentIoIntegrationResponse>;
+  addIncidentIoIntegration: handleUnaryCall<AddIncidentIoIntegrationRequest, AddIncidentIoIntegrationResponse>;
+  deleteIncidentIoIntegration: handleUnaryCall<DeleteIncidentIoIntegrationRequest, DeleteIncidentIoIntegrationResponse>;
+  updateIncidentIoIntegration: handleUnaryCall<UpdateIncidentIoIntegrationRequest, UpdateIncidentIoIntegrationResponse>;
+  getAllIncidentIoIntegrations: handleUnaryCall<
+    GetAllIncidentIoIntegrationsRequest,
+    GetAllIncidentIoIntegrationsResponse
+  >;
+  getIncidentIoIntegration: handleUnaryCall<GetIncidentIoIntegrationRequest, GetIncidentIoIntegrationResponse>;
 }
 
 export interface MonitoringServiceClient extends Client {
@@ -1735,6 +2860,96 @@ export interface MonitoringServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: GetPagerDutyIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  testIncidentIoIntegration(
+    request: TestIncidentIoIntegrationRequest,
+    callback: (error: ServiceError | null, response: TestIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  testIncidentIoIntegration(
+    request: TestIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TestIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  testIncidentIoIntegration(
+    request: TestIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TestIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  addIncidentIoIntegration(
+    request: AddIncidentIoIntegrationRequest,
+    callback: (error: ServiceError | null, response: AddIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  addIncidentIoIntegration(
+    request: AddIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: AddIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  addIncidentIoIntegration(
+    request: AddIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: AddIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  deleteIncidentIoIntegration(
+    request: DeleteIncidentIoIntegrationRequest,
+    callback: (error: ServiceError | null, response: DeleteIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  deleteIncidentIoIntegration(
+    request: DeleteIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DeleteIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  deleteIncidentIoIntegration(
+    request: DeleteIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DeleteIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  updateIncidentIoIntegration(
+    request: UpdateIncidentIoIntegrationRequest,
+    callback: (error: ServiceError | null, response: UpdateIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  updateIncidentIoIntegration(
+    request: UpdateIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: UpdateIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  updateIncidentIoIntegration(
+    request: UpdateIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: UpdateIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  getAllIncidentIoIntegrations(
+    request: GetAllIncidentIoIntegrationsRequest,
+    callback: (error: ServiceError | null, response: GetAllIncidentIoIntegrationsResponse) => void,
+  ): ClientUnaryCall;
+  getAllIncidentIoIntegrations(
+    request: GetAllIncidentIoIntegrationsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetAllIncidentIoIntegrationsResponse) => void,
+  ): ClientUnaryCall;
+  getAllIncidentIoIntegrations(
+    request: GetAllIncidentIoIntegrationsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetAllIncidentIoIntegrationsResponse) => void,
+  ): ClientUnaryCall;
+  getIncidentIoIntegration(
+    request: GetIncidentIoIntegrationRequest,
+    callback: (error: ServiceError | null, response: GetIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  getIncidentIoIntegration(
+    request: GetIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetIncidentIoIntegrationResponse) => void,
+  ): ClientUnaryCall;
+  getIncidentIoIntegration(
+    request: GetIncidentIoIntegrationRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetIncidentIoIntegrationResponse) => void,
   ): ClientUnaryCall;
 }
 

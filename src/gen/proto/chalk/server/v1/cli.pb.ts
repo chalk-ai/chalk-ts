@@ -27,6 +27,7 @@ export interface CommandLineInterfaceVersion {
   os: string;
   arch: string;
   generation: number;
+  crc32c: number;
 }
 
 export interface GetVersionsRequest {
@@ -42,7 +43,7 @@ export interface GetVersionsResponse {
 }
 
 function createBaseCommandLineInterfaceVersion(): CommandLineInterfaceVersion {
-  return { version: "", downloadUrl: "", os: "", arch: "", generation: 0 };
+  return { version: "", downloadUrl: "", os: "", arch: "", generation: 0, crc32c: 0 };
 }
 
 export const CommandLineInterfaceVersion: MessageFns<CommandLineInterfaceVersion> = {
@@ -61,6 +62,9 @@ export const CommandLineInterfaceVersion: MessageFns<CommandLineInterfaceVersion
     }
     if (message.generation !== 0) {
       writer.uint32(40).int64(message.generation);
+    }
+    if (message.crc32c !== 0) {
+      writer.uint32(48).uint32(message.crc32c);
     }
     return writer;
   },
@@ -112,6 +116,14 @@ export const CommandLineInterfaceVersion: MessageFns<CommandLineInterfaceVersion
           message.generation = longToNumber(reader.int64());
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.crc32c = reader.uint32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -128,6 +140,7 @@ export const CommandLineInterfaceVersion: MessageFns<CommandLineInterfaceVersion
       os: isSet(object.os) ? globalThis.String(object.os) : "",
       arch: isSet(object.arch) ? globalThis.String(object.arch) : "",
       generation: isSet(object.generation) ? globalThis.Number(object.generation) : 0,
+      crc32c: isSet(object.crc32c) ? globalThis.Number(object.crc32c) : 0,
     };
   },
 
@@ -147,6 +160,9 @@ export const CommandLineInterfaceVersion: MessageFns<CommandLineInterfaceVersion
     }
     if (message.generation !== 0) {
       obj.generation = Math.round(message.generation);
+    }
+    if (message.crc32c !== 0) {
+      obj.crc32c = Math.round(message.crc32c);
     }
     return obj;
   },

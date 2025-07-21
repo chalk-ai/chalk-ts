@@ -8,6 +8,7 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { ListValue, Value } from "../../../google/protobuf/struct.pb";
 import { LogicalExprNode } from "../../expression/v1/expression.pb";
+import { OverlayGraph } from "../../graph/v1/graph.pb";
 import { ChalkError } from "./chalk_error.pb";
 import { ExplainOptions } from "./online_query.pb";
 
@@ -123,8 +124,10 @@ export interface OfflineQueryRequest {
   numWorkers?:
     | number
     | undefined;
-  /** Additional context passed in to resolvers */
+  /** Additional customer-defined context passed in to resolvers (see https://docs.chalk.ai/api-docs#ChalkContext) */
   queryContext: { [key: string]: any | undefined };
+  /** Additional features and resolvers to be used to plan this specific query */
+  overlayGraph?: OverlayGraph | undefined;
 }
 
 export interface OfflineQueryRequest_PlannerOptionsEntry {
@@ -662,6 +665,7 @@ function createBaseOfflineQueryRequest(): OfflineQueryRequest {
     numShards: undefined,
     numWorkers: undefined,
     queryContext: {},
+    overlayGraph: undefined,
   };
 }
 
@@ -749,6 +753,9 @@ export const OfflineQueryRequest: MessageFns<OfflineQueryRequest> = {
         OfflineQueryRequest_QueryContextEntry.encode({ key: key as any, value }, writer.uint32(1674).fork()).join();
       }
     });
+    if (message.overlayGraph !== undefined) {
+      OverlayGraph.encode(message.overlayGraph, writer.uint32(1682).fork()).join();
+    }
     return writer;
   },
 
@@ -973,6 +980,14 @@ export const OfflineQueryRequest: MessageFns<OfflineQueryRequest> = {
           }
           continue;
         }
+        case 210: {
+          if (tag !== 1682) {
+            break;
+          }
+
+          message.overlayGraph = OverlayGraph.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1034,6 +1049,7 @@ export const OfflineQueryRequest: MessageFns<OfflineQueryRequest> = {
           return acc;
         }, {})
         : {},
+      overlayGraph: isSet(object.overlayGraph) ? OverlayGraph.fromJSON(object.overlayGraph) : undefined,
     };
   },
 
@@ -1128,6 +1144,9 @@ export const OfflineQueryRequest: MessageFns<OfflineQueryRequest> = {
           obj.queryContext[k] = v;
         });
       }
+    }
+    if (message.overlayGraph !== undefined) {
+      obj.overlayGraph = OverlayGraph.toJSON(message.overlayGraph);
     }
     return obj;
   },

@@ -95,6 +95,7 @@ export interface ScaleDeploymentResponse {
 export interface TagDeploymentRequest {
   deploymentId: string;
   tag: string;
+  mirrorWeight?: number | undefined;
 }
 
 export interface TagDeploymentResponse {
@@ -980,7 +981,7 @@ export const ScaleDeploymentResponse: MessageFns<ScaleDeploymentResponse> = {
 };
 
 function createBaseTagDeploymentRequest(): TagDeploymentRequest {
-  return { deploymentId: "", tag: "" };
+  return { deploymentId: "", tag: "", mirrorWeight: undefined };
 }
 
 export const TagDeploymentRequest: MessageFns<TagDeploymentRequest> = {
@@ -990,6 +991,9 @@ export const TagDeploymentRequest: MessageFns<TagDeploymentRequest> = {
     }
     if (message.tag !== "") {
       writer.uint32(18).string(message.tag);
+    }
+    if (message.mirrorWeight !== undefined) {
+      writer.uint32(24).int32(message.mirrorWeight);
     }
     return writer;
   },
@@ -1017,6 +1021,14 @@ export const TagDeploymentRequest: MessageFns<TagDeploymentRequest> = {
           message.tag = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.mirrorWeight = reader.int32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1030,6 +1042,7 @@ export const TagDeploymentRequest: MessageFns<TagDeploymentRequest> = {
     return {
       deploymentId: isSet(object.deploymentId) ? globalThis.String(object.deploymentId) : "",
       tag: isSet(object.tag) ? globalThis.String(object.tag) : "",
+      mirrorWeight: isSet(object.mirrorWeight) ? globalThis.Number(object.mirrorWeight) : undefined,
     };
   },
 
@@ -1040,6 +1053,9 @@ export const TagDeploymentRequest: MessageFns<TagDeploymentRequest> = {
     }
     if (message.tag !== "") {
       obj.tag = message.tag;
+    }
+    if (message.mirrorWeight !== undefined) {
+      obj.mirrorWeight = Math.round(message.mirrorWeight);
     }
     return obj;
   },

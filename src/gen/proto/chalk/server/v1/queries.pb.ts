@@ -43,6 +43,7 @@ export interface QueryErrorFilters {
   featureFqn?: string | undefined;
   resolverFqn?: string | undefined;
   queryName?: string | undefined;
+  message?: string | undefined;
 }
 
 export interface QueryErrorMeta {
@@ -102,6 +103,85 @@ export interface GetQueryErrorsChartRequest {
 
 export interface GetQueryErrorsChartResponse {
   chart: DenseTimeSeriesChart | undefined;
+}
+
+export interface GetQueryPlanRequest {
+  queryPlanId: string;
+}
+
+export interface QueryPlan {
+  id: string;
+  environmentId: string;
+  deploymentId: string;
+  queryPlan: string;
+  createdAt: Date | undefined;
+}
+
+export interface GetQueryPlanResponse {
+  queryPlan: QueryPlan | undefined;
+}
+
+export interface AggregatedQueryError {
+  /** Representative error from the group */
+  sampleError: QueryErrorMeta | undefined;
+  count: number;
+  firstSeen: Date | undefined;
+  lastSeen: Date | undefined;
+}
+
+export interface AggregateQueryErrorsRequest {
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  filters: QueryErrorFilters | undefined;
+  pageSize?: number | undefined;
+  pageToken?: string | undefined;
+}
+
+export interface AggregateQueryErrorsResponse {
+  aggregatedErrors: AggregatedQueryError[];
+  nextPageToken?: string | undefined;
+}
+
+export interface MetaQueryRun {
+  id: string;
+  metaQueryId: string;
+  externalId: string;
+  createdAt: Date | undefined;
+  queryPlanId?: string | undefined;
+  correlationId?: string | undefined;
+  hasErrors: boolean;
+  agentId?: string | undefined;
+  branchName?: string | undefined;
+  deploymentId?: string | undefined;
+  hasPlanStages: boolean;
+  duration?: number | undefined;
+}
+
+export interface MetaQueryRunWithMeta {
+  id: string;
+  run: MetaQueryRun | undefined;
+  latency?: number | undefined;
+}
+
+export interface ListMetaQueryRunsRequest {
+  includeLatency: boolean;
+  minLatencyMs?: number | undefined;
+  queryPlanId?: string | undefined;
+  metaQueryId?: number | undefined;
+  metaQueryName?: string | undefined;
+  idFilter?: string | undefined;
+  branchFilter?: string | undefined;
+  agentId?: string | undefined;
+  rootNsPkey?: string | undefined;
+  cursor?: Date | undefined;
+  limit?: number | undefined;
+  start?: Date | undefined;
+  end?: Date | undefined;
+  hasErrors?: boolean | undefined;
+}
+
+export interface ListMetaQueryRunsResponse {
+  queryRuns: MetaQueryRunWithMeta[];
 }
 
 function createBaseGetQueryPerformanceSummaryRequest(): GetQueryPerformanceSummaryRequest {
@@ -286,7 +366,13 @@ export const ListQueryErrorsPageToken: MessageFns<ListQueryErrorsPageToken> = {
 };
 
 function createBaseQueryErrorFilters(): QueryErrorFilters {
-  return { operationId: undefined, featureFqn: undefined, resolverFqn: undefined, queryName: undefined };
+  return {
+    operationId: undefined,
+    featureFqn: undefined,
+    resolverFqn: undefined,
+    queryName: undefined,
+    message: undefined,
+  };
 }
 
 export const QueryErrorFilters: MessageFns<QueryErrorFilters> = {
@@ -302,6 +388,9 @@ export const QueryErrorFilters: MessageFns<QueryErrorFilters> = {
     }
     if (message.queryName !== undefined) {
       writer.uint32(34).string(message.queryName);
+    }
+    if (message.message !== undefined) {
+      writer.uint32(42).string(message.message);
     }
     return writer;
   },
@@ -345,6 +434,14 @@ export const QueryErrorFilters: MessageFns<QueryErrorFilters> = {
           message.queryName = reader.string();
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -360,6 +457,7 @@ export const QueryErrorFilters: MessageFns<QueryErrorFilters> = {
       featureFqn: isSet(object.featureFqn) ? globalThis.String(object.featureFqn) : undefined,
       resolverFqn: isSet(object.resolverFqn) ? globalThis.String(object.resolverFqn) : undefined,
       queryName: isSet(object.queryName) ? globalThis.String(object.queryName) : undefined,
+      message: isSet(object.message) ? globalThis.String(object.message) : undefined,
     };
   },
 
@@ -376,6 +474,9 @@ export const QueryErrorFilters: MessageFns<QueryErrorFilters> = {
     }
     if (message.queryName !== undefined) {
       obj.queryName = message.queryName;
+    }
+    if (message.message !== undefined) {
+      obj.message = message.message;
     }
     return obj;
   },
@@ -1013,6 +1114,1114 @@ export const GetQueryErrorsChartResponse: MessageFns<GetQueryErrorsChartResponse
   },
 };
 
+function createBaseGetQueryPlanRequest(): GetQueryPlanRequest {
+  return { queryPlanId: "" };
+}
+
+export const GetQueryPlanRequest: MessageFns<GetQueryPlanRequest> = {
+  encode(message: GetQueryPlanRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.queryPlanId !== "") {
+      writer.uint32(10).string(message.queryPlanId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetQueryPlanRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetQueryPlanRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.queryPlanId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetQueryPlanRequest {
+    return { queryPlanId: isSet(object.queryPlanId) ? globalThis.String(object.queryPlanId) : "" };
+  },
+
+  toJSON(message: GetQueryPlanRequest): unknown {
+    const obj: any = {};
+    if (message.queryPlanId !== "") {
+      obj.queryPlanId = message.queryPlanId;
+    }
+    return obj;
+  },
+};
+
+function createBaseQueryPlan(): QueryPlan {
+  return { id: "", environmentId: "", deploymentId: "", queryPlan: "", createdAt: undefined };
+}
+
+export const QueryPlan: MessageFns<QueryPlan> = {
+  encode(message: QueryPlan, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.environmentId !== "") {
+      writer.uint32(18).string(message.environmentId);
+    }
+    if (message.deploymentId !== "") {
+      writer.uint32(26).string(message.deploymentId);
+    }
+    if (message.queryPlan !== "") {
+      writer.uint32(34).string(message.queryPlan);
+    }
+    if (message.createdAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(42).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): QueryPlan {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseQueryPlan();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.environmentId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.deploymentId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.queryPlan = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryPlan {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      environmentId: isSet(object.environmentId) ? globalThis.String(object.environmentId) : "",
+      deploymentId: isSet(object.deploymentId) ? globalThis.String(object.deploymentId) : "",
+      queryPlan: isSet(object.queryPlan) ? globalThis.String(object.queryPlan) : "",
+      createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
+    };
+  },
+
+  toJSON(message: QueryPlan): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.environmentId !== "") {
+      obj.environmentId = message.environmentId;
+    }
+    if (message.deploymentId !== "") {
+      obj.deploymentId = message.deploymentId;
+    }
+    if (message.queryPlan !== "") {
+      obj.queryPlan = message.queryPlan;
+    }
+    if (message.createdAt !== undefined) {
+      obj.createdAt = message.createdAt.toISOString();
+    }
+    return obj;
+  },
+};
+
+function createBaseGetQueryPlanResponse(): GetQueryPlanResponse {
+  return { queryPlan: undefined };
+}
+
+export const GetQueryPlanResponse: MessageFns<GetQueryPlanResponse> = {
+  encode(message: GetQueryPlanResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.queryPlan !== undefined) {
+      QueryPlan.encode(message.queryPlan, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetQueryPlanResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetQueryPlanResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.queryPlan = QueryPlan.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetQueryPlanResponse {
+    return { queryPlan: isSet(object.queryPlan) ? QueryPlan.fromJSON(object.queryPlan) : undefined };
+  },
+
+  toJSON(message: GetQueryPlanResponse): unknown {
+    const obj: any = {};
+    if (message.queryPlan !== undefined) {
+      obj.queryPlan = QueryPlan.toJSON(message.queryPlan);
+    }
+    return obj;
+  },
+};
+
+function createBaseAggregatedQueryError(): AggregatedQueryError {
+  return { sampleError: undefined, count: 0, firstSeen: undefined, lastSeen: undefined };
+}
+
+export const AggregatedQueryError: MessageFns<AggregatedQueryError> = {
+  encode(message: AggregatedQueryError, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.sampleError !== undefined) {
+      QueryErrorMeta.encode(message.sampleError, writer.uint32(10).fork()).join();
+    }
+    if (message.count !== 0) {
+      writer.uint32(16).int64(message.count);
+    }
+    if (message.firstSeen !== undefined) {
+      Timestamp.encode(toTimestamp(message.firstSeen), writer.uint32(26).fork()).join();
+    }
+    if (message.lastSeen !== undefined) {
+      Timestamp.encode(toTimestamp(message.lastSeen), writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AggregatedQueryError {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAggregatedQueryError();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.sampleError = QueryErrorMeta.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.count = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.firstSeen = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.lastSeen = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AggregatedQueryError {
+    return {
+      sampleError: isSet(object.sampleError) ? QueryErrorMeta.fromJSON(object.sampleError) : undefined,
+      count: isSet(object.count) ? globalThis.Number(object.count) : 0,
+      firstSeen: isSet(object.firstSeen) ? fromJsonTimestamp(object.firstSeen) : undefined,
+      lastSeen: isSet(object.lastSeen) ? fromJsonTimestamp(object.lastSeen) : undefined,
+    };
+  },
+
+  toJSON(message: AggregatedQueryError): unknown {
+    const obj: any = {};
+    if (message.sampleError !== undefined) {
+      obj.sampleError = QueryErrorMeta.toJSON(message.sampleError);
+    }
+    if (message.count !== 0) {
+      obj.count = Math.round(message.count);
+    }
+    if (message.firstSeen !== undefined) {
+      obj.firstSeen = message.firstSeen.toISOString();
+    }
+    if (message.lastSeen !== undefined) {
+      obj.lastSeen = message.lastSeen.toISOString();
+    }
+    return obj;
+  },
+};
+
+function createBaseAggregateQueryErrorsRequest(): AggregateQueryErrorsRequest {
+  return { startDate: undefined, endDate: undefined, filters: undefined, pageSize: undefined, pageToken: undefined };
+}
+
+export const AggregateQueryErrorsRequest: MessageFns<AggregateQueryErrorsRequest> = {
+  encode(message: AggregateQueryErrorsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.startDate !== undefined) {
+      Timestamp.encode(toTimestamp(message.startDate), writer.uint32(10).fork()).join();
+    }
+    if (message.endDate !== undefined) {
+      Timestamp.encode(toTimestamp(message.endDate), writer.uint32(18).fork()).join();
+    }
+    if (message.filters !== undefined) {
+      QueryErrorFilters.encode(message.filters, writer.uint32(26).fork()).join();
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    if (message.pageToken !== undefined) {
+      writer.uint32(42).string(message.pageToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AggregateQueryErrorsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAggregateQueryErrorsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.startDate = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.endDate = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.filters = QueryErrorFilters.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.pageToken = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AggregateQueryErrorsRequest {
+    return {
+      startDate: isSet(object.startDate) ? fromJsonTimestamp(object.startDate) : undefined,
+      endDate: isSet(object.endDate) ? fromJsonTimestamp(object.endDate) : undefined,
+      filters: isSet(object.filters) ? QueryErrorFilters.fromJSON(object.filters) : undefined,
+      pageSize: isSet(object.pageSize) ? globalThis.Number(object.pageSize) : undefined,
+      pageToken: isSet(object.pageToken) ? globalThis.String(object.pageToken) : undefined,
+    };
+  },
+
+  toJSON(message: AggregateQueryErrorsRequest): unknown {
+    const obj: any = {};
+    if (message.startDate !== undefined) {
+      obj.startDate = message.startDate.toISOString();
+    }
+    if (message.endDate !== undefined) {
+      obj.endDate = message.endDate.toISOString();
+    }
+    if (message.filters !== undefined) {
+      obj.filters = QueryErrorFilters.toJSON(message.filters);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    if (message.pageToken !== undefined) {
+      obj.pageToken = message.pageToken;
+    }
+    return obj;
+  },
+};
+
+function createBaseAggregateQueryErrorsResponse(): AggregateQueryErrorsResponse {
+  return { aggregatedErrors: [], nextPageToken: undefined };
+}
+
+export const AggregateQueryErrorsResponse: MessageFns<AggregateQueryErrorsResponse> = {
+  encode(message: AggregateQueryErrorsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.aggregatedErrors) {
+      AggregatedQueryError.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.nextPageToken !== undefined) {
+      writer.uint32(18).string(message.nextPageToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AggregateQueryErrorsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAggregateQueryErrorsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.aggregatedErrors.push(AggregatedQueryError.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.nextPageToken = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AggregateQueryErrorsResponse {
+    return {
+      aggregatedErrors: globalThis.Array.isArray(object?.aggregatedErrors)
+        ? object.aggregatedErrors.map((e: any) => AggregatedQueryError.fromJSON(e))
+        : [],
+      nextPageToken: isSet(object.nextPageToken) ? globalThis.String(object.nextPageToken) : undefined,
+    };
+  },
+
+  toJSON(message: AggregateQueryErrorsResponse): unknown {
+    const obj: any = {};
+    if (message.aggregatedErrors?.length) {
+      obj.aggregatedErrors = message.aggregatedErrors.map((e) => AggregatedQueryError.toJSON(e));
+    }
+    if (message.nextPageToken !== undefined) {
+      obj.nextPageToken = message.nextPageToken;
+    }
+    return obj;
+  },
+};
+
+function createBaseMetaQueryRun(): MetaQueryRun {
+  return {
+    id: "",
+    metaQueryId: "",
+    externalId: "",
+    createdAt: undefined,
+    queryPlanId: undefined,
+    correlationId: undefined,
+    hasErrors: false,
+    agentId: undefined,
+    branchName: undefined,
+    deploymentId: undefined,
+    hasPlanStages: false,
+    duration: undefined,
+  };
+}
+
+export const MetaQueryRun: MessageFns<MetaQueryRun> = {
+  encode(message: MetaQueryRun, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.metaQueryId !== "") {
+      writer.uint32(18).string(message.metaQueryId);
+    }
+    if (message.externalId !== "") {
+      writer.uint32(26).string(message.externalId);
+    }
+    if (message.createdAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
+    }
+    if (message.queryPlanId !== undefined) {
+      writer.uint32(42).string(message.queryPlanId);
+    }
+    if (message.correlationId !== undefined) {
+      writer.uint32(50).string(message.correlationId);
+    }
+    if (message.hasErrors !== false) {
+      writer.uint32(56).bool(message.hasErrors);
+    }
+    if (message.agentId !== undefined) {
+      writer.uint32(66).string(message.agentId);
+    }
+    if (message.branchName !== undefined) {
+      writer.uint32(74).string(message.branchName);
+    }
+    if (message.deploymentId !== undefined) {
+      writer.uint32(82).string(message.deploymentId);
+    }
+    if (message.hasPlanStages !== false) {
+      writer.uint32(88).bool(message.hasPlanStages);
+    }
+    if (message.duration !== undefined) {
+      writer.uint32(97).double(message.duration);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MetaQueryRun {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMetaQueryRun();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.metaQueryId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.externalId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.queryPlanId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.hasErrors = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.agentId = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.branchName = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.deploymentId = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.hasPlanStages = reader.bool();
+          continue;
+        }
+        case 12: {
+          if (tag !== 97) {
+            break;
+          }
+
+          message.duration = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MetaQueryRun {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      metaQueryId: isSet(object.metaQueryId) ? globalThis.String(object.metaQueryId) : "",
+      externalId: isSet(object.externalId) ? globalThis.String(object.externalId) : "",
+      createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
+      queryPlanId: isSet(object.queryPlanId) ? globalThis.String(object.queryPlanId) : undefined,
+      correlationId: isSet(object.correlationId) ? globalThis.String(object.correlationId) : undefined,
+      hasErrors: isSet(object.hasErrors) ? globalThis.Boolean(object.hasErrors) : false,
+      agentId: isSet(object.agentId) ? globalThis.String(object.agentId) : undefined,
+      branchName: isSet(object.branchName) ? globalThis.String(object.branchName) : undefined,
+      deploymentId: isSet(object.deploymentId) ? globalThis.String(object.deploymentId) : undefined,
+      hasPlanStages: isSet(object.hasPlanStages) ? globalThis.Boolean(object.hasPlanStages) : false,
+      duration: isSet(object.duration) ? globalThis.Number(object.duration) : undefined,
+    };
+  },
+
+  toJSON(message: MetaQueryRun): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.metaQueryId !== "") {
+      obj.metaQueryId = message.metaQueryId;
+    }
+    if (message.externalId !== "") {
+      obj.externalId = message.externalId;
+    }
+    if (message.createdAt !== undefined) {
+      obj.createdAt = message.createdAt.toISOString();
+    }
+    if (message.queryPlanId !== undefined) {
+      obj.queryPlanId = message.queryPlanId;
+    }
+    if (message.correlationId !== undefined) {
+      obj.correlationId = message.correlationId;
+    }
+    if (message.hasErrors !== false) {
+      obj.hasErrors = message.hasErrors;
+    }
+    if (message.agentId !== undefined) {
+      obj.agentId = message.agentId;
+    }
+    if (message.branchName !== undefined) {
+      obj.branchName = message.branchName;
+    }
+    if (message.deploymentId !== undefined) {
+      obj.deploymentId = message.deploymentId;
+    }
+    if (message.hasPlanStages !== false) {
+      obj.hasPlanStages = message.hasPlanStages;
+    }
+    if (message.duration !== undefined) {
+      obj.duration = message.duration;
+    }
+    return obj;
+  },
+};
+
+function createBaseMetaQueryRunWithMeta(): MetaQueryRunWithMeta {
+  return { id: "", run: undefined, latency: undefined };
+}
+
+export const MetaQueryRunWithMeta: MessageFns<MetaQueryRunWithMeta> = {
+  encode(message: MetaQueryRunWithMeta, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.run !== undefined) {
+      MetaQueryRun.encode(message.run, writer.uint32(18).fork()).join();
+    }
+    if (message.latency !== undefined) {
+      writer.uint32(25).double(message.latency);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MetaQueryRunWithMeta {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMetaQueryRunWithMeta();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.run = MetaQueryRun.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 25) {
+            break;
+          }
+
+          message.latency = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MetaQueryRunWithMeta {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      run: isSet(object.run) ? MetaQueryRun.fromJSON(object.run) : undefined,
+      latency: isSet(object.latency) ? globalThis.Number(object.latency) : undefined,
+    };
+  },
+
+  toJSON(message: MetaQueryRunWithMeta): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.run !== undefined) {
+      obj.run = MetaQueryRun.toJSON(message.run);
+    }
+    if (message.latency !== undefined) {
+      obj.latency = message.latency;
+    }
+    return obj;
+  },
+};
+
+function createBaseListMetaQueryRunsRequest(): ListMetaQueryRunsRequest {
+  return {
+    includeLatency: false,
+    minLatencyMs: undefined,
+    queryPlanId: undefined,
+    metaQueryId: undefined,
+    metaQueryName: undefined,
+    idFilter: undefined,
+    branchFilter: undefined,
+    agentId: undefined,
+    rootNsPkey: undefined,
+    cursor: undefined,
+    limit: undefined,
+    start: undefined,
+    end: undefined,
+    hasErrors: undefined,
+  };
+}
+
+export const ListMetaQueryRunsRequest: MessageFns<ListMetaQueryRunsRequest> = {
+  encode(message: ListMetaQueryRunsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.includeLatency !== false) {
+      writer.uint32(8).bool(message.includeLatency);
+    }
+    if (message.minLatencyMs !== undefined) {
+      writer.uint32(17).double(message.minLatencyMs);
+    }
+    if (message.queryPlanId !== undefined) {
+      writer.uint32(26).string(message.queryPlanId);
+    }
+    if (message.metaQueryId !== undefined) {
+      writer.uint32(32).int32(message.metaQueryId);
+    }
+    if (message.metaQueryName !== undefined) {
+      writer.uint32(42).string(message.metaQueryName);
+    }
+    if (message.idFilter !== undefined) {
+      writer.uint32(50).string(message.idFilter);
+    }
+    if (message.branchFilter !== undefined) {
+      writer.uint32(58).string(message.branchFilter);
+    }
+    if (message.agentId !== undefined) {
+      writer.uint32(66).string(message.agentId);
+    }
+    if (message.rootNsPkey !== undefined) {
+      writer.uint32(74).string(message.rootNsPkey);
+    }
+    if (message.cursor !== undefined) {
+      Timestamp.encode(toTimestamp(message.cursor), writer.uint32(82).fork()).join();
+    }
+    if (message.limit !== undefined) {
+      writer.uint32(88).int32(message.limit);
+    }
+    if (message.start !== undefined) {
+      Timestamp.encode(toTimestamp(message.start), writer.uint32(98).fork()).join();
+    }
+    if (message.end !== undefined) {
+      Timestamp.encode(toTimestamp(message.end), writer.uint32(106).fork()).join();
+    }
+    if (message.hasErrors !== undefined) {
+      writer.uint32(112).bool(message.hasErrors);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListMetaQueryRunsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListMetaQueryRunsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.includeLatency = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 17) {
+            break;
+          }
+
+          message.minLatencyMs = reader.double();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.queryPlanId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.metaQueryId = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.metaQueryName = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.idFilter = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.branchFilter = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.agentId = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.rootNsPkey = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.cursor = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.start = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.end = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 14: {
+          if (tag !== 112) {
+            break;
+          }
+
+          message.hasErrors = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListMetaQueryRunsRequest {
+    return {
+      includeLatency: isSet(object.includeLatency) ? globalThis.Boolean(object.includeLatency) : false,
+      minLatencyMs: isSet(object.minLatencyMs) ? globalThis.Number(object.minLatencyMs) : undefined,
+      queryPlanId: isSet(object.queryPlanId) ? globalThis.String(object.queryPlanId) : undefined,
+      metaQueryId: isSet(object.metaQueryId) ? globalThis.Number(object.metaQueryId) : undefined,
+      metaQueryName: isSet(object.metaQueryName) ? globalThis.String(object.metaQueryName) : undefined,
+      idFilter: isSet(object.idFilter) ? globalThis.String(object.idFilter) : undefined,
+      branchFilter: isSet(object.branchFilter) ? globalThis.String(object.branchFilter) : undefined,
+      agentId: isSet(object.agentId) ? globalThis.String(object.agentId) : undefined,
+      rootNsPkey: isSet(object.rootNsPkey) ? globalThis.String(object.rootNsPkey) : undefined,
+      cursor: isSet(object.cursor) ? fromJsonTimestamp(object.cursor) : undefined,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : undefined,
+      start: isSet(object.start) ? fromJsonTimestamp(object.start) : undefined,
+      end: isSet(object.end) ? fromJsonTimestamp(object.end) : undefined,
+      hasErrors: isSet(object.hasErrors) ? globalThis.Boolean(object.hasErrors) : undefined,
+    };
+  },
+
+  toJSON(message: ListMetaQueryRunsRequest): unknown {
+    const obj: any = {};
+    if (message.includeLatency !== false) {
+      obj.includeLatency = message.includeLatency;
+    }
+    if (message.minLatencyMs !== undefined) {
+      obj.minLatencyMs = message.minLatencyMs;
+    }
+    if (message.queryPlanId !== undefined) {
+      obj.queryPlanId = message.queryPlanId;
+    }
+    if (message.metaQueryId !== undefined) {
+      obj.metaQueryId = Math.round(message.metaQueryId);
+    }
+    if (message.metaQueryName !== undefined) {
+      obj.metaQueryName = message.metaQueryName;
+    }
+    if (message.idFilter !== undefined) {
+      obj.idFilter = message.idFilter;
+    }
+    if (message.branchFilter !== undefined) {
+      obj.branchFilter = message.branchFilter;
+    }
+    if (message.agentId !== undefined) {
+      obj.agentId = message.agentId;
+    }
+    if (message.rootNsPkey !== undefined) {
+      obj.rootNsPkey = message.rootNsPkey;
+    }
+    if (message.cursor !== undefined) {
+      obj.cursor = message.cursor.toISOString();
+    }
+    if (message.limit !== undefined) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.start !== undefined) {
+      obj.start = message.start.toISOString();
+    }
+    if (message.end !== undefined) {
+      obj.end = message.end.toISOString();
+    }
+    if (message.hasErrors !== undefined) {
+      obj.hasErrors = message.hasErrors;
+    }
+    return obj;
+  },
+};
+
+function createBaseListMetaQueryRunsResponse(): ListMetaQueryRunsResponse {
+  return { queryRuns: [] };
+}
+
+export const ListMetaQueryRunsResponse: MessageFns<ListMetaQueryRunsResponse> = {
+  encode(message: ListMetaQueryRunsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.queryRuns) {
+      MetaQueryRunWithMeta.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListMetaQueryRunsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListMetaQueryRunsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.queryRuns.push(MetaQueryRunWithMeta.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListMetaQueryRunsResponse {
+    return {
+      queryRuns: globalThis.Array.isArray(object?.queryRuns)
+        ? object.queryRuns.map((e: any) => MetaQueryRunWithMeta.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ListMetaQueryRunsResponse): unknown {
+    const obj: any = {};
+    if (message.queryRuns?.length) {
+      obj.queryRuns = message.queryRuns.map((e) => MetaQueryRunWithMeta.toJSON(e));
+    }
+    return obj;
+  },
+};
+
 export type QueriesServiceService = typeof QueriesServiceService;
 export const QueriesServiceService = {
   getQueryPerformanceSummary: {
@@ -1046,12 +2255,45 @@ export const QueriesServiceService = {
       Buffer.from(GetQueryErrorsChartResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => GetQueryErrorsChartResponse.decode(value),
   },
+  getQueryPlan: {
+    path: "/chalk.server.v1.QueriesService/GetQueryPlan",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetQueryPlanRequest) => Buffer.from(GetQueryPlanRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetQueryPlanRequest.decode(value),
+    responseSerialize: (value: GetQueryPlanResponse) => Buffer.from(GetQueryPlanResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetQueryPlanResponse.decode(value),
+  },
+  aggregateQueryErrors: {
+    path: "/chalk.server.v1.QueriesService/AggregateQueryErrors",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: AggregateQueryErrorsRequest) =>
+      Buffer.from(AggregateQueryErrorsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => AggregateQueryErrorsRequest.decode(value),
+    responseSerialize: (value: AggregateQueryErrorsResponse) =>
+      Buffer.from(AggregateQueryErrorsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => AggregateQueryErrorsResponse.decode(value),
+  },
+  listMetaQueryRuns: {
+    path: "/chalk.server.v1.QueriesService/ListMetaQueryRuns",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListMetaQueryRunsRequest) => Buffer.from(ListMetaQueryRunsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => ListMetaQueryRunsRequest.decode(value),
+    responseSerialize: (value: ListMetaQueryRunsResponse) =>
+      Buffer.from(ListMetaQueryRunsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => ListMetaQueryRunsResponse.decode(value),
+  },
 } as const;
 
 export interface QueriesServiceServer extends UntypedServiceImplementation {
   getQueryPerformanceSummary: handleUnaryCall<GetQueryPerformanceSummaryRequest, GetQueryPerformanceSummaryResponse>;
   listQueryErrors: handleUnaryCall<ListQueryErrorsRequest, ListQueryErrorsResponse>;
   getQueryErrorsChart: handleUnaryCall<GetQueryErrorsChartRequest, GetQueryErrorsChartResponse>;
+  getQueryPlan: handleUnaryCall<GetQueryPlanRequest, GetQueryPlanResponse>;
+  aggregateQueryErrors: handleUnaryCall<AggregateQueryErrorsRequest, AggregateQueryErrorsResponse>;
+  listMetaQueryRuns: handleUnaryCall<ListMetaQueryRunsRequest, ListMetaQueryRunsResponse>;
 }
 
 export interface QueriesServiceClient extends Client {
@@ -1099,6 +2341,51 @@ export interface QueriesServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: GetQueryErrorsChartResponse) => void,
+  ): ClientUnaryCall;
+  getQueryPlan(
+    request: GetQueryPlanRequest,
+    callback: (error: ServiceError | null, response: GetQueryPlanResponse) => void,
+  ): ClientUnaryCall;
+  getQueryPlan(
+    request: GetQueryPlanRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetQueryPlanResponse) => void,
+  ): ClientUnaryCall;
+  getQueryPlan(
+    request: GetQueryPlanRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetQueryPlanResponse) => void,
+  ): ClientUnaryCall;
+  aggregateQueryErrors(
+    request: AggregateQueryErrorsRequest,
+    callback: (error: ServiceError | null, response: AggregateQueryErrorsResponse) => void,
+  ): ClientUnaryCall;
+  aggregateQueryErrors(
+    request: AggregateQueryErrorsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: AggregateQueryErrorsResponse) => void,
+  ): ClientUnaryCall;
+  aggregateQueryErrors(
+    request: AggregateQueryErrorsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: AggregateQueryErrorsResponse) => void,
+  ): ClientUnaryCall;
+  listMetaQueryRuns(
+    request: ListMetaQueryRunsRequest,
+    callback: (error: ServiceError | null, response: ListMetaQueryRunsResponse) => void,
+  ): ClientUnaryCall;
+  listMetaQueryRuns(
+    request: ListMetaQueryRunsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ListMetaQueryRunsResponse) => void,
+  ): ClientUnaryCall;
+  listMetaQueryRuns(
+    request: ListMetaQueryRunsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ListMetaQueryRunsResponse) => void,
   ): ClientUnaryCall;
 }
 

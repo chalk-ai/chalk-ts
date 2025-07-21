@@ -10,6 +10,7 @@ import { Duration } from "../../../google/protobuf/duration.pb";
 import { Value } from "../../../google/protobuf/struct.pb";
 import { Timestamp } from "../../../google/protobuf/timestamp.pb";
 import { LogicalExprNode } from "../../expression/v1/expression.pb";
+import { OverlayGraph } from "../../graph/v1/graph.pb";
 import { ChalkError } from "./chalk_error.pb";
 
 export const protobufPackage = "chalk.common.v1";
@@ -147,8 +148,10 @@ export interface OnlineQueryContext {
   options: { [key: string]: any | undefined };
   /** Value metrics will be tagged by the output of the given features */
   valueMetricsTagByFeatures: OutputExpr[];
-  /** Query context is a dictionary of JSON-serializable values that can be used in resolvers */
+  /** Query context is a dictionary of JSON-serializable values that can be used in resolvers (see https://docs.chalk.ai/api-docs#ChalkContext) */
   queryContext: { [key: string]: any | undefined };
+  /** Additional features and resolvers to be used to plan this specific query */
+  overlayGraph?: OverlayGraph | undefined;
 }
 
 export interface OnlineQueryContext_OptionsEntry {
@@ -1076,6 +1079,7 @@ function createBaseOnlineQueryContext(): OnlineQueryContext {
     options: {},
     valueMetricsTagByFeatures: [],
     queryContext: {},
+    overlayGraph: undefined,
   };
 }
 
@@ -1118,6 +1122,9 @@ export const OnlineQueryContext: MessageFns<OnlineQueryContext> = {
         OnlineQueryContext_QueryContextEntry.encode({ key: key as any, value }, writer.uint32(90).fork()).join();
       }
     });
+    if (message.overlayGraph !== undefined) {
+      OverlayGraph.encode(message.overlayGraph, writer.uint32(98).fork()).join();
+    }
     return writer;
   },
 
@@ -1222,6 +1229,14 @@ export const OnlineQueryContext: MessageFns<OnlineQueryContext> = {
           }
           continue;
         }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.overlayGraph = OverlayGraph.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1258,6 +1273,7 @@ export const OnlineQueryContext: MessageFns<OnlineQueryContext> = {
           return acc;
         }, {})
         : {},
+      overlayGraph: isSet(object.overlayGraph) ? OverlayGraph.fromJSON(object.overlayGraph) : undefined,
     };
   },
 
@@ -1307,6 +1323,9 @@ export const OnlineQueryContext: MessageFns<OnlineQueryContext> = {
           obj.queryContext[k] = v;
         });
       }
+    }
+    if (message.overlayGraph !== undefined) {
+      obj.overlayGraph = OverlayGraph.toJSON(message.overlayGraph);
     }
     return obj;
   },

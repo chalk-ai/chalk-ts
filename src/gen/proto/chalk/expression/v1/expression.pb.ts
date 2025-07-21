@@ -1247,6 +1247,11 @@ export interface Identifier {
   name: string;
 }
 
+export interface TypedIdentifier {
+  name: string;
+  type?: ArrowType | undefined;
+}
+
 /** A field-access expression, like `arr.length`. */
 export interface ExprGetAttribute {
   parent: LogicalExprNode | undefined;
@@ -1275,6 +1280,7 @@ export interface ExprCall {
   func: LogicalExprNode | undefined;
   args: LogicalExprNode[];
   kwargs: { [key: string]: LogicalExprNode };
+  reprOverride?: string | undefined;
 }
 
 export interface ExprCall_KwargsEntry {
@@ -1302,8 +1308,9 @@ export interface LogicalExprNode {
   getAttribute?: ExprGetAttribute | undefined;
   getSubscript?: ExprGetSubscript | undefined;
   call?: ExprCall | undefined;
-  literalValue?:
-    | ExprLiteral
+  literalValue?: ExprLiteral | undefined;
+  typedIdentifier?:
+    | TypedIdentifier
     | undefined;
   /** The memory ID of this node. Nodes with equal id share are *identical*, sharing any nondeterminism and mutations. */
   exprId: string;
@@ -1770,6 +1777,72 @@ export const Identifier: MessageFns<Identifier> = {
   },
 };
 
+function createBaseTypedIdentifier(): TypedIdentifier {
+  return { name: "", type: undefined };
+}
+
+export const TypedIdentifier: MessageFns<TypedIdentifier> = {
+  encode(message: TypedIdentifier, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.type !== undefined) {
+      ArrowType.encode(message.type, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TypedIdentifier {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTypedIdentifier();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.type = ArrowType.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TypedIdentifier {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      type: isSet(object.type) ? ArrowType.fromJSON(object.type) : undefined,
+    };
+  },
+
+  toJSON(message: TypedIdentifier): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.type !== undefined) {
+      obj.type = ArrowType.toJSON(message.type);
+    }
+    return obj;
+  },
+};
+
 function createBaseExprGetAttribute(): ExprGetAttribute {
   return { parent: undefined, attribute: undefined };
 }
@@ -1905,7 +1978,7 @@ export const ExprGetSubscript: MessageFns<ExprGetSubscript> = {
 };
 
 function createBaseExprCall(): ExprCall {
-  return { func: undefined, args: [], kwargs: {} };
+  return { func: undefined, args: [], kwargs: {}, reprOverride: undefined };
 }
 
 export const ExprCall: MessageFns<ExprCall> = {
@@ -1919,6 +1992,9 @@ export const ExprCall: MessageFns<ExprCall> = {
     Object.entries(message.kwargs).forEach(([key, value]) => {
       ExprCall_KwargsEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
     });
+    if (message.reprOverride !== undefined) {
+      writer.uint32(34).string(message.reprOverride);
+    }
     return writer;
   },
 
@@ -1956,6 +2032,14 @@ export const ExprCall: MessageFns<ExprCall> = {
           }
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.reprOverride = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1975,6 +2059,7 @@ export const ExprCall: MessageFns<ExprCall> = {
           return acc;
         }, {})
         : {},
+      reprOverride: isSet(object.reprOverride) ? globalThis.String(object.reprOverride) : undefined,
     };
   },
 
@@ -1994,6 +2079,9 @@ export const ExprCall: MessageFns<ExprCall> = {
           obj.kwargs[k] = LogicalExprNode.toJSON(v);
         });
       }
+    }
+    if (message.reprOverride !== undefined) {
+      obj.reprOverride = message.reprOverride;
     }
     return obj;
   },
@@ -2138,6 +2226,7 @@ function createBaseLogicalExprNode(): LogicalExprNode {
     getSubscript: undefined,
     call: undefined,
     literalValue: undefined,
+    typedIdentifier: undefined,
     exprId: "",
     column: undefined,
     alias: undefined,
@@ -2192,6 +2281,9 @@ export const LogicalExprNode: MessageFns<LogicalExprNode> = {
     }
     if (message.literalValue !== undefined) {
       ExprLiteral.encode(message.literalValue, writer.uint32(314).fork()).join();
+    }
+    if (message.typedIdentifier !== undefined) {
+      TypedIdentifier.encode(message.typedIdentifier, writer.uint32(330).fork()).join();
     }
     if (message.exprId !== "") {
       writer.uint32(322).string(message.exprId);
@@ -2346,6 +2438,14 @@ export const LogicalExprNode: MessageFns<LogicalExprNode> = {
           }
 
           message.literalValue = ExprLiteral.decode(reader, reader.uint32());
+          continue;
+        }
+        case 41: {
+          if (tag !== 330) {
+            break;
+          }
+
+          message.typedIdentifier = TypedIdentifier.decode(reader, reader.uint32());
           continue;
         }
         case 40: {
@@ -2644,6 +2744,7 @@ export const LogicalExprNode: MessageFns<LogicalExprNode> = {
       getSubscript: isSet(object.getSubscript) ? ExprGetSubscript.fromJSON(object.getSubscript) : undefined,
       call: isSet(object.call) ? ExprCall.fromJSON(object.call) : undefined,
       literalValue: isSet(object.literalValue) ? ExprLiteral.fromJSON(object.literalValue) : undefined,
+      typedIdentifier: isSet(object.typedIdentifier) ? TypedIdentifier.fromJSON(object.typedIdentifier) : undefined,
       exprId: isSet(object.exprId) ? globalThis.String(object.exprId) : "",
       column: isSet(object.column) ? Column.fromJSON(object.column) : undefined,
       alias: isSet(object.alias) ? AliasNode.fromJSON(object.alias) : undefined,
@@ -2700,6 +2801,9 @@ export const LogicalExprNode: MessageFns<LogicalExprNode> = {
     }
     if (message.literalValue !== undefined) {
       obj.literalValue = ExprLiteral.toJSON(message.literalValue);
+    }
+    if (message.typedIdentifier !== undefined) {
+      obj.typedIdentifier = TypedIdentifier.toJSON(message.typedIdentifier);
     }
     if (message.exprId !== "") {
       obj.exprId = message.exprId;

@@ -32,6 +32,21 @@ export enum MetricKind {
   METRIC_KIND_STREAM_MESSAGE_LATENCY = 19,
   METRIC_KIND_STREAM_WINDOWS_PROCESSED = 20,
   METRIC_KIND_STREAM_WINDOW_LATENCY = 21,
+  METRIC_KIND_ONLINE_STORE_KEY_COUNT = 22,
+  METRIC_KIND_ONLINE_STORE_EXPIRED_KEY_COUNT = 23,
+  METRIC_KIND_ONLINE_STORE_REQUESTS_PER_SECOND = 24,
+  METRIC_KIND_CPU_UTILIZATION_PERCENT = 25,
+  METRIC_KIND_REPLICA_COUNT = 26,
+  METRIC_KIND_ONLINE_STORE_USED_MEMORY = 27,
+  METRIC_KIND_ONLINE_STORE_TOTAL_MEMORY = 28,
+  METRIC_KIND_MEMORY_USAGE_BYTES = 29,
+  METRIC_KIND_TOTAL_MEMORY_AVAILABLE_BYTES = 30,
+  METRIC_KIND_NETWORK_READ_BYTES = 31,
+  METRIC_KIND_NETWORK_WRITE_BYTES = 32,
+  METRIC_KIND_DISK_READ_BYTES = 33,
+  METRIC_KIND_DISK_WRITE_BYTES = 34,
+  METRIC_KIND_STREAM_LAG = 35,
+  METRIC_KIND_USAGE = 36,
   UNRECOGNIZED = -1,
 }
 
@@ -103,6 +118,51 @@ export function metricKindFromJSON(object: any): MetricKind {
     case 21:
     case "METRIC_KIND_STREAM_WINDOW_LATENCY":
       return MetricKind.METRIC_KIND_STREAM_WINDOW_LATENCY;
+    case 22:
+    case "METRIC_KIND_ONLINE_STORE_KEY_COUNT":
+      return MetricKind.METRIC_KIND_ONLINE_STORE_KEY_COUNT;
+    case 23:
+    case "METRIC_KIND_ONLINE_STORE_EXPIRED_KEY_COUNT":
+      return MetricKind.METRIC_KIND_ONLINE_STORE_EXPIRED_KEY_COUNT;
+    case 24:
+    case "METRIC_KIND_ONLINE_STORE_REQUESTS_PER_SECOND":
+      return MetricKind.METRIC_KIND_ONLINE_STORE_REQUESTS_PER_SECOND;
+    case 25:
+    case "METRIC_KIND_CPU_UTILIZATION_PERCENT":
+      return MetricKind.METRIC_KIND_CPU_UTILIZATION_PERCENT;
+    case 26:
+    case "METRIC_KIND_REPLICA_COUNT":
+      return MetricKind.METRIC_KIND_REPLICA_COUNT;
+    case 27:
+    case "METRIC_KIND_ONLINE_STORE_USED_MEMORY":
+      return MetricKind.METRIC_KIND_ONLINE_STORE_USED_MEMORY;
+    case 28:
+    case "METRIC_KIND_ONLINE_STORE_TOTAL_MEMORY":
+      return MetricKind.METRIC_KIND_ONLINE_STORE_TOTAL_MEMORY;
+    case 29:
+    case "METRIC_KIND_MEMORY_USAGE_BYTES":
+      return MetricKind.METRIC_KIND_MEMORY_USAGE_BYTES;
+    case 30:
+    case "METRIC_KIND_TOTAL_MEMORY_AVAILABLE_BYTES":
+      return MetricKind.METRIC_KIND_TOTAL_MEMORY_AVAILABLE_BYTES;
+    case 31:
+    case "METRIC_KIND_NETWORK_READ_BYTES":
+      return MetricKind.METRIC_KIND_NETWORK_READ_BYTES;
+    case 32:
+    case "METRIC_KIND_NETWORK_WRITE_BYTES":
+      return MetricKind.METRIC_KIND_NETWORK_WRITE_BYTES;
+    case 33:
+    case "METRIC_KIND_DISK_READ_BYTES":
+      return MetricKind.METRIC_KIND_DISK_READ_BYTES;
+    case 34:
+    case "METRIC_KIND_DISK_WRITE_BYTES":
+      return MetricKind.METRIC_KIND_DISK_WRITE_BYTES;
+    case 35:
+    case "METRIC_KIND_STREAM_LAG":
+      return MetricKind.METRIC_KIND_STREAM_LAG;
+    case 36:
+    case "METRIC_KIND_USAGE":
+      return MetricKind.METRIC_KIND_USAGE;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -156,6 +216,36 @@ export function metricKindToJSON(object: MetricKind): string {
       return "METRIC_KIND_STREAM_WINDOWS_PROCESSED";
     case MetricKind.METRIC_KIND_STREAM_WINDOW_LATENCY:
       return "METRIC_KIND_STREAM_WINDOW_LATENCY";
+    case MetricKind.METRIC_KIND_ONLINE_STORE_KEY_COUNT:
+      return "METRIC_KIND_ONLINE_STORE_KEY_COUNT";
+    case MetricKind.METRIC_KIND_ONLINE_STORE_EXPIRED_KEY_COUNT:
+      return "METRIC_KIND_ONLINE_STORE_EXPIRED_KEY_COUNT";
+    case MetricKind.METRIC_KIND_ONLINE_STORE_REQUESTS_PER_SECOND:
+      return "METRIC_KIND_ONLINE_STORE_REQUESTS_PER_SECOND";
+    case MetricKind.METRIC_KIND_CPU_UTILIZATION_PERCENT:
+      return "METRIC_KIND_CPU_UTILIZATION_PERCENT";
+    case MetricKind.METRIC_KIND_REPLICA_COUNT:
+      return "METRIC_KIND_REPLICA_COUNT";
+    case MetricKind.METRIC_KIND_ONLINE_STORE_USED_MEMORY:
+      return "METRIC_KIND_ONLINE_STORE_USED_MEMORY";
+    case MetricKind.METRIC_KIND_ONLINE_STORE_TOTAL_MEMORY:
+      return "METRIC_KIND_ONLINE_STORE_TOTAL_MEMORY";
+    case MetricKind.METRIC_KIND_MEMORY_USAGE_BYTES:
+      return "METRIC_KIND_MEMORY_USAGE_BYTES";
+    case MetricKind.METRIC_KIND_TOTAL_MEMORY_AVAILABLE_BYTES:
+      return "METRIC_KIND_TOTAL_MEMORY_AVAILABLE_BYTES";
+    case MetricKind.METRIC_KIND_NETWORK_READ_BYTES:
+      return "METRIC_KIND_NETWORK_READ_BYTES";
+    case MetricKind.METRIC_KIND_NETWORK_WRITE_BYTES:
+      return "METRIC_KIND_NETWORK_WRITE_BYTES";
+    case MetricKind.METRIC_KIND_DISK_READ_BYTES:
+      return "METRIC_KIND_DISK_READ_BYTES";
+    case MetricKind.METRIC_KIND_DISK_WRITE_BYTES:
+      return "METRIC_KIND_DISK_WRITE_BYTES";
+    case MetricKind.METRIC_KIND_STREAM_LAG:
+      return "METRIC_KIND_STREAM_LAG";
+    case MetricKind.METRIC_KIND_USAGE:
+      return "METRIC_KIND_USAGE";
     case MetricKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -180,6 +270,7 @@ export enum FilterKind {
   FILTER_KIND_IS_NULL = 14,
   FILTER_KIND_USAGE_KIND = 15,
   FILTER_KIND_RESOURCE_GROUP = 16,
+  FILTER_KIND_POD_NAME = 17,
   UNRECOGNIZED = -1,
 }
 
@@ -236,6 +327,9 @@ export function filterKindFromJSON(object: any): FilterKind {
     case 16:
     case "FILTER_KIND_RESOURCE_GROUP":
       return FilterKind.FILTER_KIND_RESOURCE_GROUP;
+    case 17:
+    case "FILTER_KIND_POD_NAME":
+      return FilterKind.FILTER_KIND_POD_NAME;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -279,6 +373,8 @@ export function filterKindToJSON(object: FilterKind): string {
       return "FILTER_KIND_USAGE_KIND";
     case FilterKind.FILTER_KIND_RESOURCE_GROUP:
       return "FILTER_KIND_RESOURCE_GROUP";
+    case FilterKind.FILTER_KIND_POD_NAME:
+      return "FILTER_KIND_POD_NAME";
     case FilterKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -442,6 +538,9 @@ export enum GroupByKind {
   GROUP_BY_KIND_CACHE_HIT = 9,
   GROUP_BY_KIND_USAGE_KIND = 10,
   GROUP_BY_KIND_RESOURCE_GROUP = 11,
+  GROUP_BY_KIND_DEPLOYMENT_ID = 12,
+  GROUP_BY_KIND_OPERATION_ID = 13,
+  GROUP_BY_KIND_POD_NAME = 14,
   UNRECOGNIZED = -1,
 }
 
@@ -483,6 +582,15 @@ export function groupByKindFromJSON(object: any): GroupByKind {
     case 11:
     case "GROUP_BY_KIND_RESOURCE_GROUP":
       return GroupByKind.GROUP_BY_KIND_RESOURCE_GROUP;
+    case 12:
+    case "GROUP_BY_KIND_DEPLOYMENT_ID":
+      return GroupByKind.GROUP_BY_KIND_DEPLOYMENT_ID;
+    case 13:
+    case "GROUP_BY_KIND_OPERATION_ID":
+      return GroupByKind.GROUP_BY_KIND_OPERATION_ID;
+    case 14:
+    case "GROUP_BY_KIND_POD_NAME":
+      return GroupByKind.GROUP_BY_KIND_POD_NAME;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -516,6 +624,12 @@ export function groupByKindToJSON(object: GroupByKind): string {
       return "GROUP_BY_KIND_USAGE_KIND";
     case GroupByKind.GROUP_BY_KIND_RESOURCE_GROUP:
       return "GROUP_BY_KIND_RESOURCE_GROUP";
+    case GroupByKind.GROUP_BY_KIND_DEPLOYMENT_ID:
+      return "GROUP_BY_KIND_DEPLOYMENT_ID";
+    case GroupByKind.GROUP_BY_KIND_OPERATION_ID:
+      return "GROUP_BY_KIND_OPERATION_ID";
+    case GroupByKind.GROUP_BY_KIND_POD_NAME:
+      return "GROUP_BY_KIND_POD_NAME";
     case GroupByKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -609,6 +723,7 @@ export enum AlertSeverityKind {
   ALERT_SEVERITY_KIND_ERROR = 2,
   ALERT_SEVERITY_KIND_WARNING = 3,
   ALERT_SEVERITY_KIND_INFO = 4,
+  ALERT_SEVERITY_KIND_RESOLVED = 5,
   UNRECOGNIZED = -1,
 }
 
@@ -629,6 +744,9 @@ export function alertSeverityKindFromJSON(object: any): AlertSeverityKind {
     case 4:
     case "ALERT_SEVERITY_KIND_INFO":
       return AlertSeverityKind.ALERT_SEVERITY_KIND_INFO;
+    case 5:
+    case "ALERT_SEVERITY_KIND_RESOLVED":
+      return AlertSeverityKind.ALERT_SEVERITY_KIND_RESOLVED;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -648,6 +766,8 @@ export function alertSeverityKindToJSON(object: AlertSeverityKind): string {
       return "ALERT_SEVERITY_KIND_WARNING";
     case AlertSeverityKind.ALERT_SEVERITY_KIND_INFO:
       return "ALERT_SEVERITY_KIND_INFO";
+    case AlertSeverityKind.ALERT_SEVERITY_KIND_RESOLVED:
+      return "ALERT_SEVERITY_KIND_RESOLVED";
     case AlertSeverityKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -723,6 +843,7 @@ export enum ChartLinkKind {
   CHART_LINK_KIND_FEATURE = 2,
   CHART_LINK_KIND_QUERY = 3,
   CHART_LINK_KIND_MANUAL = 4,
+  CHART_LINK_KIND_SCHEDULED_QUERY = 5,
   UNRECOGNIZED = -1,
 }
 
@@ -743,6 +864,9 @@ export function chartLinkKindFromJSON(object: any): ChartLinkKind {
     case 4:
     case "CHART_LINK_KIND_MANUAL":
       return ChartLinkKind.CHART_LINK_KIND_MANUAL;
+    case 5:
+    case "CHART_LINK_KIND_SCHEDULED_QUERY":
+      return ChartLinkKind.CHART_LINK_KIND_SCHEDULED_QUERY;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -762,6 +886,8 @@ export function chartLinkKindToJSON(object: ChartLinkKind): string {
       return "CHART_LINK_KIND_QUERY";
     case ChartLinkKind.CHART_LINK_KIND_MANUAL:
       return "CHART_LINK_KIND_MANUAL";
+    case ChartLinkKind.CHART_LINK_KIND_SCHEDULED_QUERY:
+      return "CHART_LINK_KIND_SCHEDULED_QUERY";
     case ChartLinkKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -820,14 +946,22 @@ export interface MetricConfig {
   windowPeriod: string;
   series: MetricConfigSeries[];
   formulas: MetricFormula[];
-  trigger: AlertTrigger | undefined;
+  trigger:
+    | AlertTrigger
+    | undefined;
+  /** If this is generated as part of their code source and not to be edited otherwise */
+  graphGenerated: boolean;
 }
 
 export interface Chart {
   id: string;
   config: MetricConfig | undefined;
   entityKind: ChartLinkKind;
-  entityId?: string | undefined;
+  entityId?:
+    | string
+    | undefined;
+  /** If this is generated as part of their code source and not to be edited otherwise */
+  graphGenerated: boolean;
 }
 
 function createBaseAlertTrigger(): AlertTrigger {
@@ -1387,7 +1521,7 @@ export const MetricConfigSeries: MessageFns<MetricConfigSeries> = {
 };
 
 function createBaseMetricConfig(): MetricConfig {
-  return { name: "", windowPeriod: "", series: [], formulas: [], trigger: undefined };
+  return { name: "", windowPeriod: "", series: [], formulas: [], trigger: undefined, graphGenerated: false };
 }
 
 export const MetricConfig: MessageFns<MetricConfig> = {
@@ -1406,6 +1540,9 @@ export const MetricConfig: MessageFns<MetricConfig> = {
     }
     if (message.trigger !== undefined) {
       AlertTrigger.encode(message.trigger, writer.uint32(42).fork()).join();
+    }
+    if (message.graphGenerated !== false) {
+      writer.uint32(48).bool(message.graphGenerated);
     }
     return writer;
   },
@@ -1457,6 +1594,14 @@ export const MetricConfig: MessageFns<MetricConfig> = {
           message.trigger = AlertTrigger.decode(reader, reader.uint32());
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.graphGenerated = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1477,6 +1622,7 @@ export const MetricConfig: MessageFns<MetricConfig> = {
         ? object.formulas.map((e: any) => MetricFormula.fromJSON(e))
         : [],
       trigger: isSet(object.trigger) ? AlertTrigger.fromJSON(object.trigger) : undefined,
+      graphGenerated: isSet(object.graphGenerated) ? globalThis.Boolean(object.graphGenerated) : false,
     };
   },
 
@@ -1497,12 +1643,15 @@ export const MetricConfig: MessageFns<MetricConfig> = {
     if (message.trigger !== undefined) {
       obj.trigger = AlertTrigger.toJSON(message.trigger);
     }
+    if (message.graphGenerated !== false) {
+      obj.graphGenerated = message.graphGenerated;
+    }
     return obj;
   },
 };
 
 function createBaseChart(): Chart {
-  return { id: "", config: undefined, entityKind: 0, entityId: undefined };
+  return { id: "", config: undefined, entityKind: 0, entityId: undefined, graphGenerated: false };
 }
 
 export const Chart: MessageFns<Chart> = {
@@ -1518,6 +1667,9 @@ export const Chart: MessageFns<Chart> = {
     }
     if (message.entityId !== undefined) {
       writer.uint32(34).string(message.entityId);
+    }
+    if (message.graphGenerated !== false) {
+      writer.uint32(40).bool(message.graphGenerated);
     }
     return writer;
   },
@@ -1561,6 +1713,14 @@ export const Chart: MessageFns<Chart> = {
           message.entityId = reader.string();
           continue;
         }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.graphGenerated = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1576,6 +1736,7 @@ export const Chart: MessageFns<Chart> = {
       config: isSet(object.config) ? MetricConfig.fromJSON(object.config) : undefined,
       entityKind: isSet(object.entityKind) ? chartLinkKindFromJSON(object.entityKind) : 0,
       entityId: isSet(object.entityId) ? globalThis.String(object.entityId) : undefined,
+      graphGenerated: isSet(object.graphGenerated) ? globalThis.Boolean(object.graphGenerated) : false,
     };
   },
 
@@ -1592,6 +1753,9 @@ export const Chart: MessageFns<Chart> = {
     }
     if (message.entityId !== undefined) {
       obj.entityId = message.entityId;
+    }
+    if (message.graphGenerated !== false) {
+      obj.graphGenerated = message.graphGenerated;
     }
     return obj;
   },
