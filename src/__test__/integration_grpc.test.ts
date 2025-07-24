@@ -4,6 +4,7 @@ interface IntegrationTestFeatures {
   "all_types.id": number;
   "all_types.int_feat": bigint;
   "all_types.str_feat": string;
+  "all_types.int_list": bigint[];
   "all_types.has_one": { all_types_id: number; id: string };
   "all_types.has_many": { all_types_id: number; id: string }[];
 
@@ -180,6 +181,25 @@ maybe("integration tests (gRPC)", () => {
 
         expect(result.data["all_types.str_feat"].value).toBe("1");
         expect(Number(result.data["all_types.int_feat"].value)).toBe(1);
+      },
+      INTEGRATION_TEST_TIMEOUT
+    );
+
+    it(
+      "query all_types.int_list",
+      async () => {
+        const result = await client.query({
+          inputs: {
+            "all_types.id": 1,
+          },
+          outputs: ["all_types.int_list"],
+        });
+
+        const listResult = result.data["all_types.int_list"].value;
+
+        expect(Array.isArray(listResult)).toBe(true);
+        expect(listResult.length).toBe(2);
+        expect(listResult[0]).toBe(BigInt(1));
       },
       INTEGRATION_TEST_TIMEOUT
     );

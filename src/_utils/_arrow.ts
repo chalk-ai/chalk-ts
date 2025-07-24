@@ -11,11 +11,12 @@ import {
   Vector,
   Table,
   Float64,
+  Null,
 } from "apache-arrow";
 import { ChalkOnlineBulkQueryRequest } from "../_interface";
 
 export const inferElementType = (element: unknown): DataType => {
-  if (element == null) return new LargeUtf8(); // Default for null values
+  if (element == null) return new Null(); // Default for null values
 
   if (typeof element === "string") return new LargeUtf8();
   if (typeof element === "boolean") return new Bool();
@@ -35,10 +36,8 @@ export const inferElementType = (element: unknown): DataType => {
   }
   if (typeof element === "object") {
     // For objects, create struct type from keys
-    const structFields = Object.keys(element).map((key) => {
-      const fieldType = inferElementType(
-        (element as Record<string, unknown>)[key]
-      );
+    const structFields = Object.entries(element).map(([key, subElement]) => {
+      const fieldType = inferElementType(subElement);
       return new Field(key, fieldType);
     });
     return new Struct(structFields);
@@ -76,4 +75,30 @@ export const tableFromArraysTyped = <
   }
 
   return new Table(vectorMap);
+};
+
+/**
+ * Removes any arrow-specific types like Vector so that consumers do not have to interact with
+ * Chalk-specific wire format
+ *
+ * @param datum a piece of data that may still be arrow-specific
+ */
+export const unwrapArrowSpecificTypes = <T>(datum: T): T => {
+  if (typeof datum !== "object" || datum == null) {
+    return datum;
+  } else if (datum.constructor.name === "Vector" || datum instanceof Vector) {
+    // the second check sometimes doesn't work, but the constructor still exists
+    return Array.from((datum as unknown as Vector).toArray()).map(
+      unwrapArrowSpecificTypes
+    ) as T;
+  } else if (Array.isArray(datum)) {
+    return datum.map(unwrapArrowSpecificTypes) as T;
+  } else {
+    return Object.fromEntries(
+      Object.entries(datum).map(([key, value]) => [
+        key,
+        unwrapArrowSpecificTypes(value),
+      ])
+    ) as T;
+  }
 };

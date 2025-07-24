@@ -30,6 +30,7 @@ import {
 import { tableFromIPC } from "apache-arrow";
 import { Metadata } from "@grpc/grpc-js";
 import { processArrowTable } from "../_bulk_response";
+import { unwrapArrowSpecificTypes } from "./_arrow";
 
 /**  Request-Related **/
 
@@ -292,7 +293,7 @@ export const mapBulkQueryResponseGrpcToChalkOnlineResponse = <
           return [
             feature,
             {
-              value: rawData[feature],
+              value: unwrapArrowSpecificTypes(rawData[feature]),
               valid: true,
               error: relatedError,
               meta: relatedMeta ? mapGRPCFeatureMeta(relatedMeta) : undefined,
@@ -327,7 +328,9 @@ export const mapBulkQueryResponseGrpcToChalk = <
   ) as Set<string>;
   const data = rawData.map((datum: Record<string, unknown>) =>
     Object.fromEntries(
-      Object.entries(datum).filter(([key]) => features.has(key))
+      Object.entries(datum)
+        .filter(([key]) => features.has(key))
+        .map(([key, value]) => [key, unwrapArrowSpecificTypes(value)])
     )
   );
 
