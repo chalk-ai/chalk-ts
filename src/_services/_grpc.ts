@@ -5,7 +5,7 @@ import {
   ClientUnaryCall,
   Metadata,
   ServiceError,
-  Status,
+  status,
 } from "@grpc/grpc-js";
 import { ChalkError } from "../_errors";
 import { CredentialsHolder } from "./_credentials";
@@ -129,7 +129,7 @@ export class ChalkGRPCService {
         // Retry on UNAUTHENTICATED (similar to HTTP 401)
         if (
           e instanceof ChalkError &&
-          e.httpStatus === Status.UNAUTHENTICATED
+          e.httpStatus === status.UNAUTHENTICATED
         ) {
           this.credentialsHolder.clear();
           return makeCall();
