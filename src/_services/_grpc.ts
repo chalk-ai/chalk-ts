@@ -5,6 +5,7 @@ import {
   ClientUnaryCall,
   Metadata,
   ServiceError,
+  Status,
 } from "@grpc/grpc-js";
 import { ChalkError } from "../_errors";
 import { CredentialsHolder } from "./_credentials";
@@ -87,38 +88,54 @@ export class ChalkGRPCService {
       metadata: Metadata,
       opts: ChalkRequestOptions | null | undefined
     ): Promise<Resp> => {
-      const credentials = await this.credentialsHolder.get();
+      const makeCall = async (): Promise<Resp> => {
+        const credentials = await this.credentialsHolder.get();
 
-      const fullMetadata = headersToMetadata({
-        "X-Chalk-Deployment-Type": "engine-grpc",
-        "User-Agent": USER_AGENT,
-        Authorization: `Bearer ${credentials.access_token}`,
-        ...this.additionalHeaders,
-      });
-
-      const timeoutToUse = opts?.timeout ?? this.defaultTimeout;
-
-      if (timeoutToUse != null) {
-        fullMetadata.set("X-Chalk-Timeout", timeoutToUse.toString());
-      }
-
-      fullMetadata.merge(metadata);
-
-      return new Promise<Resp>((resolve, reject) => {
-        call(req, fullMetadata, (error: ServiceError | null, resp: Resp) => {
-          if (error != null) {
-            console.error(`[Chalk] ${error}`);
-            return reject(
-              new ChalkError(error.name, {
-                httpStatus: error.code,
-                httpStatusText: error.message,
-              })
-            );
-          }
-
-          resolve(resp);
+        const fullMetadata = headersToMetadata({
+          "X-Chalk-Deployment-Type": "engine-grpc",
+          "User-Agent": USER_AGENT,
+          Authorization: `Bearer ${credentials.access_token}`,
+          ...this.additionalHeaders,
         });
-      });
+
+        const timeoutToUse = opts?.timeout ?? this.defaultTimeout;
+
+        if (timeoutToUse != null) {
+          fullMetadata.set("X-Chalk-Timeout", timeoutToUse.toString());
+        }
+
+        fullMetadata.merge(metadata);
+
+        return new Promise<Resp>((resolve, reject) => {
+          call(req, fullMetadata, (error: ServiceError | null, resp: Resp) => {
+            if (error != null) {
+              console.error(`[Chalk] ${error}`);
+              return reject(
+                new ChalkError(error.name, {
+                  httpStatus: error.code,
+                  httpStatusText: error.message,
+                })
+              );
+            }
+
+            resolve(resp);
+          });
+        });
+      };
+
+      try {
+        return await makeCall();
+      } catch (e) {
+        // Retry on UNAUTHENTICATED (similar to HTTP 401)
+        if (
+          e instanceof ChalkError &&
+          e.httpStatus === Status.UNAUTHENTICATED
+        ) {
+          this.credentialsHolder.clear();
+          return makeCall();
+        }
+        throw e;
+      }
     };
   };
 

@@ -14,6 +14,7 @@ export interface ClientCredentials {
 
 export class CredentialsHolder {
   private credentials: ClientCredentials | null = null;
+  private credentialsExpiresAt: number | null = null;
 
   constructor(
     private config: ChalkClientConfig,
@@ -21,6 +22,18 @@ export class CredentialsHolder {
   ) {}
 
   async get(): Promise<ClientCredentials> {
+    // Check if credentials exist and are still valid
+    if (this.credentials != null && this.credentialsExpiresAt != null) {
+      // Refresh proactively if within 60 seconds of expiry
+      const now = Date.now();
+      const refreshThreshold = 60 * 1000; // 60 seconds
+      if (now < this.credentialsExpiresAt - refreshThreshold) {
+        return this.credentials;
+      }
+      // Clear expired or soon-to-expire credentials
+      this.clear();
+    }
+
     if (this.credentials == null) {
       try {
         this.credentials = await this.http.v1_oauth_token({
@@ -31,6 +44,12 @@ export class CredentialsHolder {
             grant_type: "client_credentials",
           },
         });
+        
+        // Calculate expiration time
+        if (this.credentials.expires_in) {
+          // expires_in is in seconds, convert to milliseconds
+          this.credentialsExpiresAt = Date.now() + (this.credentials.expires_in * 1000);
+        }
       } catch (e) {
         console.error(e);
         if (isChalkError(e)) {
@@ -50,6 +69,7 @@ export class CredentialsHolder {
 
   clear() {
     this.credentials = null;
+    this.credentialsExpiresAt = null;
   }
 
   async getPrimaryEnvironmentFromCredentials(): Promise<
