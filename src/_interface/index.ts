@@ -178,6 +178,10 @@ export interface ChalkOnlineQueryFeatureResult<
   // If an error occurred resolving this feature, this field will be 'false'.
   valid?: boolean;
 
+  // Value of the internal metadata that encodes information about how this feature
+  // was computed.
+  metadata_val?: number;
+
   // Only included if `include_meta` is true.
   meta?: ChalkFeatureMeta;
 }
