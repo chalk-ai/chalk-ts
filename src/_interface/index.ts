@@ -190,8 +190,6 @@ export interface ChalkOnlineQueryResponse<
   TFeatureMap,
   TOutput extends keyof TFeatureMap
 > {
-
-
   // The output features and any query metadata.
   data: {
     [K in TOutput]: ChalkOnlineQueryFeatureResult<TFeatureMap, K>;
