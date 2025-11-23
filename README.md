@@ -182,11 +182,34 @@ Query Server in your Chalk Environment, changing to the gRPC Client can be done 
 After these initialization changes are made, no changes to actual calls should be necessary - the gRPC Client uses the
 same function signatures.
 
-At this moment, only `query()`, `queryBulk()`, and `multiQuery()` are supported - if your usage requires one of the other 
+At this moment, only `query()`, `queryBulk()`, and `multiQuery()` are supported - if your usage requires one of the other
 functions (`whoami()`, `triggerResolverRun()`, `uploadSingle()`, `getRunStatus()`), the legacy `ChalkClient` should be used
 (but ideally only for these four calls - we still strongly recommend partially migrating the query calls to the gRPC Client).
 
+## AWS Lambda Optimization
 
+The Chalk client does not perform OAuth token exchange during construction—tokens are fetched lazily on the first query. In AWS Lambda environments, you can reduce cold start latency by pre-populating tokens during the Lambda init phase:
+
+```ts
+import { ChalkGRPCClient } from "@chalk-ai/client";
+
+// Initialize client at module level (runs during Lambda init)
+const client = new ChalkGRPCClient<FeaturesType>();
+
+// Pre-populate OAuth tokens during init phase
+await client.whoami();
+
+export const handler = async (event) => {
+  // First query will not incur token exchange latency
+  const result = await client.query({
+    inputs: { "user.id": event.userId },
+    outputs: ["user.fraud_score"],
+  });
+  return result;
+};
+```
+
+This moves the token exchange from request time to init time, improving response latency for the first invocation after a cold start.
 
 ### Supported environment variables
 
