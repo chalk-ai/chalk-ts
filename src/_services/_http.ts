@@ -12,6 +12,7 @@ import { ChalkErrorData } from "../_interface";
 import { ClientCredentials, CredentialsHolder } from "./_credentials";
 import { isoFetch, isoHeaders } from "../_utils/_polyfill";
 import { ChalkHttpHeaders } from "../_interface/_header";
+import { RetryConfig } from "../_interface/_options";
 
 type EndpointCallArgs_Body<TRequestBody> = IsNever<TRequestBody> extends true
   ? {
@@ -52,6 +53,7 @@ type EndpointCallArgs<
     baseUrl: string;
     headers?: ChalkHttpHeaders;
     timeout?: number;
+    retryConfig?: RetryConfig;
   };
 
 export interface RawQueryResponseMeta {
@@ -74,17 +76,88 @@ async function awaitTimeout(timeout: number): Promise<void> {
   });
 }
 
+/**
+ * Calculate the delay for a retry attempt using exponential backoff with optional jitter.
+ */
+function calculateRetryDelay(
+  attemptNumber: number,
+  config: Required<RetryConfig>
+): number {
+  const { initialDelayMs, maxDelayMs, backoffMultiplier, enableJitter } = config;
+
+  // Calculate base delay with exponential backoff
+  let delay = initialDelayMs * Math.pow(backoffMultiplier, attemptNumber);
+
+  // Cap at maxDelayMs
+  delay = Math.min(delay, maxDelayMs);
+
+  // Add jitter if enabled (randomize up to 50% of the delay)
+  if (enableJitter) {
+    const jitterAmount = delay * 0.5;
+    delay = delay - jitterAmount + (Math.random() * jitterAmount * 2);
+  }
+
+  return Math.floor(delay);
+}
+
+/**
+ * Resolve retry configuration with defaults.
+ */
+function resolveRetryConfig(config?: RetryConfig): Required<RetryConfig> {
+  return {
+    maxRetries: config?.maxRetries ?? 1,
+    initialDelayMs: config?.initialDelayMs ?? 100,
+    maxDelayMs: config?.maxDelayMs ?? 5000,
+    backoffMultiplier: config?.backoffMultiplier ?? 2.0,
+    enableJitter: config?.enableJitter ?? true,
+    retryableStatusCodes: config?.retryableStatusCodes ?? [503],
+  };
+}
+
 async function retryFetch(
   fetch: CustomFetchClient,
   url: string,
   options: RequestInit,
   retries: number,
-  backoff = 100
+  backoff = 100,
+  retryConfig?: RetryConfig
 ): Promise<Response> {
-  let lastError: Error | undefined;
-  for (let i = 0; i < retries; i++) {
+  const effectiveRetryConfig = resolveRetryConfig(retryConfig);
+  const maxAttempts = effectiveRetryConfig.maxRetries + 1; // +1 for initial attempt
+
+  let lastError: Error | ChalkError | undefined;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      return await fetch(url, options);
+      const response = await fetch(url, options);
+
+      // Check if response has a retryable status code
+      if (
+        response.status >= 200 &&
+        response.status < 300
+      ) {
+        // Success - return immediately
+        return response;
+      }
+
+      // Check if this status code is retryable
+      const isRetryableStatus = effectiveRetryConfig.retryableStatusCodes.includes(
+        response.status
+      );
+
+      const isLastAttempt = attempt === maxAttempts - 1;
+
+      if (!isRetryableStatus || isLastAttempt) {
+        // Not retryable or last attempt - return the error response
+        return response;
+      }
+
+      // This is a retryable error and we have attempts left
+      // Calculate delay and wait before retry
+      const delay = calculateRetryDelay(attempt, effectiveRetryConfig);
+      await awaitTimeout(delay);
+
+      // Continue to next iteration to retry
     } catch (e) {
       if (e instanceof DOMException) {
         // Don't retry timeouts.
@@ -92,7 +165,14 @@ async function retryFetch(
       }
 
       lastError = e as Error;
-      await awaitTimeout(backoff * 2 ** i);
+      const isLastAttempt = attempt === maxAttempts - 1;
+
+      if (isLastAttempt) {
+        throw lastError;
+      }
+
+      // Network error - retry with legacy backoff for network errors
+      await awaitTimeout(backoff * 2 ** attempt);
     }
   }
 
@@ -126,19 +206,22 @@ export class ChalkHTTPService {
   private defaultTimeout: number | undefined;
   private additionalHeaders: ChalkHttpHeaders | undefined;
   private maxNetworkRetries: number;
+  private defaultRetryConfig: RetryConfig | undefined;
 
   constructor(
     fetchClient?: CustomFetchClient,
     fetchHeaders?: typeof Headers,
     defaultTimeout?: number,
     additionalHeaders?: ChalkHttpHeaders,
-    maxNetworkRetries: number = 3
+    maxNetworkRetries: number = 3,
+    retryConfig?: RetryConfig
   ) {
     this.fetchClient = fetchClient ?? (isoFetch as any); // cast for any's editor
     this.fetchHeaders = fetchHeaders ?? isoHeaders;
     this.defaultTimeout = defaultTimeout;
     this.additionalHeaders = additionalHeaders;
     this.maxNetworkRetries = maxNetworkRetries;
+    this.defaultRetryConfig = retryConfig;
   }
 
   private createEndpoint<
@@ -220,7 +303,9 @@ export class ChalkHTTPService {
                 ? AbortSignal.timeout(effectiveTimeout)
                 : undefined,
           },
-          this.maxNetworkRetries
+          this.maxNetworkRetries,
+          100,
+          callArgs.retryConfig ?? this.defaultRetryConfig
         );
         if (result.status < 200 || result.status >= 300) {
           const errorText = await result.text();

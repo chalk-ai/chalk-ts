@@ -3,6 +3,49 @@ import { CustomFetchClient } from "./_types";
 import { ChalkClientConfig } from "./_client";
 import { ClientOptions } from "@grpc/grpc-js";
 
+/**
+ * Configuration for retry behavior with exponential backoff and jitter.
+ */
+export interface RetryConfig {
+  /**
+   * Maximum number of retry attempts (not including the initial request).
+   * For example, maxRetries: 1 means the request will be attempted twice total (1 initial + 1 retry).
+   * Defaults to 1.
+   */
+  maxRetries?: number;
+
+  /**
+   * Initial delay in milliseconds before the first retry.
+   * Defaults to 100ms.
+   */
+  initialDelayMs?: number;
+
+  /**
+   * Maximum delay in milliseconds between retries.
+   * Defaults to 5000ms (5 seconds).
+   */
+  maxDelayMs?: number;
+
+  /**
+   * Multiplier for exponential backoff. Each retry delay is multiplied by this factor.
+   * Defaults to 2.0.
+   */
+  backoffMultiplier?: number;
+
+  /**
+   * Whether to add jitter to the retry delay. Jitter helps prevent thundering herd problems.
+   * If true, adds random jitter up to 50% of the calculated delay.
+   * Defaults to true.
+   */
+  enableJitter?: boolean;
+
+  /**
+   * HTTP status codes that should trigger a retry.
+   * Defaults to [503].
+   */
+  retryableStatusCodes?: number[];
+}
+
 export interface BaseChalkClientOpts {
   /**
    * Your Chalk Client ID. This value will be read from the _CHALK_CLIENT_ID environment variable if not set explicitly.
@@ -74,6 +117,13 @@ export interface BaseChalkClientOpts {
    * Defaults to "ISO_8601" (in UTC), also supports "EPOCH_MILLIS" as number of milliseconds since epoch
    */
   timestampFormat?: ChalkClientConfig["timestampFormat"];
+
+  /**
+   * Configuration for retry behavior with exponential backoff and jitter.
+   * This configuration applies to query, queryBulk, and multiQuery operations for the HTTP client.
+   * Can be overridden on a per-request basis.
+   */
+  retryConfig?: RetryConfig;
 }
 
 export interface ChalkClientOpts extends BaseChalkClientOpts {

@@ -21,5 +21,5 @@ export {
   TimestampFormat,
 } from "./_interface";
 export { CredentialsHolder } from "./_services/_credentials";
-export { ChalkClientOpts, ChalkGRPCClientOpts } from "./_interface/_options";
+export { ChalkClientOpts, ChalkGRPCClientOpts, RetryConfig } from "./_interface/_options";
 export { ChalkScalar } from "./_interface/_types";

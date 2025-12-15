@@ -1,4 +1,5 @@
 import { ChalkHttpHeaders } from "./_header";
+import { RetryConfig } from "./_options";
 
 export interface ChalkRequestOptions {
   /**
@@ -15,4 +16,9 @@ export interface ChalkRequestOptions {
    * Additional headers to include in this request. These headers will be merged with the headers provided at the client level.
    */
   additionalHeaders?: ChalkHttpHeaders;
+  /**
+   * Configuration for retry behavior with exponential backoff and jitter.
+   * Overrides the retry configuration provided at the client level.
+   */
+  retryConfig?: RetryConfig;
 }

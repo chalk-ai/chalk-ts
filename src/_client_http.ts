@@ -45,7 +45,9 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       opts?.fetch,
       opts?.fetchHeaders,
       opts?.defaultTimeout,
-      opts?.additionalHeaders
+      opts?.additionalHeaders,
+      3, // maxNetworkRetries
+      opts?.retryConfig
     );
 
     this.credentials = new CredentialsHolder(this.config, this.http);
@@ -144,6 +146,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       headers: await this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
+      retryConfig: requestOptions?.retryConfig,
     });
 
     return parseOnlineQueryResponse<TFeatureMap, TOutput>(
@@ -189,6 +192,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       headers: await this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
+      retryConfig: requestOptions?.retryConfig,
     });
 
     const resultBuffer = Buffer.from(rawResult);
@@ -235,6 +239,7 @@ export class ChalkClient<TFeatureMap = Record<string, ChalkScalar>>
       headers: await this.getHeaders(requestOptions),
       credentials: this.credentials,
       timeout: requestOptions?.timeout,
+      retryConfig: requestOptions?.retryConfig,
     });
 
     const resultBuffer = Buffer.from(rawResult);
