@@ -72,7 +72,7 @@ const APPLICATION_OCTET = "application/octet-stream";
 
 const DEFAULT_ONLINE_QUERY_RETRY_CONFIG: RetryConfig = {
   maxRetries: 1,
-  initialDelayMs: 100,
+  initialDelayMs: 0,
   retryableStatusCodes: [503],
 };
 
@@ -84,6 +84,8 @@ async function awaitTimeout(timeout: number): Promise<void> {
 
 /**
  * Calculate the delay for a retry attempt using exponential backoff with optional jitter.
+ * Special case: if initialDelayMs is 0, the first retry has 0ms delay, but subsequent
+ * retries use 1ms as the base for exponential backoff.
  */
 function calculateRetryDelay(
   attemptNumber: number,
@@ -91,8 +93,16 @@ function calculateRetryDelay(
 ): number {
   const { initialDelayMs, maxDelayMs, backoffMultiplier, enableJitter } = config;
 
+  // Special case: if initialDelayMs is 0 and this is the first retry, return 0
+  if (initialDelayMs === 0 && attemptNumber === 0) {
+    return 0;
+  }
+
+  // For subsequent retries when initialDelayMs is 0, treat it as 1ms for exponential backoff
+  const effectiveInitialDelay = initialDelayMs === 0 ? 1 : initialDelayMs;
+
   // Calculate base delay with exponential backoff
-  let delay = initialDelayMs * Math.pow(backoffMultiplier, attemptNumber);
+  let delay = effectiveInitialDelay * Math.pow(backoffMultiplier, attemptNumber);
 
   // Cap at maxDelayMs
   delay = Math.min(delay, maxDelayMs);

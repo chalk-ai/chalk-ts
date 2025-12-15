@@ -473,6 +473,70 @@ describe("Retry logic with exponential backoff", () => {
     expect(attemptCount).toBe(4);
   });
 
+  it("should handle initialDelayMs of 0 correctly (first retry immediate, subsequent use 1ms base)", async () => {
+    const delays: number[] = [];
+    let attemptCount = 0;
+    const mockFetch = jest.fn(async () => {
+      attemptCount++;
+      return {
+        status: 503,
+        statusText: "Service Unavailable",
+        text: async () => "Service temporarily unavailable",
+      } as Response;
+    });
+
+    // Mock setTimeout to capture delays
+    const originalSetTimeout = global.setTimeout;
+    global.setTimeout = jest.fn((fn: any, delay: number) => {
+      delays.push(delay);
+      return originalSetTimeout(fn, 0);
+    }) as any;
+
+    const service = new ChalkHTTPService(
+      mockFetch as any,
+      undefined,
+      undefined,
+      undefined,
+      3,
+      {
+        maxRetries: 3,
+        initialDelayMs: 0,
+        backoffMultiplier: 2,
+        enableJitter: false, // Disable jitter for predictable values
+        retryableStatusCodes: [503],
+      }
+    );
+
+    const endpoint = (service as any).createEndpoint({
+      path: "/test",
+      authKind: "none",
+      method: "POST",
+      responseBody: null as any,
+    });
+
+    await expect(
+      endpoint({
+        baseUrl: "http://test.com",
+      })
+    ).rejects.toThrow(ChalkError);
+
+    // Restore original setTimeout
+    global.setTimeout = originalSetTimeout;
+
+    expect(attemptCount).toBe(4); // Initial attempt + 3 retries
+    expect(delays.length).toBe(3); // Three delays between 4 attempts
+
+    // First retry should be immediate (0ms)
+    expect(delays[0]).toBe(0);
+
+    // Subsequent retries should use 1ms as base with exponential backoff
+    // Attempt 0: 0ms
+    // Attempt 1: 1ms * 2^1 = 2ms
+    // Attempt 2: 1ms * 2^2 = 4ms
+    expect(delays[1]).toBe(2);
+    expect(delays[2]).toBe(4);
+  });
+
   it("should apply exponential backoff with jitter", async () => {
     const delays: number[] = [];
     let attemptCount = 0;
