@@ -16,13 +16,13 @@ export interface RetryConfig {
 
   /**
    * Initial delay in milliseconds before the first retry.
-   * Defaults to 100ms.
+   * Defaults to 0ms (immediate).
    */
   initialDelayMs?: number;
 
   /**
    * Maximum delay in milliseconds between retries.
-   * Defaults to 5000ms (5 seconds).
+   * Defaults to 1000ms (1 second).
    */
   maxDelayMs?: number;
 
