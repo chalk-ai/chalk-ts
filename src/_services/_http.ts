@@ -122,8 +122,8 @@ function calculateRetryDelay(
 function resolveRetryConfig(config?: RetryConfig): Required<RetryConfig> {
   return {
     maxRetries: config?.maxRetries ?? 1,
-    initialDelayMs: config?.initialDelayMs ?? 100,
-    maxDelayMs: config?.maxDelayMs ?? 5000,
+    initialDelayMs: config?.initialDelayMs ?? 0,
+    maxDelayMs: config?.maxDelayMs ?? 1000,
     backoffMultiplier: config?.backoffMultiplier ?? 2.0,
     enableJitter: config?.enableJitter ?? true,
     retryableStatusCodes: config?.retryableStatusCodes ?? [503],
