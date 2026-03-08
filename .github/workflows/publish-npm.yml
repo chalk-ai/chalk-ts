@@ -2,14 +2,18 @@ on:
   release:
     types: [published]
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "16"
+          node-version: "22"
           cache: yarn
       - run: yarn install --immutable
       - run: yarn build
@@ -25,16 +29,15 @@ jobs:
     # needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           always-auth: true
-          node-version: "16"
+          node-version: "22"
           cache: yarn
       - run: yarn install
 
       # https://github.com/yarnpkg/berry/issues/4424
       - run: npm version ${{ github.event.release.tag_name }} --no-git-tag-version
       - run: yarn prebuild
-      - run: yarn config set npmAuthToken "${{ secrets.NPM_AUTOMATION_TOKEN }}"
       - run: yarn npm publish --access public

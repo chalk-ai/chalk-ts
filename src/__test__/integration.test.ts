@@ -1,12 +1,17 @@
 import { Vector, DataType } from "apache-arrow";
 import { ChalkClient } from "../_client_http";
 
+interface ChalkDataframe {
+  columns: string[];
+  values: unknown[][];
+}
+
 interface IntegrationTestFeatures {
   "all_types.id": number;
   "all_types.int_feat": bigint;
   "all_types.str_feat": string;
-  "all_types.has_one": { all_types_id: number; id: string };
-  "all_types.has_many": { all_types_id: number; id: string }[];
+  "all_types.has_one": { all_types_id: number; id: string; name: string };
+  "all_types.has_many": { all_types_id: number; id: string; name: string }[] | ChalkDataframe;
   "all_types.has_many.all_types_id": Vector<DataType>;
 
   "all_types.not_a_real_feat": string;
@@ -323,18 +328,21 @@ maybe("integration tests (http)", () => {
 
         expect(Object.keys(result.data).length).toBe(2);
         expect(result.data["all_types.id"].value).toBe(1);
-        expect(result.data["all_types.has_many"].value).toEqual({
-          columns: [
-            "has_many_feature.id",
-            "has_many_feature.name",
-            "has_many_feature.all_types_id",
-          ],
-          values: [
-            ["1a", "1b"],
-            ["1a", "1b"],
-            [1, 1],
-          ],
-        });
+        const hasManyData = result.data["all_types.has_many"].value as ChalkDataframe;
+        expect(hasManyData.columns).toEqual([
+          "has_many_feature.id",
+          "has_many_feature.name",
+          "has_many_feature.all_types_id",
+        ])
+
+        const resultValues = hasManyData.values;
+        expect(resultValues.length).toBe(3);
+        expect(resultValues.map(value => value.sort())).toEqual([
+          ["1a", "1b"],
+          ["1a", "1b"],
+          [1, 1],
+        ])
+        
       },
       INTEGRATION_TEST_TIMEOUT
     );
