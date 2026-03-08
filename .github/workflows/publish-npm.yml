@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: "22"
           cache: yarn
       - run: yarn install --immutable
       - run: yarn build
@@ -29,12 +29,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           always-auth: true
-          node-version: "16"
+          node-version: "22"
           cache: yarn
       - run: yarn install
 
       # https://github.com/yarnpkg/berry/issues/4424
       - run: npm version ${{ github.event.release.tag_name }} --no-git-tag-version
       - run: yarn prebuild
-      - run: yarn config set npmAuthToken "${{ secrets.NPM_AUTOMATION_TOKEN }}"
       - run: yarn npm publish --access public
