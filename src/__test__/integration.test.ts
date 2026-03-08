@@ -11,7 +11,7 @@ interface IntegrationTestFeatures {
   "all_types.int_feat": bigint;
   "all_types.str_feat": string;
   "all_types.has_one": { all_types_id: number; id: string; name: string };
-  "all_types.has_many": { all_types_id: number; id: string; name: string }[] | Dataframe;
+  "all_types.has_many": { all_types_id: number; id: string; name: string }[] | ChalkDataframe;
   "all_types.has_many.all_types_id": Vector<DataType>;
 
   "all_types.not_a_real_feat": string;
