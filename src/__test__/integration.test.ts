@@ -273,7 +273,6 @@ maybe("integration tests (http)", () => {
           outputs: ["all_types.id", "all_types.int_feat"],
         });
 
-        console.log('result data', result data)
         expect(Object.keys(result.data).length).toBe(2);
         expect(result.data["all_types.id"].value).toBe(2);
         expect(result.data["all_types.int_feat"].value).toBe(2);
