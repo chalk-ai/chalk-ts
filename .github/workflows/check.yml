@@ -60,8 +60,6 @@ jobs:
       - run: yarn install
       - run: yarn test:integration
         env:
-          CI_CHALK_CLIENT_ID: ${{ secrets.CHALK_CLIENT_ID }}
-          CI_CHALK_CLIENT_SECRET: ${{ secrets.CHALK_CLIENT_SECRET }}
           _INTEGRATION_TEST_CLIENT_ID: ${{ secrets._INTEGRATION_TEST_CLIENT_ID }}
           _INTEGRATION_TEST_CLIENT_SECRET: ${{ secrets._INTEGRATION_TEST_CLIENT_SECRET }}
           _INTEGRATION_TEST_API_SERVER: ${{ secrets._INTEGRATION_TEST_API_SERVER }}
