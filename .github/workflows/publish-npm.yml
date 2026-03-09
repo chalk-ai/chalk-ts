@@ -2,6 +2,8 @@ on:
   release:
     types: [published]
 
+concurrency: npm-publish
+
 permissions:
   id-token: write  # Required for OIDC
   contents: read
@@ -38,11 +40,9 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@chalk-ai"
 
-      - run: yarn install
+      - run: yarn install --immutable --inline-builds
       #https://github.com/yarnpkg/berry/issues/4424 
       - run: npm version ${{ github.event.release.tag_name }} --no-git-tag-version
       - run: yarn prebuild
 
-      - run: yarn npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      - run: npm publish --provenance --access public 
