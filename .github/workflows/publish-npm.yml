@@ -37,9 +37,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: yarn
           registry-url: "https://registry.npmjs.org"
+          scope: "@chalk-ai"
 
       - run: yarn install --immutable --inline-builds
       #https://github.com/yarnpkg/berry/issues/4424 
