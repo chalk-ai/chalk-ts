@@ -36,10 +36,10 @@ jobs:
           node-version: "22"
           cache: yarn
           registry-url: "https://registry.npmjs.org"
-          scope: "@chalk-ai"   # remove if not scoped
+          scope: "@chalk-ai"
 
       - run: yarn install
-
+      #https://github.com/yarnpkg/berry/issues/4424 
       - run: npm version ${{ github.event.release.tag_name }} --no-git-tag-version
       - run: yarn prebuild
 
