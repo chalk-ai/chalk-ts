@@ -30,14 +30,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          always-auth: true
           node-version: "22"
           cache: yarn
+          registry-url: "https://registry.npmjs.org"
+          scope: "@chalk-ai"   # remove if not scoped
+
       - run: yarn install
 
-      # https://github.com/yarnpkg/berry/issues/4424
       - run: npm version ${{ github.event.release.tag_name }} --no-git-tag-version
       - run: yarn prebuild
+
       - run: yarn npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
