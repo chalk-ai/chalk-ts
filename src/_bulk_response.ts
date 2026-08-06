@@ -11,6 +11,7 @@ import { RawQueryResponseMeta } from "./_services/_http";
 import { ChalkErrorData, ChalkQueryMeta, TimestampFormat } from "./_interface";
 import { mapRawResponseMeta } from "./_meta";
 import { ChalkClientConfig } from "./_interface";
+import { unwrapArrowSpecificTypes } from "./_utils/_arrow";
 
 interface ByteModel {
   attrs: { [key: string]: number | string } & {
@@ -203,7 +204,7 @@ export function parseFeatherQueryResponse(
           config
         );
         acc.chunkResults.push({
-          data: ipcTable.toArray() as any,
+          data: ipcTable.toArray().map(unwrapArrowSpecificTypes) as any,
           meta:
             chunk.attrs.meta != null
               ? mapRawResponseMeta(
