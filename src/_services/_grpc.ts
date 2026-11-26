@@ -74,6 +74,12 @@ export class ChalkGRPCService {
         ? ChannelCredentials.createInsecure()
         : ChannelCredentials.createSsl(),
       {
+        // @grpc/grpc-js disables keepalive pings by default; without them,
+        // idle connections can be silently dropped by intermediaries.
+        "grpc.keepalive_time_ms": 60000,
+        "grpc.keepalive_timeout_ms": 5000,
+        "grpc.keepalive_permit_without_calls": 1,
+        "grpc.http2.max_pings_without_data": 0,
         ...clientOptions,
         "grpc.enable_retries": clientOptions?.["grpc.enable_retries"] ?? 3,
       }
